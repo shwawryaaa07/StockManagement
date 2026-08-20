@@ -2,9 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { getProducts, createInvoice } from '../services/api';
 
 function CreateInvoice() {
-    // ============================================================
-    // STATE
-    // ============================================================
     const [products, setProducts] = useState([]);
     const [customerName, setCustomerName] = useState('');
     const [customerContact, setCustomerContact] = useState('');
@@ -17,9 +14,6 @@ function CreateInvoice() {
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(false);
 
-    // ============================================================
-    // EFFECTS
-    // ============================================================
     useEffect(() => {
         loadProducts();
     }, []);
@@ -33,9 +27,6 @@ function CreateInvoice() {
         }
     };
 
-    // ============================================================
-    // FUNCTIONS
-    // ============================================================
     const addItem = () => {
         if (!selectedProduct || quantity < 1) {
             alert('Please select a product and enter quantity');
@@ -69,9 +60,6 @@ function CreateInvoice() {
     const gstAmount = subtotal * (gstRate / 100);
     const totalAmount = subtotal + gstAmount;
 
-    // ============================================================
-    // SUBMIT
-    // ============================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (items.length === 0) {
@@ -91,7 +79,7 @@ function CreateInvoice() {
             customerName,
             customerContact: customerContact || 'N/A',
             deliveryAddress: deliveryAddress || 'N/A',
-            gstRate: gstRate,
+            gstRate,
             paymentMode,
             amountPaid: parseFloat(amountPaid) || 0,
             items
@@ -112,11 +100,91 @@ function CreateInvoice() {
     };
 
     // ============================================================
-    // RENDER
+    // STYLES WITH THEME VARIABLES
     // ============================================================
+
+    const styles = {
+        container: { padding: '30px', maxWidth: '900px', margin: '0 auto' },
+        title: { marginBottom: '20px', color: 'var(--text-primary)' },
+        form: {
+            backgroundColor: 'var(--bg-card)',
+            padding: '25px',
+            borderRadius: '12px',
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow)'
+        },
+        section: { marginBottom: '25px', paddingBottom: '25px', borderBottom: '1px solid var(--border-color)' },
+        sectionTitle: { margin: '0 0 15px 0', fontSize: '18px', color: 'var(--primary)' },
+        row: { display: 'flex', gap: '15px', flexWrap: 'wrap' },
+        field: { flex: 1, minWidth: '200px', marginBottom: '10px' },
+        label: { display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: 'var(--text-secondary)' },
+        input: {
+            width: '100%',
+            padding: '10px 12px',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            fontSize: '14px',
+            boxSizing: 'border-box',
+            backgroundColor: 'var(--bg-body)',
+            color: 'var(--text-primary)'
+        },
+        addBtn: {
+            padding: '10px 20px',
+            backgroundColor: '#4caf50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontSize: '14px',
+            height: '40px'
+        },
+        tableWrapper: { overflowX: 'auto' },
+        table: { width: '100%', borderCollapse: 'collapse' },
+        tableHead: { backgroundColor: '#1a237e', color: 'white' },
+        tableRow: { borderBottom: '1px solid var(--border-color)' },
+        tableCell: { padding: '10px', textAlign: 'left', color: 'var(--text-primary)' },
+        removeBtn: {
+            backgroundColor: '#ef5350',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            padding: '4px 10px',
+            cursor: 'pointer'
+        },
+        totals: {
+            marginTop: '15px',
+            paddingTop: '15px',
+            borderTop: '2px solid var(--border-color)',
+            textAlign: 'right',
+            color: 'var(--text-primary)'
+        },
+        totalRow: { display: 'flex', justifyContent: 'flex-end', gap: '20px', padding: '5px 0' },
+        submitBtn: {
+            width: '100%',
+            padding: '14px',
+            backgroundColor: '#1a237e',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '18px',
+            cursor: 'pointer',
+            marginTop: '10px'
+        },
+        select: {
+            width: '100%',
+            padding: '10px 12px',
+            border: '1px solid var(--border-color)',
+            borderRadius: '8px',
+            fontSize: '14px',
+            boxSizing: 'border-box',
+            backgroundColor: 'var(--bg-body)',
+            color: 'var(--text-primary)'
+        }
+    };
+
     return (
-        <div style={{ padding: '30px', maxWidth: '900px', margin: '0 auto' }}>
-            <h2 style={{ marginBottom: '20px' }}>🧾 Create Invoice</h2>
+        <div style={styles.container}>
+            <h2 style={styles.title}>🧾 Create Invoice</h2>
             <form onSubmit={handleSubmit} style={styles.form}>
                 {/* Customer Details */}
                 <div style={styles.section}>
@@ -143,7 +211,7 @@ function CreateInvoice() {
                     <div style={styles.row}>
                         <div style={styles.field}>
                             <label style={styles.label}>GST Rate</label>
-                            <select value={gstRate} onChange={(e) => setGstRate(parseFloat(e.target.value))} style={styles.input}>
+                            <select value={gstRate} onChange={(e) => setGstRate(parseFloat(e.target.value))} style={styles.select}>
                                 <option value="0">0% (No GST)</option>
                                 <option value="5">5%</option>
                                 <option value="12">12%</option>
@@ -153,7 +221,7 @@ function CreateInvoice() {
                         </div>
                         <div style={styles.field}>
                             <label style={styles.label}>Payment Mode</label>
-                            <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} style={styles.input}>
+                            <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} style={styles.select}>
                                 <option value="CASH">💵 Cash</option>
                                 <option value="UPI">📱 UPI</option>
                                 <option value="CARD">💳 Card</option>
@@ -172,7 +240,7 @@ function CreateInvoice() {
                     <div style={styles.row}>
                         <div style={{ flex: 2 }}>
                             <label style={styles.label}>Product</label>
-                            <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)} style={styles.input}>
+                            <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)} style={styles.select}>
                                 <option value="">Select a product...</option>
                                 {products.map(p => (
                                     <option key={p.id} value={p.id}>{p.name} (₹{p.price}) - Stock: {p.quantity}</option>
@@ -230,32 +298,12 @@ function CreateInvoice() {
                     </div>
                 )}
 
-                <button type="submit" style={styles.submitBtn} disabled={loading}>
+                <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '10px', padding: '14px', fontSize: '18px' }} disabled={loading}>
                     {loading ? 'Creating...' : '✨ Generate Invoice'}
                 </button>
             </form>
         </div>
     );
 }
-
-const styles = {
-    form: { backgroundColor: 'white', padding: '25px', borderRadius: '10px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' },
-    section: { marginBottom: '25px', paddingBottom: '25px', borderBottom: '1px solid #eee' },
-    sectionTitle: { margin: '0 0 15px 0', fontSize: '18px', color: '#1a237e' },
-    row: { display: 'flex', gap: '15px', flexWrap: 'wrap' },
-    field: { flex: 1, minWidth: '200px', marginBottom: '10px' },
-    label: { display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#333' },
-    input: { width: '100%', padding: '10px 12px', border: '1px solid #ddd', borderRadius: '5px', fontSize: '14px', boxSizing: 'border-box' },
-    addBtn: { padding: '10px 20px', backgroundColor: '#4caf50', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', fontSize: '14px', height: '40px' },
-    tableWrapper: { overflowX: 'auto' },
-    table: { width: '100%', borderCollapse: 'collapse' },
-    tableHead: { backgroundColor: '#1a237e', color: 'white' },
-    tableRow: { borderBottom: '1px solid #eee' },
-    tableCell: { padding: '10px', textAlign: 'left' },
-    removeBtn: { backgroundColor: '#f44336', color: 'white', border: 'none', borderRadius: '4px', padding: '4px 10px', cursor: 'pointer' },
-    totals: { marginTop: '15px', paddingTop: '15px', borderTop: '2px solid #ddd', textAlign: 'right' },
-    totalRow: { display: 'flex', justifyContent: 'flex-end', gap: '20px', padding: '5px 0' },
-    submitBtn: { width: '100%', padding: '14px', backgroundColor: '#1a237e', color: 'white', border: 'none', borderRadius: '5px', fontSize: '18px', cursor: 'pointer', marginTop: '10px' }
-};
 
 export default CreateInvoice;

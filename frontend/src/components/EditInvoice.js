@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getInvoice, getProducts } from '../services/api';
+import { getInvoice, getProducts, updateInvoice } from '../services/api';
 
 function EditInvoice() {
     const { id } = useParams();
@@ -79,57 +79,129 @@ function EditInvoice() {
         }
         setSaving(true);
         try {
-            alert('✅ Invoice updated successfully! (Feature coming soon)');
+            await updateInvoice(id, {
+                customerName,
+                customerContact: customerContact || 'N/A',
+                deliveryAddress: deliveryAddress || 'N/A',
+                paymentMode,
+                amountPaid: parseFloat(amountPaid) || 0,
+                gstRate,
+                items
+            });
+            alert('✅ Invoice updated successfully!');
             navigate(`/invoice/${id}`);
         } catch (error) {
-            alert('❌ Error updating invoice');
+            alert('❌ Error updating invoice: ' + (error.response?.data?.message || error.message));
         }
         setSaving(false);
     };
 
-    if (loading) return <div className="dashboard"><h2>Loading...</h2></div>;
+    // ============================================================
+    // STYLES WITH THEME VARIABLES
+    // ============================================================
+
+    const styles = {
+        container: { maxWidth: '900px', margin: '0 auto' },
+        title: { marginBottom: '20px', color: 'var(--text-primary)' },
+        form: {
+            background: 'var(--bg-card)',
+            padding: '25px',
+            borderRadius: '12px',
+            border: '1px solid var(--border)',
+            boxShadow: 'var(--shadow)'
+        },
+        section: { marginBottom: '20px' },
+        sectionTitle: { marginBottom: '10px', color: 'var(--text-primary)' },
+        row: { display: 'flex', gap: '15px', flexWrap: 'wrap' },
+        field: { flex: 1, minWidth: '200px' },
+        label: { display: 'block', fontWeight: 'bold', marginBottom: '5px', color: 'var(--text-secondary)' },
+        input: {
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid var(--border)',
+            borderRadius: '8px',
+            background: 'var(--bg-body)',
+            color: 'var(--text-primary)'
+        },
+        buttonRow: { display: 'flex', gap: '12px', marginTop: '20px' },
+        submitBtn: {
+            flex: 1,
+            padding: '12px',
+            background: '#1a237e',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            cursor: 'pointer'
+        },
+        cancelBtn: {
+            padding: '12px 25px',
+            background: '#999',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            fontSize: '16px',
+            cursor: 'pointer'
+        },
+        addBtn: {
+            padding: '8px 18px',
+            background: '#4caf50',
+            color: 'white',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer'
+        },
+        removeBtn: {
+            background: '#ef5350',
+            color: 'white',
+            border: 'none',
+            padding: '2px 8px',
+            borderRadius: '4px',
+            cursor: 'pointer'
+        },
+        totals: {
+            textAlign: 'right',
+            borderTop: '2px solid var(--border)',
+            paddingTop: '15px',
+            color: 'var(--text-primary)'
+        },
+        tableHeader: { background: '#1a237e', color: 'white' },
+        tableCell: { padding: '8px 12px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }
+    };
+
+    if (loading) return <div style={{ padding: '30px' }}><h2 style={{ color: 'var(--text-primary)' }}>Loading...</h2></div>;
 
     return (
-        <div className="dashboard" style={{ maxWidth: '900px', margin: '0 auto' }}>
-            <h2 style={{ marginBottom: '20px' }}>✏️ Edit Invoice - {id}</h2>
+        <div style={styles.container}>
+            <h2 style={styles.title}>✏️ Edit Invoice - {id}</h2>
 
-            <form onSubmit={handleSave} style={{
-                background: 'var(--bg-card, white)',
-                padding: '25px',
-                borderRadius: '12px',
-                border: '1px solid var(--border, #ddd)',
-                boxShadow: 'var(--shadow, 0 2px 10px rgba(0,0,0,0.08))'
-            }}>
+            <form onSubmit={handleSave} style={styles.form}>
                 {/* Customer Details */}
-                <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ marginBottom: '10px' }}>Customer Details</h3>
-                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                        <div style={{ flex: 1, minWidth: '200px' }}>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Name *</label>
-                            <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)}
-                                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '8px' }} required />
+                <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>Customer Details</h3>
+                    <div style={styles.row}>
+                        <div style={styles.field}>
+                            <label style={styles.label}>Name *</label>
+                            <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={styles.input} required />
                         </div>
-                        <div style={{ flex: 1, minWidth: '150px' }}>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Contact</label>
-                            <input type="text" value={customerContact} onChange={(e) => setCustomerContact(e.target.value)}
-                                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '8px' }} />
+                        <div style={styles.field}>
+                            <label style={styles.label}>Contact</label>
+                            <input type="text" value={customerContact} onChange={(e) => setCustomerContact(e.target.value)} style={styles.input} />
                         </div>
                     </div>
                     <div style={{ marginTop: '10px' }}>
-                        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Delivery Address</label>
-                        <input type="text" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)}
-                               style={{ width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '8px' }} />
+                        <label style={styles.label}>Delivery Address</label>
+                        <input type="text" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} style={styles.input} />
                     </div>
                 </div>
 
                 {/* GST & Payment */}
-                <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ marginBottom: '10px' }}>GST & Payment</h3>
-                    <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
-                        <div style={{ flex: 1, minWidth: '150px' }}>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>GST Rate</label>
-                            <select value={gstRate} onChange={(e) => setGstRate(parseFloat(e.target.value))}
-                                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '8px' }}>
+                <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>GST & Payment</h3>
+                    <div style={styles.row}>
+                        <div style={styles.field}>
+                            <label style={styles.label}>GST Rate</label>
+                            <select value={gstRate} onChange={(e) => setGstRate(parseFloat(e.target.value))} style={styles.input}>
                                 <option value="0">0%</option>
                                 <option value="5">5%</option>
                                 <option value="12">12%</option>
@@ -137,45 +209,38 @@ function EditInvoice() {
                                 <option value="28">28%</option>
                             </select>
                         </div>
-                        <div style={{ flex: 1, minWidth: '150px' }}>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Payment Mode</label>
-                            <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)}
-                                    style={{ width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '8px' }}>
+                        <div style={styles.field}>
+                            <label style={styles.label}>Payment Mode</label>
+                            <select value={paymentMode} onChange={(e) => setPaymentMode(e.target.value)} style={styles.input}>
                                 <option value="CASH">💵 Cash</option>
                                 <option value="UPI">📱 UPI</option>
                                 <option value="CARD">💳 Card</option>
                             </select>
                         </div>
-                        <div style={{ flex: 1, minWidth: '150px' }}>
-                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px' }}>Amount Paid</label>
-                            <input type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)}
-                                   style={{ width: '100%', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '8px' }} placeholder="0" />
+                        <div style={styles.field}>
+                            <label style={styles.label}>Amount Paid</label>
+                            <input type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} style={styles.input} placeholder="0" />
                         </div>
                     </div>
                 </div>
 
                 {/* Items */}
-                <div style={{ marginBottom: '20px' }}>
-                    <h3 style={{ marginBottom: '10px' }}>Items</h3>
+                <div style={styles.section}>
+                    <h3 style={styles.sectionTitle}>Items</h3>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                        <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)}
-                                style={{ flex: 2, padding: '8px 12px', border: '1px solid #ddd', borderRadius: '8px' }}>
+                        <select value={selectedProduct} onChange={(e) => setSelectedProduct(e.target.value)} style={{ flex: 2, ...styles.input }}>
                             <option value="">Select product...</option>
                             {products.map(p => <option key={p.id} value={p.id}>{p.name} (₹{p.price})</option>)}
                         </select>
-                        <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min="1"
-                               style={{ width: '80px', padding: '8px 12px', border: '1px solid #ddd', borderRadius: '8px' }} />
-                        <button type="button" onClick={addItem}
-                                style={{ padding: '8px 18px', background: '#4caf50', color: 'white', border: 'none', borderRadius: '8px', cursor: 'pointer' }}>
-                            ➕ Add
-                        </button>
+                        <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min="1" style={{ width: '80px', ...styles.input }} />
+                        <button type="button" onClick={addItem} style={styles.addBtn}>➕ Add</button>
                     </div>
 
                     {items.length > 0 && (
                         <div style={{ overflowX: 'auto' }}>
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
-                                <tr style={{ background: '#1a237e', color: 'white' }}>
+                                <tr style={styles.tableHeader}>
                                     <th style={{ padding: '8px 12px', textAlign: 'left' }}>Product</th>
                                     <th style={{ padding: '8px 12px', textAlign: 'center' }}>Qty</th>
                                     <th style={{ padding: '8px 12px', textAlign: 'right' }}>Price</th>
@@ -187,14 +252,13 @@ function EditInvoice() {
                                 {items.map((item, i) => {
                                     const p = products.find(p => p.id === item.product.id);
                                     return (
-                                        <tr key={i} style={{ borderBottom: '1px solid #ddd' }}>
-                                            <td style={{ padding: '8px 12px' }}>{p?.name || 'Unknown'}</td>
-                                            <td style={{ padding: '8px 12px', textAlign: 'center' }}>{item.quantity}</td>
-                                            <td style={{ padding: '8px 12px', textAlign: 'right' }}>₹{item.unitPrice}</td>
-                                            <td style={{ padding: '8px 12px', textAlign: 'right' }}>₹{item.quantity * item.unitPrice}</td>
-                                            <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                                                <button type="button" onClick={() => removeItem(i)}
-                                                        style={{ background: '#ef5350', color: 'white', border: 'none', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer' }}>✕</button>
+                                        <tr key={i}>
+                                            <td style={styles.tableCell}>{p?.name || 'Unknown'}</td>
+                                            <td style={styles.tableCell}>{item.quantity}</td>
+                                            <td style={styles.tableCell}>₹{item.unitPrice}</td>
+                                            <td style={styles.tableCell}>₹{item.quantity * item.unitPrice}</td>
+                                            <td style={styles.tableCell}>
+                                                <button type="button" onClick={() => removeItem(i)} style={styles.removeBtn}>✕</button>
                                             </td>
                                         </tr>
                                     );
@@ -206,35 +270,18 @@ function EditInvoice() {
                 </div>
 
                 {/* Totals */}
-                <div style={{ textAlign: 'right', borderTop: '2px solid #ddd', paddingTop: '15px' }}>
+                <div style={styles.totals}>
                     <p><strong>Subtotal:</strong> ₹{subtotal.toLocaleString()}</p>
                     <p><strong>GST ({gstRate}%):</strong> ₹{gstAmount.toLocaleString()}</p>
                     <p style={{ fontSize: '20px', fontWeight: 'bold' }}><strong>Total:</strong> ₹{totalAmount.toLocaleString()}</p>
                 </div>
 
                 {/* Buttons */}
-                <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
-                    <button type="submit" style={{
-                        flex: 1,
-                        padding: '12px',
-                        background: '#1a237e',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '16px',
-                        cursor: 'pointer'
-                    }} disabled={saving}>
+                <div style={styles.buttonRow}>
+                    <button type="submit" style={styles.submitBtn} disabled={saving}>
                         {saving ? 'Saving...' : '💾 Save Changes'}
                     </button>
-                    <button type="button" onClick={() => navigate(`/invoice/${id}`)} style={{
-                        padding: '12px 25px',
-                        background: '#999',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        fontSize: '16px',
-                        cursor: 'pointer'
-                    }}>
+                    <button type="button" onClick={() => navigate(`/invoice/${id}`)} style={styles.cancelBtn}>
                         ❌ Cancel
                     </button>
                 </div>

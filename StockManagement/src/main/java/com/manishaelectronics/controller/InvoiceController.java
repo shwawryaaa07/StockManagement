@@ -5,60 +5,59 @@ import com.manishaelectronics.model.InvoiceItem;
 import com.manishaelectronics.model.PaymentStatus;
 import com.manishaelectronics.model.Product;
 import com.manishaelectronics.repository.InvoiceRepository;
-import com.manishaelectronics.repository.InvoiceItemRepository;
 import com.manishaelectronics.repository.ProductRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/invoices")
+@Transactional
 public class InvoiceController {
 
-    @Autowired
-    private InvoiceRepository invoiceRepository;
+    // ===========================================================
+    // CONSTRUCTOR INJECTION (Clean, testable)
+    // ===========================================================
+    private final InvoiceRepository invoiceRepository;
+    private final ProductRepository productRepository;
 
-    @Autowired
-    private InvoiceItemRepository invoiceItemRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
+    public InvoiceController(InvoiceRepository invoiceRepository, ProductRepository productRepository) {
+        this.invoiceRepository = invoiceRepository;
+        this.productRepository = productRepository;
+    }
 
     // ===========================================================
-    // 1. GET METHODS (Read data)
+    // GET METHODS
     // ===========================================================
 
-    // GET all invoices
     @GetMapping
     public List<Invoice> getAllInvoices() {
         return invoiceRepository.findAll();
     }
 
-    // GET invoice by ID
     @GetMapping("/{id}")
     public Invoice getInvoiceById(@PathVariable Long id) {
         return invoiceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Invoice not found with id: " + id));
     }
 
-    // GET due invoices (amount_due > 0)
     @GetMapping("/due")
     public List<Invoice> getDueInvoices() {
         return invoiceRepository.findByAmountDueGreaterThan(BigDecimal.ZERO);
     }
 
-    // GET paid invoices (FULLY_PAID)
     @GetMapping("/paid")
     public List<Invoice> getPaidInvoices() {
         return invoiceRepository.findByPaymentStatus(PaymentStatus.FULLY_PAID);
     }
 
-    // GET dashboard summary (NEW)
     @GetMapping("/dashboard")
     public Map<String, Object> getDashboard() {
         LocalDateTime startOfDay = LocalDateTime.now().withHour(0).withMinute(0).withSecond(0);
@@ -87,13 +86,11 @@ public class InvoiceController {
         return dashboard;
     }
 
-    // GET search invoices by customer name (NEW)
     @GetMapping("/search")
     public List<Invoice> searchInvoices(@RequestParam String customer) {
         return invoiceRepository.findByCustomerNameContainingIgnoreCase(customer);
     }
 
-    // GET invoices by date range (NEW)
     @GetMapping("/report")
     public List<Invoice> getInvoicesByDateRange(
             @RequestParam String from,
@@ -103,7 +100,6 @@ public class InvoiceController {
         return invoiceRepository.findByCreatedAtBetween(start, end);
     }
 
-    // GET customer spending total (NEW)
     @GetMapping("/customer/{customerName}/total")
     public Map<String, Object> getCustomerTotal(@PathVariable String customerName) {
         List<Invoice> invoices = invoiceRepository.findByCustomerNameContainingIgnoreCase(customerName);
@@ -121,26 +117,17 @@ public class InvoiceController {
         return result;
     }
 
-    // GET print invoice (for future React use)
-    @GetMapping("/{id}/print")
-    public String printInvoice(@PathVariable Long id) {
-        Invoice invoice = invoiceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Invoice not found"));
-        return "Invoice " + invoice.getInvoiceNumber() + " is ready for printing!";
-    }
-
     // ===========================================================
-    // 2. POST METHODS (Create data)
+    // POST METHODS
     // ===========================================================
 
-    // POST create new invoice
     @PostMapping
     public Invoice createInvoice(@RequestBody Invoice invoice) {
 
         invoice.setCreatedAt(LocalDateTime.now());
 
-        long count = invoiceRepository.count() + 1;
-        String invoiceNumber = String.format("INV-%04d", count);
+        // ✅ UUID-based invoice number (no duplicates)
+        String invoiceNumber = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         invoice.setInvoiceNumber(invoiceNumber);
 
         BigDecimal subtotal = BigDecimal.ZERO;
@@ -152,8 +139,10 @@ public class InvoiceController {
         }
         invoice.setSubtotal(subtotal);
 
+        // ✅ GST calculation with proper rounding
         BigDecimal gstRate = invoice.getGstRate() != null ? invoice.getGstRate() : new BigDecimal("18");
-        BigDecimal gstAmount = subtotal.multiply(gstRate).divide(new BigDecimal("100"));
+        BigDecimal gstAmount = subtotal.multiply(gstRate)
+                .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         invoice.setGstAmount(gstAmount);
 
         BigDecimal total = subtotal.add(gstAmount);
@@ -174,6 +163,7 @@ public class InvoiceController {
             invoice.setAmountDue(total.subtract(amountPaid));
         }
 
+        // Stock deduction
         for (InvoiceItem item : invoice.getItems()) {
             Product product = productRepository.findById(item.getProduct().getId())
                     .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProduct().getId()));
@@ -191,10 +181,58 @@ public class InvoiceController {
     }
 
     // ===========================================================
-    // 3. PUT METHODS (Update data)
+    // PUT METHODS
     // ===========================================================
 
-    // PUT record payment (NEW)
+    // ✅ NEW: Edit Invoice (Update)
+    @PutMapping("/{id}")
+    public Invoice updateInvoice(@PathVariable Long id, @RequestBody Invoice updatedInvoice) {
+        Invoice existingInvoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Invoice not found with id: " + id));
+
+        // Update basic fields
+        existingInvoice.setCustomerName(updatedInvoice.getCustomerName());
+        existingInvoice.setCustomerContact(updatedInvoice.getCustomerContact());
+        existingInvoice.setDeliveryAddress(updatedInvoice.getDeliveryAddress());
+        existingInvoice.setPaymentMode(updatedInvoice.getPaymentMode());
+        existingInvoice.setAmountPaid(updatedInvoice.getAmountPaid());
+        existingInvoice.setGstRate(updatedInvoice.getGstRate());
+
+        // Recalculate totals
+        BigDecimal subtotal = BigDecimal.ZERO;
+        for (InvoiceItem item : updatedInvoice.getItems()) {
+            subtotal = subtotal.add(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
+        }
+        existingInvoice.setSubtotal(subtotal);
+
+        BigDecimal gstAmount = subtotal.multiply(existingInvoice.getGstRate())
+                .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+        existingInvoice.setGstAmount(gstAmount);
+        existingInvoice.setTotalAmount(subtotal.add(gstAmount));
+
+        // Update items
+        existingInvoice.getItems().clear();
+        for (InvoiceItem item : updatedInvoice.getItems()) {
+            item.setInvoice(existingInvoice);
+            existingInvoice.getItems().add(item);
+        }
+
+        // Recalculate payment status
+        BigDecimal amountPaid = existingInvoice.getAmountPaid();
+        if (amountPaid == null || amountPaid.compareTo(BigDecimal.ZERO) == 0) {
+            existingInvoice.setPaymentStatus(PaymentStatus.DUE);
+            existingInvoice.setAmountDue(existingInvoice.getTotalAmount());
+        } else if (amountPaid.compareTo(existingInvoice.getTotalAmount()) >= 0) {
+            existingInvoice.setPaymentStatus(PaymentStatus.FULLY_PAID);
+            existingInvoice.setAmountDue(BigDecimal.ZERO);
+        } else {
+            existingInvoice.setPaymentStatus(PaymentStatus.PARTIALLY_PAID);
+            existingInvoice.setAmountDue(existingInvoice.getTotalAmount().subtract(amountPaid));
+        }
+
+        return invoiceRepository.save(existingInvoice);
+    }
+
     @PutMapping("/{id}/pay")
     public Invoice recordPayment(@PathVariable Long id, @RequestParam BigDecimal amount) {
         Invoice invoice = invoiceRepository.findById(id)
@@ -215,20 +253,29 @@ public class InvoiceController {
     }
 
     // ===========================================================
-    // 4. DELETE METHODS (Delete data)
+    // DELETE METHODS
     // ===========================================================
 
-    // DELETE invoice by ID
     @DeleteMapping("/{id}")
+    @Transactional  // ← Ensures everything rolls back if something fails
     public String deleteInvoice(@PathVariable Long id) {
-        invoiceRepository.deleteById(id);
-        return "Invoice deleted with id: " + id;
-    }
+        // 1. Find the invoice
+        Invoice invoice = invoiceRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Invoice not found with id: " + id));
 
-    // DELETE all invoices (For testing - NEW)
-    @DeleteMapping("/clear-all")
-    public String deleteAllInvoices() {
-        invoiceRepository.deleteAll();
-        return "All invoices have been deleted!";
+        // 2. Restore stock for each item
+        for (InvoiceItem item : invoice.getItems()) {
+            Product product = productRepository.findById(item.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProduct().getId()));
+
+            // Add back the quantity
+            product.setQuantity(product.getQuantity() + item.getQuantity());
+            productRepository.save(product);
+        }
+
+        // 3. Delete the invoice (cascade will delete items too)
+        invoiceRepository.deleteById(id);
+
+        return "Invoice deleted with id: " + id + " and stock restored.";
     }
 }

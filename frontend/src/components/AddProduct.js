@@ -2,9 +2,6 @@ import React, { useState } from 'react';
 import { createProduct } from '../services/api';
 
 function AddProduct() {
-    // ============================================================
-    // STATE
-    // ============================================================
     const [name, setName] = useState('');
     const [price, setPrice] = useState('');
     const [quantity, setQuantity] = useState('');
@@ -13,9 +10,6 @@ function AddProduct() {
     const [message, setMessage] = useState('');
     const [showForm, setShowForm] = useState(false);
 
-    // ============================================================
-    // SUBMIT - Add Product
-    // ============================================================
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -51,25 +45,27 @@ function AddProduct() {
         setLoading(false);
     };
 
-    // ============================================================
-    // RENDER
-    // ============================================================
     return (
-        <div style={styles.container}>
+        <div style={{ marginBottom: '20px' }}>
             {!showForm ? (
-                <button
-                    onClick={() => setShowForm(true)}
-                    style={styles.showBtn}
-                >
+                <button onClick={() => setShowForm(true)} className="btn-success" style={{ fontSize: '14px' }}>
                     ➕ Add New Product
                 </button>
             ) : (
-                <div style={styles.formContainer}>
-                    <h3 style={styles.title}>➕ Add New Product</h3>
+                <div style={{
+                    backgroundColor: 'var(--bg-card)',
+                    padding: '20px',
+                    borderRadius: '12px',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: 'var(--shadow)'
+                }}>
+                    <h3 style={{ margin: '0 0 15px 0', color: 'var(--text-primary)' }}>➕ Add New Product</h3>
 
                     {message && (
                         <div style={{
-                            ...styles.message,
+                            padding: '10px 15px',
+                            borderRadius: '8px',
+                            marginBottom: '15px',
                             backgroundColor: message.includes('✅') ? '#e8f5e9' : '#ffebee',
                             color: message.includes('✅') ? '#2e7d32' : '#c62828'
                         }}>
@@ -77,26 +73,44 @@ function AddProduct() {
                         </div>
                     )}
 
-                    <form onSubmit={handleSubmit} style={styles.form}>
-                        <div style={styles.row}>
-                            <div style={styles.field}>
-                                <label style={styles.label}>Product Name *</label>
+                    <form onSubmit={handleSubmit}>
+                        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
+                            <div style={{ flex: 1, minWidth: '200px' }}>
+                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px', color: 'var(--text-secondary)' }}>Product Name *</label>
                                 <input
                                     type="text"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    style={styles.input}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        boxSizing: 'border-box',
+                                        backgroundColor: 'var(--bg-body)',
+                                        color: 'var(--text-primary)'
+                                    }}
                                     placeholder="Samsung 55-inch TV"
                                     required
                                 />
                             </div>
-                            <div style={styles.field}>
-                                <label style={styles.label}>Price (₹) *</label>
+                            <div style={{ flex: 1, minWidth: '150px' }}>
+                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px', color: 'var(--text-secondary)' }}>Price (₹) *</label>
                                 <input
                                     type="number"
                                     value={price}
                                     onChange={(e) => setPrice(e.target.value)}
-                                    style={styles.input}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        boxSizing: 'border-box',
+                                        backgroundColor: 'var(--bg-body)',
+                                        color: 'var(--text-primary)'
+                                    }}
                                     placeholder="55000"
                                     min="0"
                                     step="0.01"
@@ -105,25 +119,43 @@ function AddProduct() {
                             </div>
                         </div>
 
-                        <div style={styles.row}>
-                            <div style={styles.field}>
-                                <label style={styles.label}>Quantity *</label>
+                        <div style={{ display: 'flex', gap: '15px', flexWrap: 'wrap', marginTop: '10px' }}>
+                            <div style={{ flex: 1, minWidth: '150px' }}>
+                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px', color: 'var(--text-secondary)' }}>Quantity *</label>
                                 <input
                                     type="number"
                                     value={quantity}
                                     onChange={(e) => setQuantity(e.target.value)}
-                                    style={styles.input}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        boxSizing: 'border-box',
+                                        backgroundColor: 'var(--bg-body)',
+                                        color: 'var(--text-primary)'
+                                    }}
                                     placeholder="5"
                                     min="0"
                                     required
                                 />
                             </div>
-                            <div style={styles.field}>
-                                <label style={styles.label}>Category</label>
+                            <div style={{ flex: 1, minWidth: '150px' }}>
+                                <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '5px', color: 'var(--text-secondary)' }}>Category</label>
                                 <select
                                     value={category}
                                     onChange={(e) => setCategory(e.target.value)}
-                                    style={styles.input}
+                                    style={{
+                                        width: '100%',
+                                        padding: '8px 12px',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '8px',
+                                        fontSize: '14px',
+                                        boxSizing: 'border-box',
+                                        backgroundColor: 'var(--bg-body)',
+                                        color: 'var(--text-primary)'
+                                    }}
                                 >
                                     <option value="">Select Category</option>
                                     <option value="TV">📺 TV</option>
@@ -138,19 +170,11 @@ function AddProduct() {
                             </div>
                         </div>
 
-                        <div style={styles.buttonRow}>
-                            <button
-                                type="submit"
-                                style={styles.submitBtn}
-                                disabled={loading}
-                            >
+                        <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
+                            <button type="submit" className="btn-primary" disabled={loading}>
                                 {loading ? 'Adding...' : '💾 Save Product'}
                             </button>
-                            <button
-                                type="button"
-                                onClick={() => setShowForm(false)}
-                                style={styles.cancelBtn}
-                            >
+                            <button type="button" onClick={() => setShowForm(false)} className="btn-cancel">
                                 Cancel
                             </button>
                         </div>
@@ -160,89 +184,5 @@ function AddProduct() {
         </div>
     );
 }
-
-// ============================================================
-// STYLES
-// ============================================================
-
-const styles = {
-    container: {
-        marginBottom: '20px'
-    },
-    showBtn: {
-        backgroundColor: '#4caf50',
-        color: 'white',
-        border: 'none',
-        padding: '12px 25px',
-        borderRadius: '5px',
-        fontSize: '16px',
-        cursor: 'pointer'
-    },
-    formContainer: {
-        backgroundColor: 'white',
-        padding: '20px',
-        borderRadius: '10px',
-        boxShadow: '0 2px 10px rgba(0,0,0,0.1)'
-    },
-    title: {
-        margin: '0 0 15px 0'
-    },
-    message: {
-        padding: '10px 15px',
-        borderRadius: '5px',
-        marginBottom: '15px'
-    },
-    form: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px'
-    },
-    row: {
-        display: 'flex',
-        gap: '15px',
-        flexWrap: 'wrap'
-    },
-    field: {
-        flex: 1,
-        minWidth: '200px'
-    },
-    label: {
-        display: 'block',
-        fontWeight: 'bold',
-        fontSize: '14px',
-        marginBottom: '5px'
-    },
-    input: {
-        width: '100%',
-        padding: '8px 12px',
-        border: '1px solid #ddd',
-        borderRadius: '5px',
-        fontSize: '14px',
-        boxSizing: 'border-box'
-    },
-    buttonRow: {
-        display: 'flex',
-        gap: '10px',
-        marginTop: '10px'
-    },
-    submitBtn: {
-        backgroundColor: '#1a237e',
-        color: 'white',
-        border: 'none',
-        padding: '10px 25px',
-        borderRadius: '5px',
-        fontSize: '14px',
-        cursor: 'pointer'
-    },
-    cancelBtn: {
-        backgroundColor: '#999',
-        color: 'white',
-        border: 'none',
-        padding: '10px 25px',
-        borderRadius: '5px',
-        fontSize: '14px',
-        cursor: 'pointer'
-    }
-};
 
 export default AddProduct;

@@ -12,6 +12,7 @@ export const deleteProduct = (id) => axios.delete(`${API_BASE_URL}/products/${id
 export const getInvoices = () => axios.get(`${API_BASE_URL}/invoices`);
 export const getInvoice = (id) => axios.get(`${API_BASE_URL}/invoices/${id}`);
 export const createInvoice = (invoice) => axios.post(`${API_BASE_URL}/invoices`, invoice);
+export const updateInvoice = (id, invoice) => axios.put(`${API_BASE_URL}/invoices/${id}`, invoice);  // ✅ NEW
 export const getDueInvoices = () => axios.get(`${API_BASE_URL}/invoices/due`);
 export const getPaidInvoices = () => axios.get(`${API_BASE_URL}/invoices/paid`);
 export const getDashboard = () => axios.get(`${API_BASE_URL}/invoices/dashboard`);

@@ -1,15 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getInvoices, deleteInvoice } from '../services/api';
-import DeleteModal from './DeleteModal';  // ← ADD THIS
 
 function InvoiceList() {
     const navigate = useNavigate();
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [showDeleteModal, setShowDeleteModal] = useState(false);
-    const [selectedInvoice, setSelectedInvoice] = useState(null);
 
     useEffect(() => {
         loadInvoices();
@@ -26,17 +23,14 @@ function InvoiceList() {
         }
     };
 
-    const handleDeleteClick = (invoice) => {
-        setSelectedInvoice(invoice);
-        setShowDeleteModal(true);
-    };
-
-    const handleConfirmDelete = async () => {
-        if (selectedInvoice) {
-            await deleteInvoice(selectedInvoice.id);
-            setShowDeleteModal(false);
-            setSelectedInvoice(null);
-            loadInvoices();
+    const handleDelete = async (id) => {
+        if (window.confirm('Delete this invoice?')) {
+            try {
+                await deleteInvoice(id);
+                loadInvoices();
+            } catch (error) {
+                console.error('Error deleting invoice:', error);
+            }
         }
     };
 
@@ -59,14 +53,14 @@ function InvoiceList() {
                     style={{
                         flex: 1,
                         padding: '10px 16px',
-                        border: '1px solid var(--border, #ddd)',
+                        border: '1px solid var(--border-color)',
                         borderRadius: '8px',
-                        background: 'var(--bg-card, white)',
-                        color: 'var(--text-primary, #1a1a2e)',
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)',
                         minWidth: '200px'
                     }}
                 />
-                <span style={{ alignSelf: 'center', color: 'var(--text-muted, #6b6b8a)' }}>
+                <span style={{ alignSelf: 'center', color: 'var(--text-muted)' }}>
                     {filteredInvoices.length} invoices found
                 </span>
             </div>
@@ -85,7 +79,11 @@ function InvoiceList() {
                     </thead>
                     <tbody>
                     {filteredInvoices.length === 0 ? (
-                        <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#999' }}>No invoices found</td></tr>
+                        <tr className="table-empty-row">
+                            <td colSpan="6">
+                                📋 No invoices found. Create a new invoice to get started.
+                            </td>
+                        </tr>
                     ) : (
                         filteredInvoices.map((inv) => (
                             <tr key={inv.id}>
@@ -107,30 +105,14 @@ function InvoiceList() {
                                 <td>
                                     <button
                                         onClick={() => navigate(`/invoice/${inv.id}`)}
-                                        style={{
-                                            backgroundColor: '#1a237e',
-                                            color: 'white',
-                                            border: 'none',
-                                            padding: '6px 14px',
-                                            borderRadius: '5px',
-                                            cursor: 'pointer',
-                                            marginRight: '5px',
-                                            fontSize: '13px'
-                                        }}
+                                        className="btn-secondary"
+                                        style={{ marginRight: '5px', padding: '6px 12px' }}
                                     >
                                         👁️ View
                                     </button>
                                     <button
-                                        onClick={() => handleDeleteClick(inv)}
-                                        style={{
-                                            backgroundColor: '#ef5350',
-                                            color: 'white',
-                                            border: 'none',
-                                            padding: '6px 14px',
-                                            borderRadius: '5px',
-                                            cursor: 'pointer',
-                                            fontSize: '13px'
-                                        }}
+                                        onClick={() => handleDelete(inv.id)}
+                                        className="btn-danger"
                                     >
                                         🗑️ Delete
                                     </button>
@@ -141,14 +123,6 @@ function InvoiceList() {
                     </tbody>
                 </table>
             </div>
-
-            {/* DELETE MODAL */}
-            <DeleteModal
-                isOpen={showDeleteModal}
-                onClose={() => setShowDeleteModal(false)}
-                onConfirm={handleConfirmDelete}
-                invoiceNumber={selectedInvoice?.invoiceNumber}
-            />
         </div>
     );
 }

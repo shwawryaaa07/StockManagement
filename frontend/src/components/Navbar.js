@@ -2,12 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 
 function Navbar() {
-    // Dark Mode State
     const [darkMode, setDarkMode] = useState(() => {
         return localStorage.getItem('darkMode') === 'true';
     });
 
-    // Toggle Dark Mode
     useEffect(() => {
         document.body.classList.toggle('dark-mode', darkMode);
         localStorage.setItem('darkMode', darkMode);
@@ -15,7 +13,6 @@ function Navbar() {
 
     return (
         <nav className="navbar">
-            {/* Left: Logo + Brand */}
             <div className="navbar-left">
                 <span className="navbar-logo">🏪</span>
                 <div className="navbar-brand">
@@ -26,7 +23,6 @@ function Navbar() {
                 </div>
             </div>
 
-            {/* Right: Links + Dark Mode */}
             <div className="navbar-links">
                 <NavLink to="/" className="nav-link" end>
                     <span className="icon">📊</span> Dashboard

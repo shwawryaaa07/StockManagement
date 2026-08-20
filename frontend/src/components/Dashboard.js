@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { getDashboard, getInvoices } from '../services/api';
 
 function Dashboard() {
+    const navigate = useNavigate();
     const [data, setData] = useState(null);
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -14,7 +16,7 @@ function Dashboard() {
                     getInvoices()
                 ]);
                 setData(dashRes.data);
-                setInvoices(invRes.data.slice(0, 5)); // Last 5 invoices
+                setInvoices(invRes.data.slice(0, 5));
                 setLoading(false);
             } catch (e) {
                 console.error(e);
@@ -29,13 +31,11 @@ function Dashboard() {
 
     return (
         <div className="dashboard">
-            {/* Header */}
             <div className="dash-header">
                 <h1 className="dash-title">📊 Dashboard</h1>
                 <span className="dash-date">📅 {data.date}</span>
             </div>
 
-            {/* Cards */}
             <div className="dash-cards">
                 <div className="dash-card">
                     <div className="icon">🧾</div>
@@ -59,20 +59,18 @@ function Dashboard() {
                 </div>
             </div>
 
-            {/* Quick Actions */}
             <div className="quick-actions">
-                <button className="quick-btn gold" onClick={() => window.location.href = '/create-invoice'}>
+                <button className="btn-primary" onClick={() => navigate('/create-invoice')}>
                     ➕ New Invoice
                 </button>
-                <button className="quick-btn primary" onClick={() => window.location.href = '/products'}>
+                <button className="btn-secondary" onClick={() => navigate('/products')}>
                     📦 Add Product
                 </button>
-                <button className="quick-btn success" onClick={() => window.location.href = '/due-invoices'}>
+                <button className="btn-success" onClick={() => navigate('/due-invoices')}>
                     💳 Record Payment
                 </button>
             </div>
 
-            {/* Recent Activity */}
             <div className="recent-box">
                 <div className="recent-header">📋 Recent Invoices</div>
                 {invoices.length === 0 ? (

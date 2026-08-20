@@ -12,7 +12,7 @@ function ProductList() {
     const [selectedProduct, setSelectedProduct] = useState(null);
 
     useEffect(() => {
-        loadProducts().catch(console.error);  // ✅ Fixed: Promise handled
+        loadProducts().catch(console.error);
     }, []);
 
     const loadProducts = async () => {
@@ -33,48 +33,67 @@ function ProductList() {
 
     const handleConfirmDelete = async () => {
         if (selectedProduct) {
-            await deleteProduct(selectedProduct.id);
-            setShowDeleteModal(false);
-            setSelectedProduct(null);
-            await loadProducts();  // ✅ Fixed: await added
+            try {
+                await deleteProduct(selectedProduct.id);
+                setShowDeleteModal(false);
+                setSelectedProduct(null);
+                await loadProducts();
+            } catch (error) {
+                alert('❌ Error deleting product: ' + (error.response?.data?.message || error.message));
+            }
         }
     };
 
-    if (loading) return <h2 style={{ padding: '30px' }}>Loading...</h2>;
+    if (loading) return <h2 style={{ padding: '30px', color: 'var(--text-primary)' }}>Loading...</h2>;
 
     return (
         <div style={{ padding: '30px', maxWidth: '1200px', margin: '0 auto' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0 }}>📦 Products</h2>
+                <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>📦 Products</h2>
                 <AddProduct />
             </div>
 
-            <div style={styles.tableWrapper}>
-                <table style={styles.table}>
+            <div className="table-wrap">
+                <table>
                     <thead>
-                    <tr style={styles.tableHead}>
-                        <th style={styles.th}>ID</th>
-                        <th style={styles.th}>Name</th>
-                        <th style={styles.th}>Price</th>
-                        <th style={styles.th}>Quantity</th>
-                        <th style={styles.th}>Category</th>
-                        <th style={styles.th}>Actions</th>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Category</th>
+                        <th>Actions</th>
                     </tr>
                     </thead>
                     <tbody>
                     {products.length === 0 ? (
-                        <tr><td colSpan="6" style={{ textAlign: 'center', padding: '40px', color: '#999' }}>No products found</td></tr>
+                        <tr className="table-empty-row">
+                            <td colSpan="6">
+                                📦 No products found. Click "Add New Product" to get started.
+                            </td>
+                        </tr>
                     ) : (
                         products.map((product) => (
-                            <tr key={product.id} style={styles.tableRow}>
-                                <td style={styles.td}>{product.id}</td>
-                                <td style={styles.td}>{product.name}</td>
-                                <td style={styles.td}>₹{product.price.toLocaleString()}</td>
-                                <td style={styles.td}>{product.quantity}</td>
-                                <td style={styles.td}>{product.category}</td>
-                                <td style={styles.td}>
-                                    <button onClick={() => setEditingProduct(product)} style={styles.editBtn}>✏️ Edit</button>
-                                    <button onClick={() => handleDeleteClick(product)} style={styles.deleteBtn}>🗑️ Delete</button>
+                            <tr key={product.id}>
+                                <td>{product.id}</td>
+                                <td>{product.name}</td>
+                                <td>₹{product.price.toLocaleString()}</td>
+                                <td>{product.quantity}</td>
+                                <td>{product.category}</td>
+                                <td>
+                                    <button
+                                        onClick={() => setEditingProduct(product)}
+                                        className="btn-success"
+                                        style={{ marginRight: '5px' }}
+                                    >
+                                        ✏️ Edit
+                                    </button>
+                                    <button
+                                        onClick={() => handleDeleteClick(product)}
+                                        className="btn-danger"
+                                    >
+                                        🗑️ Delete
+                                    </button>
                                 </td>
                             </tr>
                         ))
@@ -97,4 +116,4 @@ function ProductList() {
     );
 }
 
-const styles = {cls
+export default ProductList;

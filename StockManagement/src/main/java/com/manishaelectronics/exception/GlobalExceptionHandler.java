@@ -13,9 +13,6 @@ import java.util.Map;
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // ============================================================
-    // HANDLE VALIDATION ERRORS (e.g., @Valid failures)
-    // ============================================================
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(MethodArgumentNotValidException ex) {
         Map<String, Object> errors = new HashMap<>();
@@ -32,9 +29,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
-    // ============================================================
-    // HANDLE RUNTIME EXCEPTIONS (e.g., product not found)
-    // ============================================================
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
         Map<String, Object> errorResponse = new HashMap<>();
@@ -46,9 +40,6 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
     }
 
-    // ============================================================
-    // HANDLE ALL OTHER EXCEPTIONS (fallback)
-    // ============================================================
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(Exception ex) {
         Map<String, Object> errorResponse = new HashMap<>();

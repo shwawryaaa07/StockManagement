@@ -1,5 +1,6 @@
 package com.manishaelectronics.controller;
 
+import com.manishaelectronics.config.ShopConfig;  // ✅ NEW IMPORT
 import com.manishaelectronics.model.Invoice;
 import com.manishaelectronics.model.InvoiceItem;
 import com.manishaelectronics.model.PaymentStatus;
@@ -22,15 +23,17 @@ import java.util.UUID;
 @Transactional
 public class InvoiceController {
 
-    // ===========================================================
-    // CONSTRUCTOR INJECTION (Clean, testable)
-    // ===========================================================
     private final InvoiceRepository invoiceRepository;
     private final ProductRepository productRepository;
+    private final ShopConfig shopConfig;  // ✅ NEW
 
-    public InvoiceController(InvoiceRepository invoiceRepository, ProductRepository productRepository) {
+    // ✅ Constructor Injection
+    public InvoiceController(InvoiceRepository invoiceRepository,
+                             ProductRepository productRepository,
+                             ShopConfig shopConfig) {
         this.invoiceRepository = invoiceRepository;
         this.productRepository = productRepository;
+        this.shopConfig = shopConfig;
     }
 
     // ===========================================================
@@ -123,13 +126,30 @@ public class InvoiceController {
 
     @PostMapping
     public Invoice createInvoice(@RequestBody Invoice invoice) {
-
         invoice.setCreatedAt(LocalDateTime.now());
 
-        // ✅ UUID-based invoice number (no duplicates)
+        // ✅ NEW: Business info from server config (not from client)
+        invoice.setBusinessName(shopConfig.getName());
+        invoice.setBusinessAddress(shopConfig.getAddress());
+        invoice.setBusinessPhone(shopConfig.getPhone());
+        invoice.setBusinessGstin(shopConfig.getGstin());
+
+        // Generate invoice number (UUID-based, no duplicates)
         String invoiceNumber = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
         invoice.setInvoiceNumber(invoiceNumber);
 
+        // ✅ FIX: Validate stock BEFORE any calculations
+        for (InvoiceItem item : invoice.getItems()) {
+            Product product = productRepository.findById(item.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProduct().getId()));
+
+            if (product.getQuantity() < item.getQuantity()) {
+                throw new RuntimeException("Insufficient stock for product: " + product.getName() +
+                        ". Available: " + product.getQuantity() + ", Requested: " + item.getQuantity());
+            }
+        }
+
+        // Compute totals
         BigDecimal subtotal = BigDecimal.ZERO;
         for (InvoiceItem item : invoice.getItems()) {
             item.setInvoice(invoice);
@@ -139,20 +159,22 @@ public class InvoiceController {
         }
         invoice.setSubtotal(subtotal);
 
-        // ✅ GST calculation with proper rounding
+        // GST calculation with proper rounding
         BigDecimal gstRate = invoice.getGstRate() != null ? invoice.getGstRate() : new BigDecimal("18");
         BigDecimal gstAmount = subtotal.multiply(gstRate)
                 .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         invoice.setGstAmount(gstAmount);
 
         BigDecimal total = subtotal.add(gstAmount);
-        if (invoice.getDiscount() != null) {
+        if (invoice.getDiscount() != null && invoice.getDiscount().compareTo(BigDecimal.ZERO) > 0) {
             total = total.subtract(invoice.getDiscount());
         }
         invoice.setTotalAmount(total);
 
-        BigDecimal amountPaid = invoice.getAmountPaid();
-        if (amountPaid == null || amountPaid.compareTo(BigDecimal.ZERO) == 0) {
+        // Payment status
+        BigDecimal amountPaid = invoice.getAmountPaid() != null ? invoice.getAmountPaid() : BigDecimal.ZERO;
+        invoice.setAmountPaid(amountPaid);
+        if (amountPaid.compareTo(BigDecimal.ZERO) == 0) {
             invoice.setPaymentStatus(PaymentStatus.DUE);
             invoice.setAmountDue(total);
         } else if (amountPaid.compareTo(total) >= 0) {
@@ -163,16 +185,9 @@ public class InvoiceController {
             invoice.setAmountDue(total.subtract(amountPaid));
         }
 
-        // Stock deduction
+        // Deduct stock (only after all validation passed)
         for (InvoiceItem item : invoice.getItems()) {
-            Product product = productRepository.findById(item.getProduct().getId())
-                    .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProduct().getId()));
-
-            if (product.getQuantity() < item.getQuantity()) {
-                throw new RuntimeException("Insufficient stock for product: " + product.getName() +
-                        ". Available: " + product.getQuantity() + ", Requested: " + item.getQuantity());
-            }
-
+            Product product = productRepository.findById(item.getProduct().getId()).get();
             product.setQuantity(product.getQuantity() - item.getQuantity());
             productRepository.save(product);
         }
@@ -184,13 +199,39 @@ public class InvoiceController {
     // PUT METHODS
     // ===========================================================
 
-    // ✅ NEW: Edit Invoice (Update)
     @PutMapping("/{id}")
+    @Transactional
     public Invoice updateInvoice(@PathVariable Long id, @RequestBody Invoice updatedInvoice) {
         Invoice existingInvoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Invoice not found with id: " + id));
 
-        // Update basic fields
+        // Restore stock from old items
+        for (InvoiceItem oldItem : existingInvoice.getItems()) {
+            Product product = productRepository.findById(oldItem.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Product not found: " + oldItem.getProduct().getId()));
+            product.setQuantity(product.getQuantity() + oldItem.getQuantity());
+            productRepository.save(product);
+        }
+
+        // Validate stock for new items
+        for (InvoiceItem newItem : updatedInvoice.getItems()) {
+            Product product = productRepository.findById(newItem.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Product not found: " + newItem.getProduct().getId()));
+            if (product.getQuantity() < newItem.getQuantity()) {
+                throw new RuntimeException("Insufficient stock for product: " + product.getName() +
+                        ". Available: " + product.getQuantity() + ", Requested: " + newItem.getQuantity());
+            }
+        }
+
+        // Deduct stock for new items
+        for (InvoiceItem newItem : updatedInvoice.getItems()) {
+            Product product = productRepository.findById(newItem.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Product not found: " + newItem.getProduct().getId()));
+            product.setQuantity(product.getQuantity() - newItem.getQuantity());
+            productRepository.save(product);
+        }
+
+        // Update invoice fields
         existingInvoice.setCustomerName(updatedInvoice.getCustomerName());
         existingInvoice.setCustomerContact(updatedInvoice.getCustomerContact());
         existingInvoice.setDeliveryAddress(updatedInvoice.getDeliveryAddress());
@@ -235,8 +276,17 @@ public class InvoiceController {
 
     @PutMapping("/{id}/pay")
     public Invoice recordPayment(@PathVariable Long id, @RequestParam BigDecimal amount) {
+        // ✅ FIX: Validate payment amount
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Payment amount must be greater than zero");
+        }
+
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Invoice not found"));
+
+        if (amount.compareTo(invoice.getAmountDue()) > 0) {
+            throw new IllegalArgumentException("Payment cannot exceed due amount: ₹" + invoice.getAmountDue());
+        }
 
         BigDecimal newPaid = invoice.getAmountPaid().add(amount);
         invoice.setAmountPaid(newPaid);
@@ -257,25 +307,20 @@ public class InvoiceController {
     // ===========================================================
 
     @DeleteMapping("/{id}")
-    @Transactional  // ← Ensures everything rolls back if something fails
+    @Transactional
     public String deleteInvoice(@PathVariable Long id) {
-        // 1. Find the invoice
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Invoice not found with id: " + id));
 
-        // 2. Restore stock for each item
+        // Restore stock before deleting
         for (InvoiceItem item : invoice.getItems()) {
             Product product = productRepository.findById(item.getProduct().getId())
                     .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProduct().getId()));
-
-            // Add back the quantity
             product.setQuantity(product.getQuantity() + item.getQuantity());
             productRepository.save(product);
         }
 
-        // 3. Delete the invoice (cascade will delete items too)
         invoiceRepository.deleteById(id);
-
         return "Invoice deleted with id: " + id + " and stock restored.";
     }
 }

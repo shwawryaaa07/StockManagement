@@ -78,7 +78,14 @@ function ProductList() {
                                 <td>{product.id}</td>
                                 <td>{product.name}</td>
                                 <td>₹{product.price.toLocaleString()}</td>
-                                <td>{product.quantity}</td>
+                                {/* ✅ FIX 3: Low-Stock Indicator */}
+                                <td style={{
+                                    color: product.quantity <= 2 ? '#ef5350' : 'var(--text-primary)',
+                                    fontWeight: product.quantity <= 2 ? 'bold' : 'normal'
+                                }}>
+                                    {product.quantity}
+                                    {product.quantity <= 2 && <span style={{ marginLeft: '8px', fontSize: '12px' }}>⚠️ Low Stock</span>}
+                                </td>
                                 <td>{product.category}</td>
                                 <td>
                                     <button

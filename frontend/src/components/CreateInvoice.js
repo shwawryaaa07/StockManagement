@@ -15,7 +15,7 @@ function CreateInvoice() {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        loadProducts();
+        loadProducts().catch(console.error);
     }, []);
 
     const loadProducts = async () => {
@@ -32,7 +32,7 @@ function CreateInvoice() {
             alert('Please select a product and enter quantity');
             return;
         }
-        const product = products.find(p => p.id === parseInt(selectedProduct));
+        const product = products.find(p => p.id === Number(selectedProduct));
         if (!product) return;
         const existing = items.find(i => i.product.id === product.id);
         if (existing) {
@@ -45,7 +45,7 @@ function CreateInvoice() {
         }
         setItems([...items, {
             product: { id: product.id },
-            quantity: parseInt(quantity),
+            quantity: Number(quantity),
             unitPrice: product.price
         }]);
         setSelectedProduct('');
@@ -60,6 +60,8 @@ function CreateInvoice() {
     const gstAmount = subtotal * (gstRate / 100);
     const totalAmount = subtotal + gstAmount;
 
+    // ✅ NEW: Business info removed from frontend
+    // The backend will set these values from server config
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (items.length === 0) {
@@ -71,11 +73,8 @@ function CreateInvoice() {
             return;
         }
         setLoading(true);
+
         const invoiceData = {
-            businessName: 'Manisha Electronics',
-            businessAddress: '123 Shop Street, City',
-            businessPhone: '9876543210',
-            businessGstin: '22AAAAA0000A1Z5',
             customerName,
             customerContact: customerContact || 'N/A',
             deliveryAddress: deliveryAddress || 'N/A',
@@ -84,6 +83,7 @@ function CreateInvoice() {
             amountPaid: parseFloat(amountPaid) || 0,
             items
         };
+
         try {
             const response = await createInvoice(invoiceData);
             alert(`✅ Invoice ${response.data.invoiceNumber} created successfully!`);
@@ -229,7 +229,25 @@ function CreateInvoice() {
                         </div>
                         <div style={styles.field}>
                             <label style={styles.label}>Amount Paid</label>
-                            <input type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} style={styles.input} placeholder="0.00" min="0" step="0.01" />
+                            <input
+                                type="number"
+                                value={amountPaid === '0' ? '' : amountPaid}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                        setAmountPaid(val);
+                                    }
+                                }}
+                                style={styles.input}
+                                placeholder="0.00"
+                                min="0"
+                                step="0.01"
+                                onFocus={(e) => {
+                                    if (e.target.value === '0') {
+                                        setAmountPaid('');
+                                    }
+                                }}
+                            />
                         </div>
                     </div>
                 </div>
@@ -249,7 +267,7 @@ function CreateInvoice() {
                         </div>
                         <div style={{ flex: 1 }}>
                             <label style={styles.label}>Quantity</label>
-                            <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min="1" style={styles.input} />
+                            <input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min="1" style={styles.input} />
                         </div>
                         <div style={{ flex: 0.5, display: 'flex', alignItems: 'flex-end' }}>
                             <button type="button" onClick={addItem} style={styles.addBtn}>➕ Add</button>
@@ -298,7 +316,7 @@ function CreateInvoice() {
                     </div>
                 )}
 
-                <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '10px', padding: '14px', fontSize: '18px' }} disabled={loading}>
+                <button type="submit" className="btn-primary" style={{ width: '100%', padding: '14px', fontSize: '18px', marginTop: '10px' }} disabled={loading}>
                     {loading ? 'Creating...' : '✨ Generate Invoice'}
                 </button>
             </form>

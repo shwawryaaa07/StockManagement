@@ -40,10 +40,23 @@ function Navbar() {
                     <span className="icon">🟡</span> Due
                 </NavLink>
 
+                {/* ✅ FIX 4: Dark Mode Toggle - Matching size */}
                 <button
                     className="dark-toggle"
                     onClick={() => setDarkMode(!darkMode)}
                     title="Toggle Dark Mode"
+                    style={{
+                        background: 'rgba(255,255,255,0.1)',
+                        border: 'none',
+                        color: '#fff',
+                        padding: '8px 14px',
+                        borderRadius: '5px',
+                        fontSize: '16px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                    }}
                 >
                     {darkMode ? '☀️' : '🌙'}
                 </button>

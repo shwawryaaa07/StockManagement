@@ -1,15 +1,14 @@
 package com.manishaelectronics.controller;
 
-
 import com.manishaelectronics.model.Product;
 import com.manishaelectronics.model.InvoiceItem;
 import com.manishaelectronics.repository.ProductRepository;
 import com.manishaelectronics.repository.InvoiceItemRepository;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -34,9 +33,34 @@ public class ProductController {
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
     }
 
+    // ✅ FIXED: Handles duplicate product names
     @PostMapping
-    public Product createProduct(@Valid @RequestBody Product product) {
-        return productRepository.save(product);
+    public ResponseEntity<?> createProduct(@Valid @RequestBody Product product) {
+        // Check if product with same name already exists
+        List<Product> existingProducts = productRepository.findByNameContainingIgnoreCase(product.getName());
+
+        if (!existingProducts.isEmpty()) {
+            // ✅ FIXED: Use get(0) instead of getFirst() (Java 21 compatible)
+            Product existingProduct = existingProducts.get(0);
+            existingProduct.setQuantity(existingProduct.getQuantity() + product.getQuantity());
+
+            // If price differs, update it
+            if (product.getPrice() != null && product.getPrice().compareTo(existingProduct.getPrice()) != 0) {
+                existingProduct.setPrice(product.getPrice());
+            }
+
+            // If category differs, update it
+            if (product.getCategory() != null && !product.getCategory().isEmpty()) {
+                existingProduct.setCategory(product.getCategory());
+            }
+
+            Product saved = productRepository.save(existingProduct);
+            return ResponseEntity.ok(saved);
+        } else {
+            // New product — save normally
+            Product saved = productRepository.save(product);
+            return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+        }
     }
 
     @PutMapping("/{id}")

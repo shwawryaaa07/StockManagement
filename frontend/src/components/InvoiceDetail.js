@@ -10,7 +10,7 @@ function InvoiceDetail() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        loadInvoice();
+        loadInvoice().catch(console.error);
     }, [id]);
 
     const loadInvoice = async () => {
@@ -24,10 +24,12 @@ function InvoiceDetail() {
         }
     };
 
-    // Simple print — React won't be destroyed!
     const handlePrint = () => {
         window.print();
     };
+
+    if (loading) return <div style={{ padding: '30px' }}><h2 style={{ color: 'var(--text-primary)' }}>Loading...</h2></div>;
+    if (!invoice) return <div style={{ padding: '30px' }}><h2 style={{ color: 'var(--text-primary)' }}>Invoice not found</h2></div>;
 
     // ============================================================
     // STYLES WITH THEME VARIABLES
@@ -35,33 +37,90 @@ function InvoiceDetail() {
 
     const styles = {
         container: { padding: '30px' },
-        loadingText: { padding: '30px', color: 'var(--text-primary)' },
         invoicePaper: {
-            background: 'white',
+            background: 'var(--bg-card)',
             padding: '30px',
             maxWidth: '800px',
             margin: '0 auto',
             borderRadius: '12px',
-            boxShadow: 'var(--shadow)'
+            border: '1px solid var(--border-color)',
+            boxShadow: 'var(--shadow)',
+            color: 'var(--text-primary)'
         },
-        header: { textAlign: 'center', borderBottom: '2px solid #1a237e', paddingBottom: '15px', marginBottom: '20px' },
-        shopName: { margin: 0, color: '#1a237e', fontSize: '24px' },
-        shopInfo: { margin: '5px 0', color: '#555' },
-        infoRow: { display: 'flex', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' },
+        header: {
+            textAlign: 'center',
+            borderBottom: '2px solid var(--primary)',
+            paddingBottom: '15px',
+            marginBottom: '20px'
+        },
+        shopName: {
+            margin: 0,
+            color: 'var(--primary)',
+            fontSize: '24px'
+        },
+        shopInfo: {
+            margin: '5px 0',
+            color: 'var(--text-muted)'
+        },
+        infoRow: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            marginBottom: '20px',
+            flexWrap: 'wrap',
+            gap: '10px',
+            color: 'var(--text-primary)'
+        },
         label: { fontWeight: 'bold' },
-        table: { width: '100%', borderCollapse: 'collapse', marginBottom: '20px' },
-        th: { padding: '10px', textAlign: 'left', backgroundColor: '#1a237e', color: 'white' },
-        td: { padding: '10px', borderBottom: '1px solid #eee' },
-        totals: { textAlign: 'right', borderTop: '2px solid #ddd', paddingTop: '15px' },
-        totalText: { fontSize: '20px', fontWeight: 'bold' },
-        dueText: { color: '#f44336' },
+        table: {
+            width: '100%',
+            borderCollapse: 'collapse',
+            marginBottom: '20px',
+            color: 'var(--text-primary)'
+        },
+        th: {
+            padding: '10px',
+            textAlign: 'left',
+            backgroundColor: 'var(--primary)',
+            color: '#ffffff'
+        },
+        td: {
+            padding: '10px',
+            borderBottom: '1px solid var(--border-color)'
+        },
+        totals: {
+            textAlign: 'right',
+            borderTop: '2px solid var(--border-color)',
+            paddingTop: '15px',
+            color: 'var(--text-primary)'
+        },
+        totalText: {
+            fontSize: '20px',
+            fontWeight: 'bold'
+        },
+        dueText: { color: '#ef5350' },
         paidText: { color: '#4caf50' },
-        footer: { textAlign: 'center', marginTop: '30px', borderTop: '2px solid #1a237e', paddingTop: '15px' },
-        footerText: { color: '#555' },
-        footerThankYou: { color: '#1a237e', fontWeight: 'bold', marginTop: '10px' },
-        buttonContainer: { textAlign: 'center', marginTop: '20px', display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' },
+        footer: {
+            textAlign: 'center',
+            marginTop: '30px',
+            borderTop: '2px solid var(--primary)',
+            paddingTop: '15px',
+            color: 'var(--text-muted)'
+        },
+        footerThankYou: {
+            color: 'var(--primary)',
+            fontWeight: 'bold',
+            marginTop: '10px'
+        },
+        buttonContainer: {
+            textAlign: 'center',
+            marginTop: '20px',
+            display: 'flex',
+            gap: '12px',
+            justifyContent: 'center',
+            flexWrap: 'wrap'
+        },
         printBtn: {
-            backgroundColor: '#1a237e',
+            backgroundColor: 'var(--primary)',
             color: 'white',
             border: 'none',
             padding: '12px 30px',
@@ -79,7 +138,7 @@ function InvoiceDetail() {
             cursor: 'pointer'
         },
         backBtn: {
-            backgroundColor: '#999',
+            backgroundColor: 'var(--btn-cancel)',
             color: 'white',
             border: 'none',
             padding: '12px 30px',
@@ -88,9 +147,6 @@ function InvoiceDetail() {
             cursor: 'pointer'
         }
     };
-
-    if (loading) return <div style={styles.container}><h2 style={styles.loadingText}>Loading...</h2></div>;
-    if (!invoice) return <div style={styles.container}><h2 style={styles.loadingText}>Invoice not found</h2></div>;
 
     return (
         <div style={styles.container}>
@@ -134,7 +190,11 @@ function InvoiceDetail() {
                             </tr>
                         ))
                     ) : (
-                        <tr><td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: '#999' }}>No items found</td></tr>
+                        <tr>
+                            <td colSpan="4" style={{ textAlign: 'center', padding: '20px', color: 'var(--text-muted)' }}>
+                                No items found
+                            </td>
+                        </tr>
                     )}
                     </tbody>
                 </table>
@@ -150,8 +210,8 @@ function InvoiceDetail() {
                 </div>
 
                 <div style={styles.footer}>
-                    <p style={styles.footerText}>Payment Mode: {invoice.paymentMode}</p>
-                    <p style={styles.footerText}>Status: {invoice.paymentStatus === 'FULLY_PAID' ? '✅ FULLY PAID' : '🟡 PENDING'}</p>
+                    <p>Payment Mode: {invoice.paymentMode}</p>
+                    <p>Status: {invoice.paymentStatus === 'FULLY_PAID' ? '✅ FULLY PAID' : '🟡 PENDING'}</p>
                     <p style={styles.footerThankYou}>Thank you for your visit! ❤️</p>
                 </div>
             </div>

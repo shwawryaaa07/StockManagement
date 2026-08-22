@@ -59,14 +59,14 @@ function Dashboard() {
                 </div>
             </div>
 
-            <div className="quick-actions">
-                <button className="btn-primary" onClick={() => navigate('/create-invoice')}>
+            <div className="quick-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <button className="btn-primary" style={{ flex: 1, minWidth: '140px', textAlign: 'center' }} onClick={() => navigate('/create-invoice')}>
                     ➕ New Invoice
                 </button>
-                <button className="btn-secondary" onClick={() => navigate('/products')}>
+                <button className="btn-secondary" style={{ flex: 1, minWidth: '140px', textAlign: 'center' }} onClick={() => navigate('/products')}>
                     📦 Add Product
                 </button>
-                <button className="btn-success" onClick={() => navigate('/due-invoices')}>
+                <button className="btn-success" style={{ flex: 1, minWidth: '140px', textAlign: 'center' }} onClick={() => navigate('/due-invoices')}>
                     💳 Record Payment
                 </button>
             </div>

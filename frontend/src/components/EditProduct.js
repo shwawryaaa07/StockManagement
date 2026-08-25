@@ -101,9 +101,10 @@ function EditProduct({ product, onClose, onRefresh }) {
             gap: '10px',
             marginTop: '10px'
         },
+        // ✅ FIX: Submit button uses CSS variables
         submitBtn: {
-            backgroundColor: '#1a237e',
-            color: 'white',
+            backgroundColor: 'var(--primary)',
+            color: '#ffffff',
             border: 'none',
             padding: '10px 25px',
             borderRadius: '5px',

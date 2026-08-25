@@ -3,6 +3,7 @@
    ============================================================ */
 
 :root {
+    /* Light Theme Colors */
     --bg-primary: #f0f2f5;
     --bg-secondary: #ffffff;
     --bg-card: #ffffff;
@@ -12,15 +13,21 @@
     --border: #e8e8f0;
     --border-color: #e8e8f0;
     --shadow: 0 2px 12px rgba(26, 35, 126, 0.08);
+
+    /* Brand Colors */
     --primary: #1a237e;
     --primary-dark: #0d1445;
     --primary-light: #3949ab;
     --gold: #f9a825;
     --gold-light: #ffd54f;
+
+    /* Status Colors */
     --success: #4caf50;
     --warning: #ff9800;
     --danger: #ef5350;
     --info: #29b6f6;
+
+    /* Button Colors */
     --btn-primary: #f9a825;
     --btn-primary-text: #1a1a2e;
     --btn-secondary: #1a237e;
@@ -31,15 +38,20 @@
     --btn-cancel-text: #ffffff;
     --btn-success: #4caf50;
     --btn-success-text: #ffffff;
+
+    /* ✅ Notification Colors - Light Mode */
     --success-bg: #e8f5e9;
     --success-text: #2e7d32;
     --danger-bg: #ffebee;
     --danger-text: #c62828;
+
+    /* Spacing */
     --radius: 12px;
     --radius-sm: 8px;
     --transition: 0.3s ease;
 }
 
+/* Dark Theme */
 body.dark-mode {
     --bg-primary: #121212;
     --bg-secondary: #1e1e2e;
@@ -50,6 +62,8 @@ body.dark-mode {
     --border: #2a2a3e;
     --border-color: #2a2a3e;
     --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+
+    /* ✅ Notification Colors - Dark Mode */
     --success-bg: #1b3a1b;
     --success-text: #81c784;
     --danger-bg: #3a1b1b;
@@ -57,6 +71,10 @@ body.dark-mode {
     --btn-cancel: #555;
     --btn-cancel-text: #ffffff;
 }
+
+/* ============================================================
+   GLOBAL STYLES
+   ============================================================ */
 
 * {
     box-sizing: border-box;
@@ -73,7 +91,7 @@ body {
 }
 
 /* ============================================================
-   BUTTONS
+   BUTTON CLASSES (Theme-Agnostic)
    ============================================================ */
 
 .btn-primary {
@@ -149,7 +167,7 @@ body {
 }
 
 /* ============================================================
-   TABLE
+   EMPTY TABLE STATE
    ============================================================ */
 
 .table-empty-row td {
@@ -165,7 +183,7 @@ body {
 }
 
 /* ============================================================
-   NAVBAR
+   ACTIVE NAV LINK (Underline Style)
    ============================================================ */
 
 .nav-link.active {
@@ -174,6 +192,10 @@ body {
     border-bottom: 3px solid var(--gold) !important;
     border-radius: 0 !important;
 }
+
+/* ============================================================
+   NAVBAR
+   ============================================================ */
 
 .navbar {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary));
@@ -205,7 +227,7 @@ body {
     line-height: 1.2;
 }
 
-/* ✅ FIX 1: letter-spacing changed to 0.025em */
+/* ✅ letter-spacing: 0.5px → 0.025em */
 .navbar-brand .main {
     font-size: 20px;
     font-weight: 800;
@@ -299,6 +321,7 @@ body {
     border: 1px solid var(--border);
 }
 
+/* Cards */
 .dash-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -325,7 +348,7 @@ body {
     margin-bottom: 6px;
 }
 
-/* ✅ FIX 2: letter-spacing changed to 0.04em */
+/* ✅ letter-spacing: 0.5px → 0.04em */
 .dash-card .label {
     color: var(--text-muted);
     font-size: 12px;
@@ -345,6 +368,7 @@ body {
 .dash-card .value.orange { color: var(--warning); }
 .dash-card .value.red { color: var(--danger); }
 
+/* Quick Actions */
 .quick-actions {
     display: flex;
     gap: 12px;
@@ -352,6 +376,7 @@ body {
     margin-bottom: 25px;
 }
 
+/* Recent Activity */
 .recent-box {
     background: var(--bg-card);
     border-radius: var(--radius);
@@ -408,7 +433,7 @@ body {
 .recent-amount.orange { color: var(--warning); }
 
 /* ============================================================
-   FAB
+   FLOATING BUTTON (FAB)
    ============================================================ */
 
 .fab {

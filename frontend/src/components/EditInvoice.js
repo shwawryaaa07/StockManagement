@@ -19,8 +19,9 @@ function EditInvoice() {
     const [selectedProduct, setSelectedProduct] = useState('');
     const [quantity, setQuantity] = useState(1);
 
+    // ✅ FIX 1: Added .catch() to handle promise
     useEffect(() => {
-        loadData();
+        loadData().catch(console.error);
     }, []);
 
     const loadData = async () => {
@@ -45,9 +46,10 @@ function EditInvoice() {
         }
     };
 
+    // ✅ FIX 2: Use Number() instead of parseInt()
     const addItem = () => {
         if (!selectedProduct || quantity < 1) return;
-        const product = products.find(p => p.id === parseInt(selectedProduct));
+        const product = products.find(p => p.id === Number(selectedProduct));
         if (!product) return;
         const existing = items.find(i => i.product.id === product.id);
         if (existing) {
@@ -56,7 +58,7 @@ function EditInvoice() {
         }
         setItems([...items, {
             product: { id: product.id },
-            quantity: parseInt(quantity),
+            quantity: Number(quantity),
             unitPrice: product.price
         }]);
         setSelectedProduct('');
@@ -75,6 +77,14 @@ function EditInvoice() {
         e.preventDefault();
         if (items.length === 0) {
             alert('Add at least one product!');
+            return;
+        }
+        if (!customerName.trim()) {
+            alert('Please enter customer name!');
+            return;
+        }
+        if (customerContact && customerContact.length !== 10) {
+            alert('Contact number must be exactly 10 digits!');
             return;
         }
         setSaving(true);
@@ -96,10 +106,6 @@ function EditInvoice() {
         setSaving(false);
     };
 
-    // ============================================================
-    // STYLES WITH THEME VARIABLES
-    // ============================================================
-
     const styles = {
         container: { maxWidth: '900px', margin: '0 auto' },
         title: { marginBottom: '20px', color: 'var(--text-primary)' },
@@ -107,7 +113,7 @@ function EditInvoice() {
             background: 'var(--bg-card)',
             padding: '25px',
             borderRadius: '12px',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--border-color)',
             boxShadow: 'var(--shadow)'
         },
         section: { marginBottom: '20px' },
@@ -118,7 +124,7 @@ function EditInvoice() {
         input: {
             width: '100%',
             padding: '8px 12px',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--border-color)',
             borderRadius: '8px',
             background: 'var(--bg-body)',
             color: 'var(--text-primary)'
@@ -161,12 +167,12 @@ function EditInvoice() {
         },
         totals: {
             textAlign: 'right',
-            borderTop: '2px solid var(--border)',
+            borderTop: '2px solid var(--border-color)',
             paddingTop: '15px',
             color: 'var(--text-primary)'
         },
         tableHeader: { background: '#1a237e', color: 'white' },
-        tableCell: { padding: '8px 12px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border)' }
+        tableCell: { padding: '8px 12px', color: 'var(--text-primary)', borderBottom: '1px solid var(--border-color)' }
     };
 
     if (loading) return <div style={{ padding: '30px' }}><h2 style={{ color: 'var(--text-primary)' }}>Loading...</h2></div>;
@@ -176,26 +182,52 @@ function EditInvoice() {
             <h2 style={styles.title}>✏️ Edit Invoice - {id}</h2>
 
             <form onSubmit={handleSave} style={styles.form}>
-                {/* Customer Details */}
                 <div style={styles.section}>
                     <h3 style={styles.sectionTitle}>Customer Details</h3>
                     <div style={styles.row}>
                         <div style={styles.field}>
                             <label style={styles.label}>Name *</label>
-                            <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} style={styles.input} required />
+                            <input
+                                type="text"
+                                value={customerName}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (/^[a-zA-Z\s.]*$/.test(val) || val === '') {
+                                        setCustomerName(val);
+                                    }
+                                }}
+                                style={styles.input}
+                                required
+                            />
                         </div>
                         <div style={styles.field}>
                             <label style={styles.label}>Contact</label>
-                            <input type="text" value={customerContact} onChange={(e) => setCustomerContact(e.target.value)} style={styles.input} />
+                            <input
+                                type="text"
+                                value={customerContact}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (/^\d*$/.test(val) && val.length <= 10) {
+                                        setCustomerContact(val);
+                                    }
+                                }}
+                                style={styles.input}
+                                placeholder="10 digit phone number"
+                                maxLength={10}
+                            />
                         </div>
                     </div>
                     <div style={{ marginTop: '10px' }}>
                         <label style={styles.label}>Delivery Address</label>
-                        <input type="text" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} style={styles.input} />
+                        <input
+                            type="text"
+                            value={deliveryAddress}
+                            onChange={(e) => setDeliveryAddress(e.target.value)}
+                            style={styles.input}
+                        />
                     </div>
                 </div>
 
-                {/* GST & Payment */}
                 <div style={styles.section}>
                     <h3 style={styles.sectionTitle}>GST & Payment</h3>
                     <div style={styles.row}>
@@ -219,12 +251,18 @@ function EditInvoice() {
                         </div>
                         <div style={styles.field}>
                             <label style={styles.label}>Amount Paid</label>
-                            <input type="number" value={amountPaid} onChange={(e) => setAmountPaid(e.target.value)} style={styles.input} placeholder="0" />
+                            <input
+                                type="number"
+                                value={amountPaid}
+                                onChange={(e) => setAmountPaid(e.target.value)}
+                                style={styles.input}
+                                placeholder="0"
+                                min="0"
+                            />
                         </div>
                     </div>
                 </div>
 
-                {/* Items */}
                 <div style={styles.section}>
                     <h3 style={styles.sectionTitle}>Items</h3>
                     <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
@@ -232,7 +270,14 @@ function EditInvoice() {
                             <option value="">Select product...</option>
                             {products.map(p => <option key={p.id} value={p.id}>{p.name} (₹{p.price})</option>)}
                         </select>
-                        <input type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)} min="1" style={{ width: '80px', ...styles.input }} />
+                        {/* ✅ FIX 3: Number() instead of e.target.value */}
+                        <input
+                            type="number"
+                            value={quantity}
+                            onChange={(e) => setQuantity(Number(e.target.value))}
+                            min="1"
+                            style={{ width: '80px', ...styles.input }}
+                        />
                         <button type="button" onClick={addItem} style={styles.addBtn}>➕ Add</button>
                     </div>
 
@@ -269,14 +314,12 @@ function EditInvoice() {
                     )}
                 </div>
 
-                {/* Totals */}
                 <div style={styles.totals}>
                     <p><strong>Subtotal:</strong> ₹{subtotal.toLocaleString()}</p>
                     <p><strong>GST ({gstRate}%):</strong> ₹{gstAmount.toLocaleString()}</p>
                     <p style={{ fontSize: '20px', fontWeight: 'bold' }}><strong>Total:</strong> ₹{totalAmount.toLocaleString()}</p>
                 </div>
 
-                {/* Buttons */}
                 <div style={styles.buttonRow}>
                     <button type="submit" style={styles.submitBtn} disabled={saving}>
                         {saving ? 'Saving...' : '💾 Save Changes'}

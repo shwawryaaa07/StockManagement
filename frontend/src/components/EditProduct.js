@@ -9,6 +9,119 @@ function EditProduct({ product, onClose, onRefresh }) {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
+    // ✅ FIX 3: All colors use CSS variables
+    const styles = {
+        overlay: {
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            zIndex: 1000
+        },
+        modal: {
+            backgroundColor: 'var(--bg-card)',
+            padding: '25px',
+            borderRadius: '10px',
+            maxWidth: '600px',
+            width: '95%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+            border: '1px solid var(--border-color)'
+        },
+        header: {
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '15px'
+        },
+        title: {
+            margin: 0,
+            color: 'var(--text-primary)'
+        },
+        closeBtn: {
+            backgroundColor: 'transparent',
+            border: 'none',
+            fontSize: '22px',
+            cursor: 'pointer',
+            color: 'var(--text-muted)'
+        },
+        message: {
+            padding: '10px 15px',
+            borderRadius: '5px',
+            marginBottom: '15px'
+        },
+        form: {
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '10px'
+        },
+        row: {
+            display: 'flex',
+            gap: '15px',
+            flexWrap: 'wrap'
+        },
+        field: {
+            flex: 1,
+            minWidth: '200px'
+        },
+        label: {
+            display: 'block',
+            fontWeight: 'bold',
+            fontSize: '14px',
+            marginBottom: '5px',
+            color: 'var(--text-secondary)'
+        },
+        input: {
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid var(--border-color)',
+            borderRadius: '5px',
+            fontSize: '14px',
+            boxSizing: 'border-box',
+            backgroundColor: 'var(--bg-body)',
+            color: 'var(--text-primary)'
+        },
+        select: {
+            width: '100%',
+            padding: '8px 12px',
+            border: '1px solid var(--border-color)',
+            borderRadius: '5px',
+            fontSize: '14px',
+            boxSizing: 'border-box',
+            backgroundColor: 'var(--bg-body)',
+            color: 'var(--text-primary)'
+        },
+        buttonRow: {
+            display: 'flex',
+            gap: '10px',
+            marginTop: '10px'
+        },
+        submitBtn: {
+            backgroundColor: '#1a237e',
+            color: 'white',
+            border: 'none',
+            padding: '10px 25px',
+            borderRadius: '5px',
+            fontSize: '14px',
+            cursor: 'pointer'
+        },
+        cancelBtn: {
+            backgroundColor: 'var(--btn-cancel)',
+            color: 'white',
+            border: 'none',
+            padding: '10px 25px',
+            borderRadius: '5px',
+            fontSize: '14px',
+            cursor: 'pointer'
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -103,7 +216,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                             <select
                                 value={category}
                                 onChange={(e) => setCategory(e.target.value)}
-                                style={styles.input}
+                                style={styles.select}
                             >
                                 <option value="">Select Category</option>
                                 <option value="TV">📺 TV</option>
@@ -139,102 +252,5 @@ function EditProduct({ product, onClose, onRefresh }) {
         </div>
     );
 }
-
-const styles = {
-    overlay: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        zIndex: 1000
-    },
-    modal: {
-        backgroundColor: 'white',
-        padding: '25px',
-        borderRadius: '10px',
-        maxWidth: '600px',
-        width: '95%',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        boxShadow: '0 4px 20px rgba(0,0,0,0.3)'
-    },
-    header: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '15px'
-    },
-    title: {
-        margin: 0
-    },
-    closeBtn: {
-        backgroundColor: 'transparent',
-        border: 'none',
-        fontSize: '22px',
-        cursor: 'pointer',
-        color: '#666'
-    },
-    message: {
-        padding: '10px 15px',
-        borderRadius: '5px',
-        marginBottom: '15px'
-    },
-    form: {
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px'
-    },
-    row: {
-        display: 'flex',
-        gap: '15px',
-        flexWrap: 'wrap'
-    },
-    field: {
-        flex: 1,
-        minWidth: '200px'
-    },
-    label: {
-        display: 'block',
-        fontWeight: 'bold',
-        fontSize: '14px',
-        marginBottom: '5px'
-    },
-    input: {
-        width: '100%',
-        padding: '8px 12px',
-        border: '1px solid #ddd',
-        borderRadius: '5px',
-        fontSize: '14px',
-        boxSizing: 'border-box'
-    },
-    buttonRow: {
-        display: 'flex',
-        gap: '10px',
-        marginTop: '10px'
-    },
-    submitBtn: {
-        backgroundColor: '#1a237e',
-        color: 'white',
-        border: 'none',
-        padding: '10px 25px',
-        borderRadius: '5px',
-        fontSize: '14px',
-        cursor: 'pointer'
-    },
-    cancelBtn: {
-        backgroundColor: '#999',
-        color: 'white',
-        border: 'none',
-        padding: '10px 25px',
-        borderRadius: '5px',
-        fontSize: '14px',
-        cursor: 'pointer'
-    }
-};
 
 export default EditProduct;

@@ -31,10 +31,6 @@ function InvoiceDetail() {
     if (loading) return <div style={{ padding: '30px' }}><h2 style={{ color: 'var(--text-primary)' }}>Loading...</h2></div>;
     if (!invoice) return <div style={{ padding: '30px' }}><h2 style={{ color: 'var(--text-primary)' }}>Invoice not found</h2></div>;
 
-    // ============================================================
-    // STYLES WITH THEME VARIABLES
-    // ============================================================
-
     const styles = {
         container: { padding: '30px' },
         invoicePaper: {
@@ -70,7 +66,6 @@ function InvoiceDetail() {
             gap: '10px',
             color: 'var(--text-primary)'
         },
-        label: { fontWeight: 'bold' },
         table: {
             width: '100%',
             borderCollapse: 'collapse',
@@ -152,10 +147,17 @@ function InvoiceDetail() {
         <div style={styles.container}>
             {/* Printable Invoice */}
             <div ref={printRef} style={styles.invoicePaper}>
+                {/* ✅ FIX 1: Read business info from invoice object */}
                 <div style={styles.header}>
-                    <h1 style={styles.shopName}>MANISHA ELECTRONICS</h1>
-                    <p style={styles.shopInfo}>123 Shop Street, City</p>
-                    <p style={styles.shopInfo}>GSTIN: 22AAAAA0000A1Z5 | Phone: 9876543210</p>
+                    <h1 style={styles.shopName}>
+                        {invoice.businessName || 'MANISHA ELECTRONICS'}
+                    </h1>
+                    <p style={styles.shopInfo}>
+                        {invoice.businessAddress || '123 Shop Street, City'}
+                    </p>
+                    <p style={styles.shopInfo}>
+                        GSTIN: {invoice.businessGstin || '22AAAAA0000A1Z5'} | Phone: {invoice.businessPhone || '9876543210'}
+                    </p>
                 </div>
 
                 <div style={styles.infoRow}>

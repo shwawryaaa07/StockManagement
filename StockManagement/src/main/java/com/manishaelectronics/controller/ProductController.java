@@ -5,7 +5,6 @@ import com.manishaelectronics.model.InvoiceItem;
 import com.manishaelectronics.repository.ProductRepository;
 import com.manishaelectronics.repository.InvoiceItemRepository;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,11 +15,13 @@ import java.util.List;
 @RequestMapping("/api/products")
 public class ProductController {
 
-    @Autowired
-    private ProductRepository productRepository;
+    private final ProductRepository productRepository;
+    private final InvoiceItemRepository invoiceItemRepository;
 
-    @Autowired
-    private InvoiceItemRepository invoiceItemRepository;
+    public ProductController(ProductRepository productRepository, InvoiceItemRepository invoiceItemRepository) {
+        this.productRepository = productRepository;
+        this.invoiceItemRepository = invoiceItemRepository;
+    }
 
     @GetMapping
     public List<Product> getAllProducts() {
@@ -33,34 +34,35 @@ public class ProductController {
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
     }
 
-    // ✅ FIXED: Handles duplicate product names
+    // ✅ FIX 3: Extracted method to handle duplicate product logic
     @PostMapping
     public ResponseEntity<?> createProduct(@Valid @RequestBody Product product) {
-        // Check if product with same name already exists
-        List<Product> existingProducts = productRepository.findByNameContainingIgnoreCase(product.getName());
+        List<Product> existingProducts = productRepository.findByNameIgnoreCase(product.getName());
 
         if (!existingProducts.isEmpty()) {
-            // ✅ FIXED: Use get(0) instead of getFirst() (Java 21 compatible)
-            Product existingProduct = existingProducts.get(0);
-            existingProduct.setQuantity(existingProduct.getQuantity() + product.getQuantity());
-
-            // If price differs, update it
-            if (product.getPrice() != null && product.getPrice().compareTo(existingProduct.getPrice()) != 0) {
-                existingProduct.setPrice(product.getPrice());
-            }
-
-            // If category differs, update it
-            if (product.getCategory() != null && !product.getCategory().isEmpty()) {
-                existingProduct.setCategory(product.getCategory());
-            }
-
-            Product saved = productRepository.save(existingProduct);
+            // ✅ FIX 1: Using getFirst() instead of get(0)
+            Product existingProduct = existingProducts.getFirst();
+            Product saved = mergeProduct(existingProduct, product);
             return ResponseEntity.ok(saved);
         } else {
-            // New product — save normally
             Product saved = productRepository.save(product);
             return ResponseEntity.status(HttpStatus.CREATED).body(saved);
         }
+    }
+
+    // ✅ FIX 3: Extracted method to reduce complexity
+    private Product mergeProduct(Product existing, Product incoming) {
+        existing.setQuantity(existing.getQuantity() + incoming.getQuantity());
+
+        if (incoming.getPrice() != null && incoming.getPrice().compareTo(existing.getPrice()) != 0) {
+            existing.setPrice(incoming.getPrice());
+        }
+
+        if (incoming.getCategory() != null && !incoming.getCategory().isEmpty()) {
+            existing.setCategory(incoming.getCategory());
+        }
+
+        return productRepository.save(existing);
     }
 
     @PutMapping("/{id}")
@@ -79,10 +81,13 @@ public class ProductController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
         try {
-            Product product = productRepository.findById(id)
-                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + id));
+            // ✅ FIX 2: Removed unused 'product' variable
+            if (!productRepository.existsById(id)) {
+                return ResponseEntity
+                        .status(HttpStatus.NOT_FOUND)
+                        .body("Product not found with id: " + id);
+            }
 
-            // Check if product is used in any invoice
             List<InvoiceItem> items = invoiceItemRepository.findByProductId(id);
             if (!items.isEmpty()) {
                 return ResponseEntity

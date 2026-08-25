@@ -9,6 +9,9 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    // ✅ Add this method for duplicate checking
+    // ✅ FIX 2: Exact match method
+    List<Product> findByNameIgnoreCase(String name);
+
+    // Keep this for search functionality
     List<Product> findByNameContainingIgnoreCase(String name);
 }

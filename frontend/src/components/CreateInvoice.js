@@ -60,8 +60,6 @@ function CreateInvoice() {
     const gstAmount = subtotal * (gstRate / 100);
     const totalAmount = subtotal + gstAmount;
 
-    // ✅ NEW: Business info removed from frontend
-    // The backend will set these values from server config
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (items.length === 0) {
@@ -72,8 +70,11 @@ function CreateInvoice() {
             alert('Please enter customer name!');
             return;
         }
+        if (customerContact && customerContact.length !== 10) {
+            alert('Contact number must be exactly 10 digits!');
+            return;
+        }
         setLoading(true);
-
         const invoiceData = {
             customerName,
             customerContact: customerContact || 'N/A',
@@ -83,7 +84,6 @@ function CreateInvoice() {
             amountPaid: parseFloat(amountPaid) || 0,
             items
         };
-
         try {
             const response = await createInvoice(invoiceData);
             alert(`✅ Invoice ${response.data.invoiceNumber} created successfully!`);
@@ -100,7 +100,7 @@ function CreateInvoice() {
     };
 
     // ============================================================
-    // STYLES WITH THEME VARIABLES
+    // STYLES
     // ============================================================
 
     const styles = {
@@ -192,16 +192,48 @@ function CreateInvoice() {
                     <div style={styles.row}>
                         <div style={styles.field}>
                             <label style={styles.label}>Customer Name *</label>
-                            <input type="text" value={customerName} onChange={(e) => setCustomerName(e.target.value)} required style={styles.input} placeholder="Enter customer name" />
+                            {/* ✅ FIX: Only letters and spaces */}
+                            <input
+                                type="text"
+                                value={customerName}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (/^[a-zA-Z\s.]*$/.test(val) || val === '') {
+                                        setCustomerName(val);
+                                    }
+                                }}
+                                required
+                                style={styles.input}
+                                placeholder="Enter customer name"
+                            />
                         </div>
                         <div style={styles.field}>
                             <label style={styles.label}>Contact</label>
-                            <input type="text" value={customerContact} onChange={(e) => setCustomerContact(e.target.value)} style={styles.input} placeholder="Phone number" />
+                            {/* ✅ FIX: Only numbers, max 10 digits */}
+                            <input
+                                type="text"
+                                value={customerContact}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    if (/^\d*$/.test(val) && val.length <= 10) {
+                                        setCustomerContact(val);
+                                    }
+                                }}
+                                style={styles.input}
+                                placeholder="Phone number (10 digits)"
+                                maxLength={10}
+                            />
                         </div>
                     </div>
                     <div style={styles.field}>
                         <label style={styles.label}>Delivery Address</label>
-                        <input type="text" value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} style={styles.input} placeholder="Delivery address" />
+                        <input
+                            type="text"
+                            value={deliveryAddress}
+                            onChange={(e) => setDeliveryAddress(e.target.value)}
+                            style={styles.input}
+                            placeholder="Delivery address"
+                        />
                     </div>
                 </div>
 

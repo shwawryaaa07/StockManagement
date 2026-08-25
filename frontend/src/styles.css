@@ -3,30 +3,24 @@
    ============================================================ */
 
 :root {
-    /* Light Theme Colors */
     --bg-primary: #f0f2f5;
     --bg-secondary: #ffffff;
     --bg-card: #ffffff;
     --text-primary: #1a1a2e;
     --text-secondary: #4a4a6a;
     --text-muted: #6c6c8a;
+    --border: #e8e8f0;
     --border-color: #e8e8f0;
     --shadow: 0 2px 12px rgba(26, 35, 126, 0.08);
-
-    /* Brand Colors */
     --primary: #1a237e;
     --primary-dark: #0d1445;
     --primary-light: #3949ab;
     --gold: #f9a825;
     --gold-light: #ffd54f;
-
-    /* Status Colors */
     --success: #4caf50;
     --warning: #ff9800;
     --danger: #ef5350;
     --info: #29b6f6;
-
-    /* Button Colors */
     --btn-primary: #f9a825;
     --btn-primary-text: #1a1a2e;
     --btn-secondary: #1a237e;
@@ -37,20 +31,15 @@
     --btn-cancel-text: #ffffff;
     --btn-success: #4caf50;
     --btn-success-text: #ffffff;
-
-    /* Notification Colors */
     --success-bg: #e8f5e9;
     --success-text: #2e7d32;
     --danger-bg: #ffebee;
     --danger-text: #c62828;
-
-    /* Spacing */
     --radius: 12px;
     --radius-sm: 8px;
     --transition: 0.3s ease;
 }
 
-/* Dark Theme */
 body.dark-mode {
     --bg-primary: #121212;
     --bg-secondary: #1e1e2e;
@@ -58,10 +47,9 @@ body.dark-mode {
     --text-primary: #e8e8f0;
     --text-secondary: #b0b0c8;
     --text-muted: #8888aa;
+    --border: #2a2a3e;
     --border-color: #2a2a3e;
     --shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-
-    /* Notification Colors for Dark Mode */
     --success-bg: #1b3a1b;
     --success-text: #81c784;
     --danger-bg: #3a1b1b;
@@ -69,10 +57,6 @@ body.dark-mode {
     --btn-cancel: #555;
     --btn-cancel-text: #ffffff;
 }
-
-/* ============================================================
-   GLOBAL STYLES
-   ============================================================ */
 
 * {
     box-sizing: border-box;
@@ -89,7 +73,7 @@ body {
 }
 
 /* ============================================================
-   BUTTON CLASSES (Theme-Agnostic)
+   BUTTONS
    ============================================================ */
 
 .btn-primary {
@@ -165,14 +149,14 @@ body {
 }
 
 /* ============================================================
-   EMPTY TABLE STATE
+   TABLE
    ============================================================ */
 
 .table-empty-row td {
     padding: 30px 20px;
     text-align: center;
     color: var(--text-muted);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border);
     font-style: italic;
 }
 
@@ -181,7 +165,7 @@ body {
 }
 
 /* ============================================================
-   ACTIVE NAV LINK (Underline Style)
+   NAVBAR
    ============================================================ */
 
 .nav-link.active {
@@ -190,10 +174,6 @@ body {
     border-bottom: 3px solid var(--gold) !important;
     border-radius: 0 !important;
 }
-
-/* ============================================================
-   NAVBAR
-   ============================================================ */
 
 .navbar {
     background: linear-gradient(135deg, var(--primary-dark), var(--primary));
@@ -225,10 +205,11 @@ body {
     line-height: 1.2;
 }
 
+/* ✅ FIX 1: letter-spacing changed to 0.025em */
 .navbar-brand .main {
     font-size: 20px;
     font-weight: 800;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.025em;
     color: #ffffff;
 }
 
@@ -315,10 +296,9 @@ body {
     background: var(--bg-card);
     padding: 8px 18px;
     border-radius: 20px;
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border);
 }
 
-/* Cards */
 .dash-cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -330,14 +310,14 @@ body {
     background: var(--bg-card);
     padding: 20px 22px;
     border-radius: var(--radius);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border);
     box-shadow: var(--shadow);
     transition: all 0.3s ease;
 }
 
 .dash-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
 }
 
 .dash-card .icon {
@@ -345,12 +325,13 @@ body {
     margin-bottom: 6px;
 }
 
+/* ✅ FIX 2: letter-spacing changed to 0.04em */
 .dash-card .label {
     color: var(--text-muted);
     font-size: 12px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.04em;
 }
 
 .dash-card .value {
@@ -364,7 +345,6 @@ body {
 .dash-card .value.orange { color: var(--warning); }
 .dash-card .value.red { color: var(--danger); }
 
-/* Quick Actions */
 .quick-actions {
     display: flex;
     gap: 12px;
@@ -372,11 +352,10 @@ body {
     margin-bottom: 25px;
 }
 
-/* Recent Activity */
 .recent-box {
     background: var(--bg-card);
     border-radius: var(--radius);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border);
     box-shadow: var(--shadow);
     overflow: hidden;
 }
@@ -385,7 +364,7 @@ body {
     padding: 16px 22px;
     font-weight: 600;
     font-size: 16px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border);
 }
 
 .recent-item {
@@ -393,7 +372,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border);
     flex-wrap: wrap;
     gap: 6px;
 }
@@ -429,7 +408,7 @@ body {
 .recent-amount.orange { color: var(--warning); }
 
 /* ============================================================
-   FLOATING BUTTON (FAB)
+   FAB
    ============================================================ */
 
 .fab {
@@ -468,7 +447,7 @@ body {
 .table-wrap {
     background: var(--bg-card);
     border-radius: var(--radius);
-    border: 1px solid var(--border-color);
+    border: 1px solid var(--border);
     box-shadow: var(--shadow);
     overflow-x: auto;
 }
@@ -488,7 +467,7 @@ body {
 
 .table-wrap td {
     padding: 10px 16px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border);
     color: var(--text-primary);
 }
 

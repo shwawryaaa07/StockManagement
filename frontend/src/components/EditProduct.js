@@ -9,7 +9,6 @@ function EditProduct({ product, onClose, onRefresh }) {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
-    // ✅ FIX 3: All colors use CSS variables
     const styles = {
         overlay: {
             position: 'fixed',
@@ -112,8 +111,8 @@ function EditProduct({ product, onClose, onRefresh }) {
             cursor: 'pointer'
         },
         cancelBtn: {
-            backgroundColor: 'var(--btn-cancel)',
-            color: 'white',
+            backgroundColor: 'var(--btn-cancel, #999)',
+            color: 'var(--btn-cancel-text, #ffffff)',
             border: 'none',
             padding: '10px 25px',
             borderRadius: '5px',
@@ -166,8 +165,8 @@ function EditProduct({ product, onClose, onRefresh }) {
                 {message && (
                     <div style={{
                         ...styles.message,
-                        backgroundColor: message.includes('✅') ? '#e8f5e9' : '#ffebee',
-                        color: message.includes('✅') ? '#2e7d32' : '#c62828'
+                        backgroundColor: message.includes('✅') ? 'var(--success-bg, #e8f5e9)' : 'var(--danger-bg, #ffebee)',
+                        color: message.includes('✅') ? 'var(--success-text, #2e7d32)' : 'var(--danger-text, #c62828)'
                     }}>
                         {message}
                     </div>

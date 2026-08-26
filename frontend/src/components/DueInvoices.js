@@ -45,14 +45,12 @@ function DueInvoices() {
             loadDueInvoices();
             setPaymentAmounts({ ...paymentAmounts, [id]: '' });
         } catch (error) {
-            setMessage('❌ Error recording payment');
+            const apiMessage = error?.response?.data?.message;
+            const fallbackMessage = error instanceof Error ? error.message : String(error);
+            setMessage('❌ Error recording payment: ' + (apiMessage || fallbackMessage));
             setTimeout(() => setMessage(''), 3000);
         }
     };
-
-    // ============================================================
-    // STYLES WITH THEME VARIABLES
-    // ============================================================
 
     const styles = {
         container: { padding: '30px', maxWidth: '1200px', margin: '0 auto' },
@@ -65,7 +63,7 @@ function DueInvoices() {
             fontWeight: 'bold',
             backgroundColor: 'var(--bg-card)',
             color: 'var(--text-primary)',
-            border: '1px solid var(--border)'
+            border: '1px solid var(--border-color)'
         },
         summaryContainer: {
             display: 'flex',
@@ -79,7 +77,7 @@ function DueInvoices() {
             backgroundColor: 'var(--bg-card)',
             padding: '15px 25px',
             borderRadius: '12px',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--border-color)',
             boxShadow: 'var(--shadow)',
             minWidth: '150px'
         },
@@ -97,7 +95,7 @@ function DueInvoices() {
             overflowX: 'auto',
             backgroundColor: 'var(--bg-card)',
             borderRadius: '12px',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--border-color)',
             boxShadow: 'var(--shadow)'
         },
         table: {
@@ -113,7 +111,7 @@ function DueInvoices() {
             textAlign: 'left'
         },
         tableRow: {
-            borderBottom: '1px solid var(--border)'
+            borderBottom: '1px solid var(--border-color)'
         },
         td: {
             padding: '12px 15px',
@@ -133,7 +131,7 @@ function DueInvoices() {
         paymentInput: {
             width: '100px',
             padding: '6px 10px',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--border-color)',
             borderRadius: '4px',
             fontSize: '14px',
             backgroundColor: 'var(--bg-body)',
@@ -153,7 +151,7 @@ function DueInvoices() {
             padding: '60px 20px',
             backgroundColor: 'var(--bg-card)',
             borderRadius: '12px',
-            border: '1px solid var(--border)',
+            border: '1px solid var(--border-color)',
             boxShadow: 'var(--shadow)'
         },
         emptyTitle: {
@@ -178,11 +176,12 @@ function DueInvoices() {
             <h2 style={styles.title}>🟡 Due Invoices</h2>
             <p style={styles.subtitle}>Invoices with pending payments</p>
 
+            {/* ✅ FIX: Notification colors use CSS variables */}
             {message && (
                 <div style={{
                     ...styles.message,
-                    backgroundColor: message.includes('✅') ? '#e8f5e9' : '#ffebee',
-                    color: message.includes('✅') ? '#2e7d32' : '#c62828'
+                    backgroundColor: message.includes('✅') ? 'var(--success-bg, #e8f5e9)' : 'var(--danger-bg, #ffebee)',
+                    color: message.includes('✅') ? 'var(--success-text, #2e7d32)' : 'var(--danger-text, #c62828)'
                 }}>
                     {message}
                 </div>

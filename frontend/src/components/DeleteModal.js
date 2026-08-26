@@ -7,9 +7,9 @@ function DeleteModal({ isOpen, onClose, onConfirm, invoiceNumber }) {
         <div style={styles.overlay}>
             <div style={styles.modal}>
                 <div style={styles.icon}>🗑️</div>
-                <h2 style={styles.title}>Delete Invoice</h2>
+                <h2 style={styles.title}>Delete {invoiceNumber || 'Item'}</h2>
                 <p style={styles.message}>
-                    Are you sure you want to delete <strong>{invoiceNumber}</strong>?
+                    Are you sure you want to delete {invoiceNumber ? <strong>{invoiceNumber}</strong> : 'this item'}?
                 </p>
                 <p style={styles.warning}>This action cannot be undone!</p>
                 <div style={styles.buttons}>
@@ -24,6 +24,8 @@ function DeleteModal({ isOpen, onClose, onConfirm, invoiceNumber }) {
         </div>
     );
 }
+
+// ✅ FIX: No style injection — styles are in styles.css
 
 const styles = {
     overlay: {
@@ -40,7 +42,7 @@ const styles = {
         zIndex: 9999,
     },
     modal: {
-        backgroundColor: 'var(--bg-card, #ffffff)',
+        backgroundColor: 'var(--bg-card)',
         padding: '35px 40px',
         borderRadius: '16px',
         maxWidth: '420px',
@@ -48,6 +50,7 @@ const styles = {
         textAlign: 'center',
         boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
         animation: 'fadeIn 0.2s ease',
+        border: '1px solid var(--border-color)'
     },
     icon: {
         fontSize: '48px',
@@ -57,16 +60,16 @@ const styles = {
         fontSize: '22px',
         fontWeight: '700',
         marginBottom: '10px',
-        color: 'var(--text-primary, #1a1a2e)',
+        color: 'var(--text-primary)',
     },
     message: {
         fontSize: '16px',
-        color: 'var(--text-secondary, #4a4a6a)',
+        color: 'var(--text-secondary)',
         marginBottom: '5px',
     },
     warning: {
         fontSize: '14px',
-        color: '#ef5350',
+        color: 'var(--danger)',
         fontWeight: '600',
         marginBottom: '25px',
     },
@@ -77,8 +80,8 @@ const styles = {
     },
     cancelBtn: {
         padding: '10px 28px',
-        backgroundColor: '#e0e0e0',
-        color: '#333',
+        backgroundColor: 'var(--btn-cancel, #e0e0e0)',
+        color: 'var(--btn-cancel-text, #333)',
         border: 'none',
         borderRadius: '8px',
         fontSize: '15px',
@@ -87,7 +90,7 @@ const styles = {
     },
     deleteBtn: {
         padding: '10px 28px',
-        backgroundColor: '#ef5350',
+        backgroundColor: 'var(--danger)',
         color: 'white',
         border: 'none',
         borderRadius: '8px',
@@ -96,15 +99,5 @@ const styles = {
         transition: '0.2s',
     },
 };
-
-// Inject keyframes once
-const styleSheet = document.createElement('style');
-styleSheet.textContent = `
-    @keyframes fadeIn {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
-    }
-`;
-document.head.appendChild(styleSheet);
 
 export default DeleteModal;

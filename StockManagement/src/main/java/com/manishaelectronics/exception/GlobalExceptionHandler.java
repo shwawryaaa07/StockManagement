@@ -29,15 +29,29 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
     }
 
+    // ✅ FIX: Handles "not found" errors with 404 status
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex) {
+        String message = ex.getMessage();
+        HttpStatus status = HttpStatus.BAD_REQUEST;
+
+        // Check if the error is a "not found" error
+        if (message != null && (
+                message.contains("not found") ||
+                        message.contains("Product not found") ||
+                        message.contains("Invoice not found") ||
+                        message.contains("User not found")
+        )) {
+            status = HttpStatus.NOT_FOUND;
+        }
+
         Map<String, Object> errorResponse = new HashMap<>();
         errorResponse.put("timestamp", LocalDateTime.now());
-        errorResponse.put("status", HttpStatus.BAD_REQUEST.value());
-        errorResponse.put("message", ex.getMessage());
+        errorResponse.put("status", status.value());
+        errorResponse.put("message", message);
         errorResponse.put("success", false);
 
-        return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(errorResponse, status);
     }
 
     @ExceptionHandler(Exception.class)

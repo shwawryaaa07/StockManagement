@@ -1,11 +1,24 @@
 import React, { useState } from 'react';
 import { updateProduct } from '../services/api';
 
+/**
+ * @typedef {Object} Product
+ * @property {string|number} id
+ * @property {string} name
+ * @property {number|string} price
+ * @property {number|string} quantity
+ * @property {string} [category]
+ */
+
+/**
+ * @param {{ product: Product, onClose: Function, onRefresh: Function }} props
+ */
 function EditProduct({ product, onClose, onRefresh }) {
-    const [name, setName] = useState(product.name);
-    const [price, setPrice] = useState(product.price);
-    const [quantity, setQuantity] = useState(product.quantity);
-    const [category, setCategory] = useState(product.category || '');
+    // Added safe fallbacks to prevent undefined values from breaking controlled inputs
+    const [name, setName] = useState(product?.name || '');
+    const [price, setPrice] = useState(product?.price || 0);
+    const [quantity, setQuantity] = useState(product?.quantity || 0);
+    const [category, setCategory] = useState(product?.category || '');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
 
@@ -101,10 +114,9 @@ function EditProduct({ product, onClose, onRefresh }) {
             gap: '10px',
             marginTop: '10px'
         },
-        // ✅ FIX: Submit button uses CSS variables
         submitBtn: {
             backgroundColor: 'var(--primary)',
-            color: '#ffffff',
+            color: 'var(--btn-primary-text, #ffffff)',
             border: 'none',
             padding: '10px 25px',
             borderRadius: '5px',
@@ -148,7 +160,11 @@ function EditProduct({ product, onClose, onRefresh }) {
                 onClose();
             }, 1000);
         } catch (error) {
-            setMessage('❌ Error updating product: ' + (error.response?.data?.message || error.message));
+            // Safely extract the message whether it's an Axios error or a standard JS Error
+            const apiMessage = error?.response?.data?.message;
+            const fallbackMessage = error instanceof Error ? error.message : String(error);
+
+            setMessage('❌ Error updating product: ' + (apiMessage || fallbackMessage));
             setTimeout(() => setMessage(''), 3000);
         }
 

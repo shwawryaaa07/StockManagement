@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getInvoices, deleteInvoice } from '../services/api';
+import DeleteModal from './DeleteModal';
 
 function InvoiceList() {
     const navigate = useNavigate();
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [selectedInvoice, setSelectedInvoice] = useState(null);
 
+    // ✅ FIX 1: Added .catch() to handle the promise
     useEffect(() => {
-        loadInvoices();
+        loadInvoices().catch(console.error);
     }, []);
 
     const loadInvoices = async () => {
@@ -23,13 +27,23 @@ function InvoiceList() {
         }
     };
 
-    const handleDelete = async (id) => {
-        if (window.confirm('Delete this invoice?')) {
+    const handleDeleteClick = (invoice) => {
+        setSelectedInvoice(invoice);
+        setShowDeleteModal(true);
+    };
+
+    const handleConfirmDelete = async () => {
+        if (selectedInvoice) {
             try {
-                await deleteInvoice(id);
-                loadInvoices();
+                await deleteInvoice(selectedInvoice.id);
+                setShowDeleteModal(false);
+                setSelectedInvoice(null);
+                // ✅ FIX 2: Added await here
+                await loadInvoices();
             } catch (error) {
                 console.error('Error deleting invoice:', error);
+                const message = error?.response?.data?.message || error.message;
+                alert('❌ Error deleting invoice: ' + message);
             }
         }
     };
@@ -111,7 +125,7 @@ function InvoiceList() {
                                         👁️ View
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(inv.id)}
+                                        onClick={() => handleDeleteClick(inv)}
                                         className="btn-danger"
                                     >
                                         🗑️ Delete
@@ -123,6 +137,13 @@ function InvoiceList() {
                     </tbody>
                 </table>
             </div>
+
+            <DeleteModal
+                isOpen={showDeleteModal}
+                onClose={() => setShowDeleteModal(false)}
+                onConfirm={handleConfirmDelete}
+                invoiceNumber={selectedInvoice?.invoiceNumber}
+            />
         </div>
     );
 }

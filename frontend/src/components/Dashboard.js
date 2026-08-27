@@ -8,6 +8,7 @@ function Dashboard() {
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
 
+    // ✅ FIX: Proper promise handling with .catch()
     useEffect(() => {
         const load = async () => {
             try {
@@ -19,11 +20,11 @@ function Dashboard() {
                 setInvoices(invRes.data.slice(0, 5));
                 setLoading(false);
             } catch (e) {
-                console.error(e);
+                console.error('Error loading dashboard:', e);
                 setLoading(false);
             }
         };
-        load();
+        load().catch(console.error);  // ✅ Added .catch() here
     }, []);
 
     if (loading) return <div className="dashboard"><h2>Loading...</h2></div>;
@@ -32,7 +33,23 @@ function Dashboard() {
     return (
         <div className="dashboard">
             <div className="dash-header">
-                <h1 className="dash-title">📊 Dashboard</h1>
+                <div>
+                    <h1 className="dash-title">📊 Dashboard</h1>
+                    <div style={{
+                        fontSize: '13px',
+                        color: 'var(--text-muted)',
+                        marginTop: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flexWrap: 'wrap'
+                    }}>
+                        <span style={{ color: 'var(--gold)' }}>★</span>
+                        <span style={{ fontWeight: '500' }}>MANISHA ELECTRONICS</span>
+                        <span style={{ opacity: '0.4' }}>|</span>
+                        <span>Sales of T.V., Refrigerator, Washing Machine &amp; Other Electronic Goods.</span>
+                    </div>
+                </div>
                 <span className="dash-date">📅 {data.date}</span>
             </div>
 
@@ -59,14 +76,14 @@ function Dashboard() {
                 </div>
             </div>
 
-            <div className="quick-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                <button className="btn-primary" style={{ flex: 1, minWidth: '140px', textAlign: 'center' }} onClick={() => navigate('/create-invoice')}>
+            <div className="quick-actions">
+                <button className="btn-primary" onClick={() => navigate('/create-invoice')}>
                     ➕ New Invoice
                 </button>
-                <button className="btn-secondary" style={{ flex: 1, minWidth: '140px', textAlign: 'center' }} onClick={() => navigate('/products')}>
+                <button className="btn-secondary" onClick={() => navigate('/products')}>
                     📦 Add Product
                 </button>
-                <button className="btn-success" style={{ flex: 1, minWidth: '140px', textAlign: 'center' }} onClick={() => navigate('/due-invoices')}>
+                <button className="btn-success" onClick={() => navigate('/due-invoices')}>
                     💳 Record Payment
                 </button>
             </div>

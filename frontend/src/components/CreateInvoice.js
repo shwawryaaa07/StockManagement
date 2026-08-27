@@ -60,6 +60,7 @@ function CreateInvoice() {
     const gstAmount = subtotal * (gstRate / 100);
     const totalAmount = subtotal + gstAmount;
 
+    // ✅ Business info removed from frontend — backend sets from ShopConfig
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (items.length === 0) {
@@ -75,6 +76,7 @@ function CreateInvoice() {
             return;
         }
         setLoading(true);
+
         const invoiceData = {
             customerName,
             customerContact: customerContact || 'N/A',
@@ -84,6 +86,7 @@ function CreateInvoice() {
             amountPaid: parseFloat(amountPaid) || 0,
             items
         };
+
         try {
             const response = await createInvoice(invoiceData);
             alert(`✅ Invoice ${response.data.invoiceNumber} created successfully!`);
@@ -94,13 +97,15 @@ function CreateInvoice() {
             setItems([]);
             setGstRate(18);
         } catch (error) {
-            alert('❌ Error creating invoice: ' + (error.response?.data?.message || error.message));
+            const apiMessage = error?.response?.data?.message;
+            const fallbackMessage = error instanceof Error ? error.message : String(error);
+            alert('❌ Error creating invoice: ' + (apiMessage || fallbackMessage));
         }
         setLoading(false);
     };
 
     // ============================================================
-    // STYLES
+    // STYLES WITH THEME VARIABLES
     // ============================================================
 
     const styles = {
@@ -192,7 +197,6 @@ function CreateInvoice() {
                     <div style={styles.row}>
                         <div style={styles.field}>
                             <label style={styles.label}>Customer Name *</label>
-                            {/* ✅ FIX: Only letters and spaces */}
                             <input
                                 type="text"
                                 value={customerName}
@@ -209,7 +213,6 @@ function CreateInvoice() {
                         </div>
                         <div style={styles.field}>
                             <label style={styles.label}>Contact</label>
-                            {/* ✅ FIX: Only numbers, max 10 digits */}
                             <input
                                 type="text"
                                 value={customerContact}

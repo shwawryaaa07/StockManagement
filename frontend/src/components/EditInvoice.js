@@ -19,7 +19,6 @@ function EditInvoice() {
     const [selectedProduct, setSelectedProduct] = useState('');
     const [quantity, setQuantity] = useState(1);
 
-    // ✅ FIX 1: Added .catch() to handle promise
     useEffect(() => {
         loadData().catch(console.error);
     }, []);
@@ -46,7 +45,6 @@ function EditInvoice() {
         }
     };
 
-    // ✅ FIX 2: Use Number() instead of parseInt()
     const addItem = () => {
         if (!selectedProduct || quantity < 1) return;
         const product = products.find(p => p.id === Number(selectedProduct));
@@ -101,7 +99,9 @@ function EditInvoice() {
             alert('✅ Invoice updated successfully!');
             navigate(`/invoice/${id}`);
         } catch (error) {
-            alert('❌ Error updating invoice: ' + (error.response?.data?.message || error.message));
+            const apiMessage = error?.response?.data?.message;
+            const fallbackMessage = error instanceof Error ? error.message : String(error);
+            alert('❌ Error updating invoice: ' + (apiMessage || fallbackMessage));
         }
         setSaving(false);
     };
@@ -140,9 +140,10 @@ function EditInvoice() {
             fontSize: '16px',
             cursor: 'pointer'
         },
+        // ✅ FIX: Cancel button is now RED
         cancelBtn: {
             padding: '12px 25px',
-            background: '#999',
+            background: '#ef5350',
             color: 'white',
             border: 'none',
             borderRadius: '8px',
@@ -270,14 +271,7 @@ function EditInvoice() {
                             <option value="">Select product...</option>
                             {products.map(p => <option key={p.id} value={p.id}>{p.name} (₹{p.price})</option>)}
                         </select>
-                        {/* ✅ FIX 3: Number() instead of e.target.value */}
-                        <input
-                            type="number"
-                            value={quantity}
-                            onChange={(e) => setQuantity(Number(e.target.value))}
-                            min="1"
-                            style={{ width: '80px', ...styles.input }}
-                        />
+                        <input type="number" value={quantity} onChange={(e) => setQuantity(Number(e.target.value))} min="1" style={{ width: '80px', ...styles.input }} />
                         <button type="button" onClick={addItem} style={styles.addBtn}>➕ Add</button>
                     </div>
 

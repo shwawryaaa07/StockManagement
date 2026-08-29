@@ -11,6 +11,7 @@ function InvoiceDetail() {
 
     useEffect(() => {
         loadInvoice().catch(console.error);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
 
     const loadInvoice = async () => {

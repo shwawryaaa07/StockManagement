@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-// ✅ FIX 4: Use environment variable with fallback
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+// Cloud production backend with local fallback
+const API_BASE_URL = process.env.REACT_APP_API_URL || 
+                     process.env.REACT_APP_API_BASE_URL || 
+                     'https://stockmanagement07.onrender.com/api';
 
 // Products
 export const getProducts = () => axios.get(`${API_BASE_URL}/products`);

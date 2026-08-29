@@ -172,12 +172,7 @@ function Dashboard() {
             )}
 
             {/* 4 Hero Stat Cards */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '16px',
-                marginBottom: '24px'
-            }}>
+            <div className="dash-kpi-grid">
                 {/* 1. Today's Invoices */}
                 <div style={{
                     background: 'var(--bg-card)',
@@ -287,20 +282,9 @@ function Dashboard() {
                 </div>
             </div>
 
-            {/* Quick Actions Strip */}
-            <div style={{
-                background: 'var(--bg-card)',
-                padding: '14px 20px',
-                borderRadius: '12px',
-                border: '1px solid var(--border-color)',
-                boxShadow: 'var(--shadow)',
-                display: 'flex',
-                gap: '12px',
-                flexWrap: 'wrap',
-                alignItems: 'center',
-                marginBottom: '24px'
-            }}>
-                <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)', marginRight: '8px' }}>
+            {/* Fast Action Buttons Bar */}
+            <div className="shortcuts-scroll-bar">
+                <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)', marginRight: '8px', flexShrink: 0 }}>
                     ⚡ Shortcuts:
                 </span>
                 <button
@@ -313,7 +297,8 @@ function Dashboard() {
                         borderRadius: '6px',
                         fontSize: '13px',
                         fontWeight: '700',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        flexShrink: 0
                     }}
                 >
                     🧾 Create Invoice
@@ -321,7 +306,7 @@ function Dashboard() {
                 <button
                     onClick={() => navigate('/products')}
                     className="btn-secondary"
-                    style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '600' }}
+                    style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '600', flexShrink: 0 }}
                 >
                     📦 Manage Products ({products.length})
                 </button>
@@ -335,7 +320,8 @@ function Dashboard() {
                         borderRadius: '6px',
                         fontSize: '13px',
                         fontWeight: '700',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        flexShrink: 0
                     }}
                 >
                     🟡 Settle Pending Dues ({data.dueInvoicesCount || 0})
@@ -350,20 +336,16 @@ function Dashboard() {
                         borderRadius: '6px',
                         fontSize: '13px',
                         fontWeight: '600',
-                        cursor: 'pointer'
+                        cursor: 'pointer',
+                        flexShrink: 0
                     }}
                 >
                     📋 View All Invoices
                 </button>
             </div>
 
-            {/* 2-Column Split: Recent Invoices (60%) & Stock Status (40%) */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1.4fr) minmax(0, 1fr)',
-                gap: '24px',
-                alignItems: 'start'
-            }}>
+            {/* 2-Column Split: Recent Invoices & Stock Status */}
+            <div className="dash-main-grid">
                 {/* LEFT: Recent Invoices */}
                 <div style={{
                     background: 'var(--bg-card)',

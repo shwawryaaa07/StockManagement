@@ -511,44 +511,158 @@ body {
 
 @media (max-width: 768px) {
     .navbar {
-        padding: 10px 16px;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        padding: 10px 12px !important;
+        gap: 10px !important;
+    }
+    .navbar-left {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+        gap: 8px !important;
     }
     .navbar-brand .main {
-        font-size: 16px;
+        font-size: 15px !important;
     }
     .navbar-brand .tagline {
-        display: none;
+        display: none !important;
+    }
+    .navbar-links {
+        display: flex !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        -webkit-overflow-scrolling: touch !important;
+        padding-bottom: 4px !important;
+        gap: 6px !important;
+        scrollbar-width: thin;
     }
     .nav-link {
-        font-size: 12px;
-        padding: 6px 10px;
+        font-size: 12px !important;
+        padding: 6px 10px !important;
+        flex-shrink: 0 !important;
+    }
+    .dark-toggle {
+        font-size: 12px !important;
+        padding: 6px 10px !important;
+        flex-shrink: 0 !important;
     }
     .dashboard {
-        padding: 16px;
+        padding: 12px 10px !important;
     }
     .dash-title {
-        font-size: 22px;
+        font-size: 20px !important;
     }
     .dash-cards {
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
     }
     .dash-card .value {
-        font-size: 24px;
+        font-size: 22px !important;
     }
     .fab {
-        width: 50px;
-        height: 50px;
-        font-size: 24px;
-        bottom: 20px;
-        right: 20px;
+        width: 48px !important;
+        height: 48px !important;
+        font-size: 22px !important;
+        bottom: 16px !important;
+        right: 16px !important;
     }
 }
 
 @media (max-width: 480px) {
     .dash-cards {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
     }
+}
+
+/* Responsive Helper Classes for POS, Dashboard & Tables */
+.dash-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+@media (max-width: 1024px) {
+    .dash-kpi-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .dash-kpi-grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+.dash-main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+@media (max-width: 900px) {
+    .dash-main-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+}
+
+.pos-grid-container {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: 24px;
+    align-items: start;
+}
+
+.pos-summary-card {
+    position: sticky;
+    top: 90px;
+}
+
+@media (max-width: 900px) {
+    .pos-grid-container {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    .pos-summary-card {
+        position: static !important;
+    }
+}
+
+.customer-info-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 14px;
+}
+
+@media (max-width: 650px) {
+    .customer-info-grid {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+}
+
+.shortcuts-scroll-bar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 24px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+}
+
+.shortcuts-scroll-bar::-webkit-scrollbar {
+    height: 3px;
+}
+
+.shortcuts-scroll-bar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
 }
 /* ============================================================
    ANIMATIONS

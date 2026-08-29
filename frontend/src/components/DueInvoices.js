@@ -209,8 +209,8 @@ function DueInvoices() {
                 boxShadow: 'var(--shadow)',
                 overflow: 'hidden'
             }}>
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                    <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', fontSize: '13px' }}>
                         <thead>
                             <tr style={{ background: 'var(--primary)', color: '#ffffff' }}>
                                 <th style={{ padding: '12px 16px', textAlign: 'left', width: '130px' }}>Invoice #</th>

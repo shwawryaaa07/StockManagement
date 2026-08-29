@@ -273,12 +273,7 @@ function CreateInvoice() {
             </div>
 
             {/* 2-Column POS Layout */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(0, 1.6fr) minmax(0, 1fr)',
-                gap: '24px',
-                alignItems: 'start'
-            }}>
+            <div className="pos-grid-container">
                 {/* LEFT COLUMN: Customer + Items */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     {/* 1. Customer Details Card */}
@@ -317,7 +312,7 @@ function CreateInvoice() {
                             )}
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '14px' }}>
+                        <div className="customer-info-grid">
                             {/* Customer Name */}
                             <div>
                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
@@ -767,14 +762,12 @@ function CreateInvoice() {
                 </div>
 
                 {/* RIGHT COLUMN: Live Bill Summary Card */}
-                <div style={{
+                <div className="pos-summary-card" style={{
                     background: 'var(--bg-card)',
                     borderRadius: '14px',
                     padding: '24px',
                     border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow)',
-                    position: 'sticky',
-                    top: '90px'
+                    boxShadow: 'var(--shadow)'
                 }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         💳 <span>Bill Summary &amp; Checkout</span>

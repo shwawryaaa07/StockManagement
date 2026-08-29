@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 function Navbar() {
+    const { logout } = useAuth();
     const [darkMode, setDarkMode] = useState(() => {
         return localStorage.getItem('darkMode') === 'true';
     });
@@ -50,16 +52,40 @@ function Navbar() {
                         color: '#fff',
                         padding: '8px 14px',
                         borderRadius: '8px',
-                        fontSize: '15px',
+                        fontSize: '13px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '6px',
                         transition: 'all 0.2s ease',
-                        marginLeft: '6px'
+                        marginLeft: '4px'
                     }}
                 >
                     {darkMode ? '☀️ Light' : '🌙 Dark'}
+                </button>
+
+                <button
+                    type="button"
+                    onClick={logout}
+                    title="Lock Application / Sign Out"
+                    style={{
+                        background: 'rgba(239, 83, 80, 0.2)',
+                        border: '1px solid rgba(239, 83, 80, 0.4)',
+                        color: '#ffcdd2',
+                        padding: '8px 12px',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        transition: 'all 0.2s ease',
+                        marginLeft: '4px',
+                        flexShrink: 0
+                    }}
+                >
+                    🔒 Lock
                 </button>
             </div>
         </nav>

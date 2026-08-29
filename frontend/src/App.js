@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Dashboard from './components/Dashboard';
 import ProductList from './components/ProductList';
@@ -9,8 +9,36 @@ import DueInvoices from './components/DueInvoices';
 import InvoiceDetail from './components/InvoiceDetail';
 import EditInvoice from './components/EditInvoice';
 import FloatingButton from './components/FloatingButton';
+import Login from './components/Login';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
-function App() {
+function AppContent() {
+    const { isAuthenticated, loading } = useAuth();
+
+    if (loading) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: 'var(--bg-primary)',
+                color: 'var(--text-primary)',
+                fontWeight: '700',
+                fontSize: '16px',
+                flexDirection: 'column',
+                gap: '12px'
+            }}>
+                <div style={{ fontSize: '36px' }}>🏪</div>
+                <div>Securing Manisha Electronics Portal...</div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
+        return <Login />;
+    }
+
     return (
         <Router>
             <div>
@@ -23,10 +51,19 @@ function App() {
                     <Route path="/invoice/:id" element={<InvoiceDetail />} />
                     <Route path="/edit-invoice/:id" element={<EditInvoice />} />
                     <Route path="/due-invoices" element={<DueInvoices />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
                 <FloatingButton />
             </div>
         </Router>
+    );
+}
+
+function App() {
+    return (
+        <AuthProvider>
+            <AppContent />
+        </AuthProvider>
     );
 }
 

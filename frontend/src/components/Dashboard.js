@@ -5,37 +5,17 @@ import { getDashboard, getInvoices, getProducts } from '../services/api';
 function Dashboard() {
     const navigate = useNavigate();
     const [data, setData] = useState({
-        todayInvoices: 0,
         todaySales: 0,
+        todayInvoices: 0,
         dueInvoicesCount: 0,
-        totalDueAmount: 0,
-        date: new Date().toISOString().split('T')[0]
+        totalDueAmount: 0
     });
     const [invoices, setInvoices] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isOffline, setIsOffline] = useState(false);
-
-    // Format date to DD/MM/YYYY
-    const formatDate = (dateStr) => {
-        if (!dateStr) return '';
-        const d = new Date(dateStr);
-        if (!isNaN(d.getTime())) {
-            const day = String(d.getDate()).padStart(2, '0');
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const year = d.getFullYear();
-            return `${day}/${month}/${year}`;
-        }
-        const parts = String(dateStr).split('T')[0].split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-        return dateStr;
-    };
 
     const loadData = async () => {
         setLoading(true);
-        setIsOffline(false);
         try {
             const results = await Promise.allSettled([
                 getDashboard(),
@@ -43,260 +23,220 @@ function Dashboard() {
                 getProducts()
             ]);
 
-            let hadFailure = false;
-
             if (results[0].status === 'fulfilled' && results[0].value?.data) {
                 setData(results[0].value.data);
-            } else {
-                hadFailure = true;
             }
-
             if (results[1].status === 'fulfilled' && Array.isArray(results[1].value?.data)) {
                 setInvoices(results[1].value.data);
-            } else {
-                hadFailure = true;
             }
-
             if (results[2].status === 'fulfilled' && Array.isArray(results[2].value?.data)) {
                 setProducts(results[2].value.data);
-            } else {
-                hadFailure = true;
             }
-
-            setIsOffline(hadFailure);
-        } catch (e) {
-            console.error('Error loading dashboard data:', e);
-            setIsOffline(true);
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        loadData().catch(console.error);
+        loadData();
     }, []);
 
-    // Calculations for inventory stats
-    const totalInventoryCount = products.reduce((acc, p) => acc + (p.quantity || 0), 0);
-    const totalInventoryValue = products.reduce((acc, p) => acc + ((p.price || 0) * (p.quantity || 0)), 0);
-    const lowStockItems = products.filter(p => (p.quantity || 0) <= 3);
+    // Derived inventory statistics
+    const totalUnitsInStock = products.reduce((acc, p) => acc + (Number(p.quantity) || 0), 0);
+    const totalInventoryValue = products.reduce((acc, p) => acc + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0);
+    const lowStockProducts = products.filter(p => (Number(p.quantity) || 0) <= 2);
+
+    const formatDate = (dateStr) => {
+        if (!dateStr) return 'N/A';
+        const parts = String(dateStr).split('T')[0].split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    };
+
+    const getInitials = (name) => {
+        if (!name) return 'C';
+        const parts = name.trim().split(' ');
+        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+        return name.slice(0, 2).toUpperCase();
+    };
 
     return (
-        <div style={{ maxWidth: '1350px', margin: '0 auto', padding: '24px 20px' }}>
-            {/* Top Bar / Header */}
+        <div className="page-container">
+            {/* Header / Greeting Bar */}
             <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '20px',
+                marginBottom: '24px',
                 flexWrap: 'wrap',
-                gap: '12px'
+                gap: '14px'
             }}>
                 <div>
-                    <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        📊 <span>Business Dashboard</span>
+                    <h1 style={{ fontSize: '26px', fontWeight: '900', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.5px' }}>
+                        Shop Command Center
                     </h1>
-                    <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <span style={{ color: 'var(--gold)' }}>★</span>
-                        <span style={{ fontWeight: '700' }}>MANISHA ELECTRONICS</span>
-                        <span>•</span>
-                        <span>Complete Electronics &amp; Home Appliances Store</span>
-                        <span>•</span>
-                        <span>Valpoi, Sattari - Goa</span>
-                    </div>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0', fontWeight: '500' }}>
+                        Real-time sales, billing register &amp; stock overview
+                    </p>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{
-                        padding: '8px 14px',
-                        background: 'var(--bg-card)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        fontSize: '13px',
-                        fontWeight: '700',
-                        color: 'var(--text-secondary)'
-                    }}>
-                        📅 {formatDate(data.date || new Date())}
-                    </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
                     <button
                         onClick={() => navigate('/create-invoice')}
                         className="btn-primary"
-                        style={{
-                            padding: '10px 18px',
-                            fontSize: '14px',
-                            fontWeight: '700',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px'
-                        }}
+                        style={{ padding: '11px 22px', fontSize: '14px' }}
                     >
-                        ⚡ Quick POS Sale
+                        🧾 + Create New Bill
+                    </button>
+                    <button
+                        onClick={loadData}
+                        className="btn-cancel"
+                        style={{ padding: '11px 16px', fontSize: '14px' }}
+                        title="Refresh data"
+                    >
+                        🔄 Refresh
                     </button>
                 </div>
             </div>
 
-            {/* Offline / Connection Banner */}
-            {isOffline && (
-                <div style={{
-                    padding: '12px 18px',
-                    borderRadius: '10px',
-                    background: 'rgba(255, 152, 0, 0.15)',
-                    border: '1px solid rgba(255, 152, 0, 0.3)',
-                    color: '#e65100',
-                    fontSize: '13px',
-                    fontWeight: '600',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: '20px',
-                    flexWrap: 'wrap',
-                    gap: '10px'
-                }}>
-                    <span>⚠️ Backend server connecting... (http://localhost:8080)</span>
-                    <button
-                        onClick={loadData}
-                        style={{
-                            background: '#e65100',
-                            color: '#ffffff',
-                            border: 'none',
-                            borderRadius: '6px',
-                            padding: '6px 12px',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        🔄 Retry Connection
-                    </button>
-                </div>
-            )}
-
-            {/* 4 Hero Stat Cards */}
+            {/* 4 Hero KPI Metric Cards */}
             <div className="dash-kpi-grid">
-                {/* 1. Today's Invoices */}
+                {/* 1. Today's Gross Revenue */}
                 <div style={{
                     background: 'var(--bg-card)',
-                    padding: '20px',
-                    borderRadius: '12px',
+                    padding: '22px',
+                    borderRadius: '16px',
                     border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow)',
+                    boxShadow: 'var(--shadow-md)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between'
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-muted)' }}>TODAY'S INVOICES</span>
-                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(33, 150, 243, 0.15)', color: '#1e88e5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
-                            🧾
-                        </div>
-                    </div>
-                    <div style={{ marginTop: '12px' }}>
-                        <div style={{ fontSize: '30px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                            {data.todayInvoices || 0}
-                        </div>
-                        <div style={{ fontSize: '12px', color: '#1e88e5', marginTop: '4px', fontWeight: '600' }}>
-                            Transactions today
-                        </div>
-                    </div>
-                </div>
-
-                {/* 2. Today's Sales */}
-                <div style={{
-                    background: 'var(--bg-card)',
-                    padding: '20px',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-muted)' }}>TODAY'S SALES</span>
-                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(76, 175, 80, 0.15)', color: '#2e7d32', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Today's Sales
+                        </span>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--emerald-light)', color: '#065f46', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
                             💰
                         </div>
                     </div>
-                    <div style={{ marginTop: '12px' }}>
-                        <div style={{ fontSize: '30px', fontWeight: '800', color: '#2e7d32' }}>
+                    <div style={{ marginTop: '14px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: '900', color: '#10b981', letterSpacing: '-0.5px' }}>
                             ₹{Number(data.todaySales || 0).toLocaleString('en-IN')}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#2e7d32', marginTop: '4px', fontWeight: '600' }}>
-                            Gross billing revenue
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '600' }}>
+                            Gross counter receipts
                         </div>
                     </div>
                 </div>
 
-                {/* 3. Due Invoices Count */}
+                {/* 2. Today's Invoices Count */}
                 <div style={{
                     background: 'var(--bg-card)',
-                    padding: '20px',
-                    borderRadius: '12px',
+                    padding: '22px',
+                    borderRadius: '16px',
                     border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow)',
+                    boxShadow: 'var(--shadow-md)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between'
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-muted)' }}>DUE BILLS</span>
-                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(255, 152, 0, 0.15)', color: '#f57c00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Today's Bills
+                        </span>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                            🧾
+                        </div>
+                    </div>
+                    <div style={{ marginTop: '14px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+                            {data.todayInvoices || 0}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '600' }}>
+                            Transactions created today
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Market Receivables (Due Balance) */}
+                <div style={{
+                    background: 'var(--bg-card)',
+                    padding: '22px',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: 'var(--shadow-md)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Outstanding Dues
+                        </span>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--amber-light)', color: '#92400e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
                             🟡
                         </div>
                     </div>
-                    <div style={{ marginTop: '12px' }}>
-                        <div style={{ fontSize: '30px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                            {data.dueInvoicesCount || 0}
+                    <div style={{ marginTop: '14px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: '900', color: '#f59e0b', letterSpacing: '-0.5px' }}>
+                            ₹{Number(data.totalDueAmount || 0).toLocaleString('en-IN')}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#f57c00', marginTop: '4px', fontWeight: '600' }}>
-                            Pending customer balances
+                        <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px', fontWeight: '700' }}>
+                            {data.dueInvoicesCount || 0} customer(s) pending
                         </div>
                     </div>
                 </div>
 
-                {/* 4. Total Outstanding Due */}
+                {/* 4. Total Stock Asset Value */}
                 <div style={{
                     background: 'var(--bg-card)',
-                    padding: '20px',
-                    borderRadius: '12px',
+                    padding: '22px',
+                    borderRadius: '16px',
                     border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow)',
+                    boxShadow: 'var(--shadow-md)',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between'
                 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: 'var(--text-muted)' }}>TOTAL MARKET DUE</span>
-                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(239, 83, 80, 0.15)', color: '#c62828', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
-                            💳
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Inventory Asset Value
+                        </span>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(15, 23, 42, 0.08)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                            📦
                         </div>
                     </div>
-                    <div style={{ marginTop: '12px' }}>
-                        <div style={{ fontSize: '30px', fontWeight: '800', color: '#c62828' }}>
-                            ₹{Number(data.totalDueAmount || 0).toLocaleString('en-IN')}
+                    <div style={{ marginTop: '14px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+                            ₹{totalInventoryValue.toLocaleString('en-IN')}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#c62828', marginTop: '4px', fontWeight: '600' }}>
-                            Outstanding receivables
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '600' }}>
+                            {totalUnitsInStock} total units across {products.length} products
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Fast Action Buttons Bar */}
+            {/* Quick Shortcuts Bar */}
             <div className="shortcuts-scroll-bar">
-                <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-secondary)', marginRight: '8px', flexShrink: 0 }}>
-                    ⚡ Shortcuts:
+                <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-secondary)', marginRight: '6px', flexShrink: 0 }}>
+                    ⚡ Jump to:
                 </span>
                 <button
                     onClick={() => navigate('/create-invoice')}
                     style={{
-                        padding: '8px 16px',
-                        background: 'linear-gradient(135deg, var(--gold), #f57f17)',
-                        color: '#1a1a2e',
+                        padding: '9px 18px',
+                        background: 'linear-gradient(135deg, var(--gold), #d97706)',
+                        color: '#0f172a',
                         border: 'none',
-                        borderRadius: '6px',
+                        borderRadius: '8px',
                         fontSize: '13px',
-                        fontWeight: '700',
+                        fontWeight: '800',
                         cursor: 'pointer',
                         flexShrink: 0
                     }}
@@ -306,261 +246,255 @@ function Dashboard() {
                 <button
                     onClick={() => navigate('/products')}
                     className="btn-secondary"
-                    style={{ padding: '8px 16px', fontSize: '13px', fontWeight: '600', flexShrink: 0 }}
+                    style={{ padding: '9px 18px', fontSize: '13px', fontWeight: '700', flexShrink: 0 }}
                 >
                     📦 Manage Products ({products.length})
                 </button>
                 <button
                     onClick={() => navigate('/due-invoices')}
                     style={{
-                        padding: '8px 16px',
-                        background: 'rgba(255, 152, 0, 0.15)',
-                        color: '#e65100',
-                        border: '1px solid rgba(255, 152, 0, 0.3)',
-                        borderRadius: '6px',
+                        padding: '9px 18px',
+                        background: 'var(--amber-light)',
+                        color: '#92400e',
+                        border: '1px solid rgba(245, 158, 11, 0.4)',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        flexShrink: 0
+                    }}
+                >
+                    🟡 Due Ledger ({data.dueInvoicesCount || 0})
+                </button>
+                <button
+                    onClick={() => navigate('/invoices')}
+                    style={{
+                        padding: '9px 18px',
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
                         fontSize: '13px',
                         fontWeight: '700',
                         cursor: 'pointer',
                         flexShrink: 0
                     }}
                 >
-                    🟡 Settle Pending Dues ({data.dueInvoicesCount || 0})
-                </button>
-                <button
-                    onClick={() => navigate('/invoices')}
-                    style={{
-                        padding: '8px 16px',
-                        background: 'var(--bg-body)',
-                        color: 'var(--text-primary)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        flexShrink: 0
-                    }}
-                >
-                    📋 View All Invoices
+                    📋 View Invoices ({invoices.length})
                 </button>
             </div>
 
-            {/* 2-Column Split: Recent Invoices & Stock Status */}
+            {/* 2-Column Split: Recent Bills & Inventory Health */}
             <div className="dash-main-grid">
-                {/* LEFT: Recent Invoices */}
+                {/* LEFT: Recent Invoices Stream */}
                 <div style={{
                     background: 'var(--bg-card)',
-                    borderRadius: '12px',
+                    borderRadius: '16px',
                     border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow)',
+                    boxShadow: 'var(--shadow-md)',
                     overflow: 'hidden'
                 }}>
                     <div style={{
-                        padding: '16px 20px',
+                        padding: '18px 24px',
                         borderBottom: '1px solid var(--border-color)',
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center'
                     }}>
-                        <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h2 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                             📋 <span>Recent Invoices</span>
-                        </h3>
+                        </h2>
                         <button
                             onClick={() => navigate('/invoices')}
                             style={{
                                 background: 'none',
                                 border: 'none',
-                                color: 'var(--primary)',
+                                color: 'var(--primary-accent)',
                                 fontWeight: '700',
-                                fontSize: '12px',
+                                fontSize: '13px',
                                 cursor: 'pointer'
                             }}
                         >
-                            View All →
+                            View All ({invoices.length}) →
                         </button>
                     </div>
 
                     {loading ? (
-                        <div style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>Loading recent invoices...</div>
+                        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                            Loading recent bills...
+                        </div>
                     ) : invoices.length === 0 ? (
-                        <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                            <div style={{ fontSize: '32px', marginBottom: '8px' }}>🧾</div>
-                            <div style={{ fontWeight: '600' }}>No invoices recorded yet</div>
+                        <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                            <div style={{ fontSize: '36px', marginBottom: '10px' }}>🧾</div>
+                            <div style={{ fontWeight: '700', fontSize: '15px', color: 'var(--text-primary)' }}>No Invoices Created Yet</div>
+                            <p style={{ fontSize: '13px', margin: '6px 0 16px 0' }}>Generate your first customer bill to see real-time records.</p>
                             <button
                                 onClick={() => navigate('/create-invoice')}
                                 className="btn-primary"
-                                style={{ marginTop: '12px', padding: '8px 16px', fontSize: '13px' }}
+                                style={{ padding: '10px 20px', fontSize: '13px' }}
                             >
-                                Generate First Invoice
+                                + Generate First Bill
                             </button>
                         </div>
                     ) : (
-                        <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                            <table style={{ width: '100%', minWidth: '550px', borderCollapse: 'collapse', fontSize: '13px' }}>
                                 <thead>
-                                    <tr style={{ background: 'var(--bg-body)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                                        <th style={{ padding: '10px 16px', textAlign: 'left' }}>Invoice #</th>
-                                        <th style={{ padding: '10px 16px', textAlign: 'left' }}>Customer</th>
-                                        <th style={{ padding: '10px 16px', textAlign: 'right' }}>Total</th>
-                                        <th style={{ padding: '10px 16px', textAlign: 'center' }}>Status</th>
-                                        <th style={{ padding: '10px 16px', textAlign: 'center' }}>Action</th>
+                                    <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+                                        <th style={{ padding: '12px 18px', textAlign: 'left', fontWeight: '700' }}>Bill # / Customer</th>
+                                        <th style={{ padding: '12px 18px', textAlign: 'left', fontWeight: '700' }}>Date</th>
+                                        <th style={{ padding: '12px 18px', textAlign: 'right', fontWeight: '700' }}>Amount (₹)</th>
+                                        <th style={{ padding: '12px 18px', textAlign: 'center', fontWeight: '700' }}>Status</th>
+                                        <th style={{ padding: '12px 18px', textAlign: 'center', fontWeight: '700' }}>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {invoices.slice(0, 6).map((inv) => {
-                                        const isPaid = (Number(inv.amountDue || 0) <= 0);
-                                        return (
-                                            <tr
-                                                key={inv.id}
-                                                style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }}
-                                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(26, 35, 126, 0.03)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                            >
-                                                <td style={{ padding: '12px 16px', fontWeight: '700', color: 'var(--primary)' }}>
-                                                    {inv.invoiceNumber}
-                                                </td>
-                                                <td style={{ padding: '12px 16px' }}>
-                                                    <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>
-                                                        {inv.customerName}
-                                                    </div>
-                                                    <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                                                        {formatDate(inv.createdAt)}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '700', color: 'var(--text-primary)' }}>
-                                                    ₹{Number(inv.totalAmount || 0).toLocaleString('en-IN')}
-                                                </td>
-                                                <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                                                    <span style={{
-                                                        padding: '3px 8px',
-                                                        borderRadius: '6px',
-                                                        fontSize: '11px',
-                                                        fontWeight: '700',
-                                                        background: isPaid ? 'rgba(76, 175, 80, 0.15)' : 'rgba(255, 152, 0, 0.15)',
-                                                        color: isPaid ? '#2e7d32' : '#e65100'
+                                    {invoices.slice(0, 6).map((inv) => (
+                                        <tr
+                                            key={inv.id}
+                                            style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                        >
+                                            <td style={{ padding: '12px 18px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{
+                                                        width: '34px',
+                                                        height: '34px',
+                                                        borderRadius: '8px',
+                                                        background: 'rgba(15, 23, 42, 0.08)',
+                                                        color: 'var(--text-primary)',
+                                                        fontWeight: '800',
+                                                        fontSize: '12px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        flexShrink: 0
                                                     }}>
-                                                        {isPaid ? 'PAID' : `DUE ₹${Number(inv.amountDue).toLocaleString('en-IN')}`}
-                                                    </span>
-                                                </td>
-                                                <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                                                    <button
-                                                        onClick={() => navigate(`/invoice/${inv.id}`)}
-                                                        style={{
-                                                            padding: '4px 10px',
-                                                            borderRadius: '6px',
-                                                            border: '1px solid var(--border-color)',
-                                                            background: 'var(--bg-body)',
-                                                            color: 'var(--text-primary)',
-                                                            fontSize: '12px',
-                                                            cursor: 'pointer'
-                                                        }}
-                                                        title="Print/View Bill"
-                                                    >
-                                                        👁️ View
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })}
+                                                        {getInitials(inv.customerName)}
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontWeight: '800', color: 'var(--text-primary)' }}>
+                                                            {inv.customerName}
+                                                        </div>
+                                                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                                            #{inv.invoiceNumber}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '12px 18px', color: 'var(--text-secondary)' }}>
+                                                {formatDate(inv.createdAt)}
+                                            </td>
+                                            <td style={{ padding: '12px 18px', textAlign: 'right', fontWeight: '800', color: 'var(--text-primary)' }}>
+                                                ₹{Number(inv.totalAmount || 0).toLocaleString('en-IN')}
+                                            </td>
+                                            <td style={{ padding: '12px 18px', textAlign: 'center' }}>
+                                                {Number(inv.balanceDue || 0) <= 0 ? (
+                                                    <span className="badge-paid">● PAID</span>
+                                                ) : (
+                                                    <span className="badge-due">● DUE ₹{Number(inv.balanceDue).toLocaleString('en-IN')}</span>
+                                                )}
+                                            </td>
+                                            <td style={{ padding: '12px 18px', textAlign: 'center' }}>
+                                                <button
+                                                    onClick={() => navigate(`/invoice/${inv.id}`)}
+                                                    className="btn-cancel"
+                                                    style={{ padding: '5px 10px', fontSize: '12px', fontWeight: '700' }}
+                                                >
+                                                    View / Print 🖨️
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
                                 </tbody>
                             </table>
                         </div>
                     )}
                 </div>
 
-                {/* RIGHT: Inventory Valuation & Low Stock Alerts */}
+                {/* RIGHT: Inventory Status & Low Stock Watchlist */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                     {/* Inventory Summary Card */}
                     <div style={{
                         background: 'var(--bg-card)',
-                        padding: '20px',
-                        borderRadius: '12px',
+                        borderRadius: '16px',
+                        padding: '22px',
                         border: '1px solid var(--border-color)',
-                        boxShadow: 'var(--shadow)'
+                        boxShadow: 'var(--shadow-md)'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-                            <h3 style={{ fontSize: '16px', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
-                                📦 Inventory Summary
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h3 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+                                📦 Inventory Health
                             </h3>
                             <button
                                 onClick={() => navigate('/products')}
-                                style={{ background: 'none', border: 'none', color: 'var(--primary)', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
+                                style={{ background: 'none', border: 'none', color: 'var(--primary-accent)', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
                             >
                                 All Products →
                             </button>
                         </div>
 
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                            <div style={{ padding: '12px', background: 'var(--bg-body)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>TOTAL UNITS IN STOCK</div>
-                                <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--text-primary)', marginTop: '4px' }}>
-                                    {totalInventoryCount}
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                            <div style={{ background: 'var(--bg-surface)', padding: '14px', borderRadius: '10px' }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Units</div>
+                                <div style={{ fontSize: '22px', fontWeight: '900', color: 'var(--text-primary)', marginTop: '4px' }}>
+                                    {totalUnitsInStock}
                                 </div>
                             </div>
-                            <div style={{ padding: '12px', background: 'var(--bg-body)', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
-                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '600' }}>STOCK VALUATION</div>
-                                <div style={{ fontSize: '20px', fontWeight: '800', color: 'var(--primary)', marginTop: '4px' }}>
-                                    ₹{totalInventoryValue.toLocaleString('en-IN')}
+                            <div style={{ background: 'var(--bg-surface)', padding: '14px', borderRadius: '10px' }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Catalog Items</div>
+                                <div style={{ fontSize: '22px', fontWeight: '900', color: '#10b981', marginTop: '4px' }}>
+                                    {products.length}
                                 </div>
                             </div>
+                        </div>
+
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Valuation Breakdown:</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>₹{totalInventoryValue.toLocaleString('en-IN')}</strong>
                         </div>
                     </div>
 
                     {/* Low Stock Alerts */}
                     <div style={{
                         background: 'var(--bg-card)',
-                        borderRadius: '12px',
+                        borderRadius: '16px',
+                        padding: '22px',
                         border: '1px solid var(--border-color)',
-                        boxShadow: 'var(--shadow)',
-                        overflow: 'hidden'
+                        boxShadow: 'var(--shadow-md)'
                     }}>
-                        <div style={{
-                            padding: '14px 20px',
-                            borderBottom: '1px solid var(--border-color)',
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center'
-                        }}>
-                            <h3 style={{ fontSize: '15px', fontWeight: '700', color: '#c62828', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                ⚠️ <span>Low Stock Watchlist ({lowStockItems.length})</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#e11d48', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                ⚠️ Low Stock Watchlist ({lowStockProducts.length})
                             </h3>
                         </div>
 
-                        {loading ? (
-                            <div style={{ padding: '20px', textAlign: 'center', color: 'var(--text-muted)' }}>Checking inventory...</div>
-                        ) : lowStockItems.length === 0 ? (
-                            <div style={{ padding: '24px 20px', textAlign: 'center', color: '#2e7d32', fontSize: '13px' }}>
+                        {lowStockProducts.length === 0 ? (
+                            <div style={{ padding: '16px', background: 'var(--emerald-light)', borderRadius: '10px', color: '#065f46', fontSize: '13px', fontWeight: '700', textAlign: 'center' }}>
                                 ✅ All products are well stocked!
                             </div>
                         ) : (
-                            <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                {lowStockItems.slice(0, 5).map(p => (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {lowStockProducts.slice(0, 4).map(p => (
                                     <div
                                         key={p.id}
                                         style={{
-                                            padding: '12px 20px',
-                                            borderBottom: '1px solid var(--border-color)',
                                             display: 'flex',
                                             justifyContent: 'space-between',
-                                            alignItems: 'center'
+                                            alignItems: 'center',
+                                            padding: '10px 14px',
+                                            background: 'var(--bg-surface)',
+                                            borderRadius: '8px',
+                                            borderLeft: '4px solid #e11d48'
                                         }}
                                     >
                                         <div>
-                                            <div style={{ fontWeight: '600', fontSize: '13px', color: 'var(--text-primary)' }}>
-                                                {p.name}
-                                            </div>
-                                            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                                                ₹{Number(p.price || 0).toLocaleString('en-IN')} | {p.category || 'General'}
-                                            </span>
+                                            <div style={{ fontWeight: '800', fontSize: '13px', color: 'var(--text-primary)' }}>{p.name}</div>
+                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.category} • ₹{Number(p.price).toLocaleString('en-IN')}</div>
                                         </div>
-                                        <span style={{
-                                            padding: '3px 8px',
-                                            borderRadius: '6px',
-                                            fontSize: '11px',
-                                            fontWeight: '700',
-                                            background: p.quantity === 0 ? 'rgba(239, 83, 80, 0.15)' : 'rgba(255, 152, 0, 0.15)',
-                                            color: p.quantity === 0 ? '#c62828' : '#e65100'
-                                        }}>
-                                            {p.quantity === 0 ? 'OUT OF STOCK' : `Only ${p.quantity} left`}
+                                        <span className="badge-urgent">
+                                            {p.quantity} Left
                                         </span>
                                     </div>
                                 ))}

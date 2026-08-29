@@ -25,7 +25,7 @@ public class ProductController {
 
     @GetMapping
     public List<Product> getAllProducts() {
-        return productRepository.findAll();
+        return productRepository.findByActiveTrue();
     }
 
     @GetMapping("/{id}")
@@ -37,7 +37,8 @@ public class ProductController {
     // ✅ FIX 3: Extracted method to handle duplicate product logic
     @PostMapping
     public ResponseEntity<?> createProduct(@Valid @RequestBody Product product) {
-        List<Product> existingProducts = productRepository.findByNameIgnoreCase(product.getName());
+        product.setActive(true);
+        List<Product> existingProducts = productRepository.findByNameIgnoreCaseAndActiveTrue(product.getName());
 
         if (!existingProducts.isEmpty()) {
             // ✅ FIX 1: Using getFirst() instead of get(0)
@@ -52,6 +53,7 @@ public class ProductController {
 
     // ✅ FIX 3: Extracted method to reduce complexity
     private Product mergeProduct(Product existing, Product incoming) {
+        existing.setActive(true);
         existing.setQuantity(existing.getQuantity() + incoming.getQuantity());
 
         if (incoming.getPrice() != null && incoming.getPrice().compareTo(existing.getPrice()) != 0) {
@@ -60,6 +62,14 @@ public class ProductController {
 
         if (incoming.getCategory() != null && !incoming.getCategory().isEmpty()) {
             existing.setCategory(incoming.getCategory());
+        }
+
+        if (incoming.getModelNumber() != null && !incoming.getModelNumber().isEmpty()) {
+            existing.setModelNumber(incoming.getModelNumber());
+        }
+
+        if (incoming.getSerialNumbers() != null && !incoming.getSerialNumbers().isEmpty()) {
+            existing.setSerialNumbers(incoming.getSerialNumbers());
         }
 
         return productRepository.save(existing);
@@ -74,28 +84,32 @@ public class ProductController {
         existingProduct.setPrice(productDetails.getPrice());
         existingProduct.setQuantity(productDetails.getQuantity());
         existingProduct.setCategory(productDetails.getCategory());
+        existingProduct.setModelNumber(productDetails.getModelNumber());
+        existingProduct.setSerialNumbers(productDetails.getSerialNumbers());
+        existingProduct.setActive(true);
 
         return productRepository.save(existingProduct);
     }
 
     @DeleteMapping("/{id}")
+    @org.springframework.transaction.annotation.Transactional
     public ResponseEntity<?> deleteProduct(@PathVariable Long id) {
         try {
-            // ✅ FIX 2: Removed unused 'product' variable
-            if (!productRepository.existsById(id)) {
+            Product product = productRepository.findById(id).orElse(null);
+            if (product == null) {
                 return ResponseEntity
                         .status(HttpStatus.NOT_FOUND)
                         .body("Product not found with id: " + id);
             }
 
             List<InvoiceItem> items = invoiceItemRepository.findByProductId(id);
-            if (!items.isEmpty()) {
-                return ResponseEntity
-                        .status(HttpStatus.CONFLICT)
-                        .body("Cannot delete product because it is used in " + items.size() + " invoice(s).");
+            if (items.isEmpty()) {
+                productRepository.deleteById(id);
+            } else {
+                product.setActive(false);
+                productRepository.save(product);
             }
 
-            productRepository.deleteById(id);
             return ResponseEntity.ok("Product deleted successfully");
         } catch (Exception e) {
             return ResponseEntity

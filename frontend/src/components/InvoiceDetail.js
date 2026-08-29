@@ -24,30 +24,81 @@ function InvoiceDetail() {
         }
     };
 
-    const handlePrint = () => {
-        window.print();
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (!isNaN(d.getTime())) {
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}/${month}/${year}`;
+        }
+        const parts = String(dateStr).split('T')[0].split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
     };
 
-    // Helper function to convert number to words
+    const handlePrint = () => {
+        const prevTitle = document.title;
+        document.title = invoice?.invoiceNumber ? `Tax_Invoice_${invoice.invoiceNumber}` : 'Tax_Invoice';
+        window.print();
+        document.title = prevTitle;
+    };
+
+    // Helper function to convert number to words (Indian Numbering System)
     const numberToWords = (num) => {
-        if (num === 0) return 'Zero';
+        if (!num || isNaN(num) || num === 0) return 'Zero';
         const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine',
             'Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
         const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
-        const numStr = num.toString();
 
-        if (num < 20) return ones[num];
-        if (num < 100) return tens[Math.floor(num / 10)] + (num % 10 !== 0 ? ' ' + ones[num % 10] : '');
-        if (num < 1000) return ones[Math.floor(num / 100)] + ' Hundred' + (num % 100 !== 0 ? ' ' + numberToWords(num % 100) : '');
-        if (num < 100000) return numberToWords(Math.floor(num / 1000)) + ' Thousand' + (num % 1000 !== 0 ? ' ' + numberToWords(num % 1000) : '');
-        return numberToWords(Math.floor(num / 100000)) + ' Lakh' + (num % 100000 !== 0 ? ' ' + numberToWords(num % 100000) : '');
+        const convertLessThanOneThousand = (n) => {
+            if (n === 0) return '';
+            if (n < 20) return ones[n];
+            if (n < 100) return tens[Math.floor(n / 10)] + (n % 10 !== 0 ? ' ' + ones[n % 10] : '');
+            return ones[Math.floor(n / 100)] + ' Hundred' + (n % 100 !== 0 ? ' ' + convertLessThanOneThousand(n % 100) : '');
+        };
+
+        const convert = (n) => {
+            if (n === 0) return 'Zero';
+            let result = '';
+            if (n >= 10000000) {
+                result += convert(Math.floor(n / 10000000)) + ' Crore ';
+                n %= 10000000;
+            }
+            if (n >= 100000) {
+                result += convertLessThanOneThousand(Math.floor(n / 100000)) + ' Lakh ';
+                n %= 100000;
+            }
+            if (n >= 1000) {
+                result += convertLessThanOneThousand(Math.floor(n / 1000)) + ' Thousand ';
+                n %= 1000;
+            }
+            if (n > 0) {
+                result += convertLessThanOneThousand(n);
+            }
+            return result.trim();
+        };
+
+        return convert(num);
+    };
+
+    const getFullAmountInWords = (amount) => {
+        const num = Number(amount) || 0;
+        const wholeRupees = Math.floor(num);
+        const paise = Math.round((num - wholeRupees) * 100);
+
+        let words = numberToWords(wholeRupees) + ' Rupees';
+        if (paise > 0) {
+            words += ' and ' + numberToWords(paise) + ' Paise';
+        }
+        return words + ' Only';
     };
 
     if (loading) return <div style={{ padding: '30px' }}><h2 style={{ color: 'var(--text-primary)' }}>Loading...</h2></div>;
     if (!invoice) return <div style={{ padding: '30px' }}><h2 style={{ color: 'var(--text-primary)' }}>Invoice not found</h2></div>;
-
-    const totalAmount = invoice.totalAmount || 0;
-    const totalInWords = numberToWords(Math.round(totalAmount));
 
     const styles = {
         container: { padding: '30px' },
@@ -192,9 +243,9 @@ function InvoiceDetail() {
     };
 
     return (
-        <div style={styles.container}>
+        <div className="invoice-detail-container" style={styles.container}>
             {/* Printable Invoice */}
-            <div ref={printRef} style={styles.invoicePaper}>
+            <div ref={printRef} className="invoice-paper" style={styles.invoicePaper}>
                 <div style={styles.header}>
                     <div style={styles.shopName}>
                         {invoice.businessName || 'MANISHA ELECTRONIC'}
@@ -217,12 +268,23 @@ function InvoiceDetail() {
 
                 <div style={styles.invoiceNoDate}>
                     <span><strong>Invoice No:</strong> {invoice.invoiceNumber}</span>
-                    <span><strong>Date:</strong> {invoice.createdAt?.split('T')[0]}</span>
+                    <span><strong>Date:</strong> {formatDate(invoice.createdAt)}</span>
                 </div>
 
                 <div style={styles.toSection}>
-                    <strong>To:</strong> {invoice.customerName}
-                    {invoice.deliveryAddress && <span> , {invoice.deliveryAddress}</span>}
+                    <div>
+                        <strong>To:</strong> {invoice.customerName}
+                        {invoice.customerContact && invoice.customerContact !== 'N/A' && (
+                            <span style={{ marginLeft: '18px' }}>
+                                <strong>Contact:</strong> {invoice.customerContact}
+                            </span>
+                        )}
+                    </div>
+                    {invoice.deliveryAddress && invoice.deliveryAddress !== 'N/A' && (
+                        <div style={{ marginTop: '4px' }}>
+                            <strong>Address:</strong> {invoice.deliveryAddress}
+                        </div>
+                    )}
                 </div>
 
                 <table style={styles.table}>
@@ -242,8 +304,19 @@ function InvoiceDetail() {
                                 <td style={styles.td}>{index + 1}</td>
                                 <td style={styles.td}>{item.quantity}</td>
                                 <td style={styles.td}>
-                                    {item.product?.name || 'Product'}
-                                    {item.product?.model && <div style={{ fontSize: '11px', color: '#555' }}>Model: {item.product.model}</div>}
+                                    <div style={{ fontWeight: 'bold', fontSize: '13px' }}>
+                                        {item.productName || item.product?.name || 'Product'}
+                                    </div>
+                                    {(item.modelNumber || item.product?.modelNumber || item.product?.model) && (
+                                        <div style={{ fontSize: '12px', marginTop: '2px', color: '#222' }}>
+                                            <strong>Model:</strong> {item.modelNumber || item.product?.modelNumber || item.product?.model}
+                                        </div>
+                                    )}
+                                    {item.serialNumber && (
+                                        <div style={{ fontSize: '12px', marginTop: '2px', color: '#222' }}>
+                                            <strong>S/N:</strong> {item.serialNumber}
+                                        </div>
+                                    )}
                                 </td>
                                 <td style={styles.td}>₹{item.unitPrice?.toLocaleString()}/-</td>
                                 <td style={styles.td}>₹{item.totalPrice?.toLocaleString()}/-</td>
@@ -260,13 +333,34 @@ function InvoiceDetail() {
                 <table style={styles.totals}>
                     <tbody>
                     <tr>
-                        <td style={{ width: '70%' }}></td>
-                        <td style={{ width: '30%', textAlign: 'right' }}>
-                            <div><strong>Total:</strong> ₹{invoice.totalAmount?.toLocaleString()}/-</div>
-                            <div style={{ fontSize: '12px', color: '#555' }}>CGST@: {invoice.gstRate / 2}%</div>
-                            <div style={{ fontSize: '12px', color: '#555' }}>SGST@: {invoice.gstRate / 2}%</div>
-                            <div style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '5px' }}>
-                                Grand Total: ₹{invoice.totalAmount?.toLocaleString()}/-
+                        <td style={{ width: '45%' }}></td>
+                        <td style={{ width: '55%', textAlign: 'right' }}>
+                            <div style={{ padding: '2px 0' }}>
+                                <span>Subtotal (Taxable): </span>
+                                <strong>₹{Number(invoice.subtotal != null ? invoice.subtotal : (invoice.totalAmount || 0) - (invoice.gstAmount || 0)).toLocaleString('en-IN')}/-</strong>
+                            </div>
+                            {Number(invoice.gstRate || 0) > 0 && (
+                                <>
+                                    <div style={{ fontSize: '12px', color: '#555', padding: '1px 0' }}>
+                                        CGST @ {(invoice.gstRate / 2)}%: ₹{(Number(invoice.gstAmount || 0) / 2).toLocaleString('en-IN')}/-
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#555', padding: '1px 0' }}>
+                                        SGST @ {(invoice.gstRate / 2)}%: ₹{(Number(invoice.gstAmount || 0) / 2).toLocaleString('en-IN')}/-
+                                    </div>
+                                </>
+                            )}
+                            {invoice.discount != null && Number(invoice.discount) > 0 && (
+                                <div style={{ fontSize: '13px', color: '#2e7d32', padding: '2px 0' }}>
+                                    Discount: -₹{Number(invoice.discount).toLocaleString('en-IN')}/-
+                                </div>
+                            )}
+                            <div style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '6px', borderTop: '1px solid #000', paddingTop: '4px' }}>
+                                Grand Total: ₹{Number(invoice.totalAmount || 0).toLocaleString('en-IN')}/-
+                            </div>
+                            <div style={{ fontSize: '12px', color: Number(invoice.amountDue || 0) > 0 ? '#c62828' : '#2e7d32', marginTop: '4px' }}>
+                                {Number(invoice.amountDue || 0) > 0
+                                    ? `Amount Due: ₹${Number(invoice.amountDue).toLocaleString('en-IN')}/-`
+                                    : 'Payment: FULLY PAID'}
                             </div>
                         </td>
                     </tr>
@@ -274,7 +368,7 @@ function InvoiceDetail() {
                 </table>
 
                 <div style={styles.amountInWords}>
-                    {totalInWords} {totalAmount % 100 !== 0 ? 'and ' + (totalAmount % 100) + '/-' : ''} only
+                    {getFullAmountInWords(invoice.totalAmount)}
                 </div>
 
                 <div style={styles.signature}>
@@ -291,7 +385,7 @@ function InvoiceDetail() {
             </div>
 
             {/* Buttons */}
-            <div style={styles.buttonContainer}>
+            <div className="buttonContainer no-print" style={styles.buttonContainer}>
                 <button onClick={handlePrint} style={styles.printBtn}>
                     🖨️ Print Invoice
                 </button>

@@ -21,7 +21,7 @@ public class StockManagementApplication {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")  // Allow all endpoints
-						.allowedOrigins("http://localhost:3000")  // Allow React app
+						.allowedOriginPatterns("http://localhost:[*]", "http://127.0.0.1:[*]", "*")  // Allow local and client origins
 						.allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")  // Allow these methods
 						.allowedHeaders("*")  // Allow all headers
 						.allowCredentials(true);  // Allow cookies/auth

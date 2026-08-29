@@ -31,12 +31,19 @@ public class Product {
  private Integer quantity;
 
  private String category;
+ private String modelNumber;
+ private String serialNumbers;
+
+ @Column(name = "active")
+ private Boolean active = true;
 
  // ============================================================
  // CONSTRUCTORS
  // ============================================================
 
- public Product() {}
+ public Product() {
+  this.active = true;
+ }
 
  public Product(String name, BigDecimal price, Integer quantity, String category) {
   this.name = name;
@@ -63,4 +70,13 @@ public class Product {
 
  public String getCategory() { return category; }
  public void setCategory(String category) { this.category = category; }
+
+ public String getModelNumber() { return modelNumber; }
+ public void setModelNumber(String modelNumber) { this.modelNumber = modelNumber; }
+
+ public String getSerialNumbers() { return serialNumbers; }
+ public void setSerialNumbers(String serialNumbers) { this.serialNumbers = serialNumbers; }
+
+ public Boolean getActive() { return active != null ? active : true; }
+ public void setActive(Boolean active) { this.active = active; }
 }

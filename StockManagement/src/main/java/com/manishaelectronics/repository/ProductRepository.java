@@ -9,9 +9,11 @@ import java.util.List;
 @Repository
 public interface ProductRepository extends JpaRepository<Product, Long> {
 
-    // ✅ FIX 2: Exact match method
+    List<Product> findByActiveTrue();
+
+    List<Product> findByNameIgnoreCaseAndActiveTrue(String name);
+
     List<Product> findByNameIgnoreCase(String name);
 
-    // Keep this for search functionality
     List<Product> findByNameContainingIgnoreCase(String name);
 }

@@ -18,13 +18,17 @@ public class InvoiceItem {
     private Invoice invoice;
 
     @ManyToOne
-    @JoinColumn(name = "product_id", nullable = false)
+    @JoinColumn(name = "product_id", nullable = true)
     private Product product;
+
+    private String productName;
 
     private Integer quantity;
     private BigDecimal unitPrice;
     private BigDecimal discount;
     private BigDecimal totalPrice;
+    private String modelNumber;
+    private String serialNumber;
 
     // Default constructor
     public InvoiceItem() {}
@@ -60,4 +64,18 @@ public class InvoiceItem {
 
     public BigDecimal getTotalPrice() { return totalPrice; }
     public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
+
+    public String getModelNumber() { return modelNumber; }
+    public void setModelNumber(String modelNumber) { this.modelNumber = modelNumber; }
+
+    public String getSerialNumber() { return serialNumber; }
+    public void setSerialNumber(String serialNumber) { this.serialNumber = serialNumber; }
+
+    public String getProductName() {
+        if (productName != null && !productName.isBlank()) {
+            return productName;
+        }
+        return product != null ? product.getName() : "Product";
+    }
+    public void setProductName(String productName) { this.productName = productName; }
 }

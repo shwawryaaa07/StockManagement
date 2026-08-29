@@ -19,46 +19,47 @@ function Navbar() {
                     <span className="main">
                         MANISHA <span className="gold">ELECTRONICS</span>
                     </span>
-                    <span className="tagline">★ Trusted Shop Since 2024</span>
+                    <span className="tagline">★ Complete Electronics &amp; Home Appliances Store</span>
                 </div>
             </div>
 
             <div className="navbar-links">
-                <NavLink to="/" className="nav-link" end>
+                <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} end>
                     <span className="icon">📊</span> Dashboard
                 </NavLink>
-                <NavLink to="/products" className="nav-link">
+                <NavLink to="/products" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <span className="icon">📦</span> Products
                 </NavLink>
-                <NavLink to="/create-invoice" className="nav-link">
+                <NavLink to="/create-invoice" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <span className="icon">🧾</span> New Invoice
                 </NavLink>
-                <NavLink to="/invoices" className="nav-link">
+                <NavLink to="/invoices" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                     <span className="icon">📋</span> Invoices
                 </NavLink>
-                <NavLink to="/due-invoices" className="nav-link">
-                    <span className="icon">🟡</span> Due
+                <NavLink to="/due-invoices" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                    <span className="icon">🟡</span> Due Bills
                 </NavLink>
 
-                {/* ✅ FIX 4: Dark Mode Toggle - Matching size */}
                 <button
                     className="dark-toggle"
                     onClick={() => setDarkMode(!darkMode)}
-                    title="Toggle Dark Mode"
+                    title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
                     style={{
-                        background: 'rgba(255,255,255,0.1)',
-                        border: 'none',
+                        background: 'rgba(255,255,255,0.12)',
+                        border: '1px solid rgba(255,255,255,0.2)',
                         color: '#fff',
                         padding: '8px 14px',
-                        borderRadius: '5px',
-                        fontSize: '16px',
+                        borderRadius: '8px',
+                        fontSize: '15px',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        gap: '6px',
+                        transition: 'all 0.2s ease',
+                        marginLeft: '6px'
                     }}
                 >
-                    {darkMode ? '☀️' : '🌙'}
+                    {darkMode ? '☀️ Light' : '🌙 Dark'}
                 </button>
             </div>
         </nav>

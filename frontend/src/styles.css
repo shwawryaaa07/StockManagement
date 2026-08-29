@@ -183,14 +183,15 @@ body {
 }
 
 /* ============================================================
-   ACTIVE NAV LINK (Underline Style)
+   ACTIVE NAV LINK (Modern Glass Pill)
    ============================================================ */
 
 .nav-link.active {
-    background: transparent !important;
+    background: rgba(249, 168, 37, 0.15) !important;
     color: var(--gold) !important;
-    border-bottom: 3px solid var(--gold) !important;
-    border-radius: 0 !important;
+    border: 1px solid rgba(249, 168, 37, 0.35) !important;
+    border-radius: 8px !important;
+    font-weight: 700;
 }
 
 /* ============================================================
@@ -556,4 +557,62 @@ body {
 @keyframes fadeIn {
     from { opacity: 0; transform: scale(0.95); }
     to { opacity: 1; transform: scale(1); }
+}
+
+/* ============================================================
+   PRINT STYLES
+   ============================================================ */
+
+@media print {
+    /* Hide all application chrome, navbar, buttons, and floating buttons */
+    .navbar,
+    .fab,
+    .buttonContainer,
+    .no-print,
+    nav,
+    button,
+    .quick-actions,
+    .dark-toggle {
+        display: none !important;
+        visibility: hidden !important;
+    }
+
+    body, html {
+        background: #ffffff !important;
+        color: #000000 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        font-family: 'Times New Roman', Times, serif !important;
+    }
+
+    .invoice-detail-container,
+    .dashboard,
+    #root,
+    body > div {
+        padding: 0 !important;
+        margin: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .invoicePaper,
+    .invoice-paper {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 12mm 16mm !important;
+        margin: 0 auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        box-sizing: border-box !important;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 0mm;
+    }
 }

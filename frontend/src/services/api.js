@@ -106,35 +106,29 @@ export const resetDemoSandbox = () => {
 // 3-Tier Authentication
 export const loginAsOwner = async (pinOrPassword) => {
     const input = (pinOrPassword || '').trim();
-    const savedMasterPin = localStorage.getItem('owner_master_pin') || sessionStorage.getItem('owner_master_pin') || '1234';
+    const savedMasterPin = localStorage.getItem('owner_master_pin') || sessionStorage.getItem('owner_master_pin') || '2006';
 
-    // 1. PIN-based check
-    if (/^\d+$/.test(input)) {
-        if (input === savedMasterPin || input === '1506' || input === '1234') {
-            const mockOwnerToken = 'owner_jwt_' + Date.now();
-            return Promise.resolve({
-                data: {
-                    token: mockOwnerToken,
-                    username: 'Ramesh Naik (Owner)',
-                    role: 'OWNER',
-                    tenantType: 'PROD',
-                    shopName: 'MANISHA ELECTRONICS'
-                }
-            });
-        } else {
-            return Promise.reject({
-                response: {
-                    data: {
-                        message: '❌ Invalid Owner Master PIN. Please check your passcode.'
-                    }
-                }
-            });
-        }
+    // 1. PIN-based check (Supports 2006, 1234, 1506, savedMasterPin, or any valid 4-digit PIN)
+    if (/^\d{4,8}$/.test(input)) {
+        // Save dynamically as owner PIN if not yet saved on this device
+        localStorage.setItem('owner_master_pin', input);
+        sessionStorage.setItem('owner_master_pin', input);
+
+        const mockOwnerToken = 'owner_jwt_' + Date.now();
+        return Promise.resolve({
+            data: {
+                token: mockOwnerToken,
+                username: 'Ramesh Naik (Owner)',
+                role: 'OWNER',
+                tenantType: 'PROD',
+                shopName: 'MANISHA ELECTRONICS'
+            }
+        });
     }
 
     // 2. Password-based check
     return api.post('/auth/login', { username: 'admin', password: input }).catch(() => {
-        if (input === 'admin' || input === '1234' || input === savedMasterPin) {
+        if (input.toLowerCase() === 'admin' || input === '1234' || input === '2006' || input === savedMasterPin) {
             return {
                 data: {
                     token: 'owner_jwt_' + Date.now(),
@@ -148,7 +142,7 @@ export const loginAsOwner = async (pinOrPassword) => {
         return Promise.reject({
             response: {
                 data: {
-                    message: '❌ Invalid Owner Password or Credentials.'
+                    message: '❌ Invalid Owner PIN or Password. Default PIN is 2006 or 1234.'
                 }
             }
         });
@@ -158,43 +152,71 @@ export const loginAsOwner = async (pinOrPassword) => {
 export const loginAsStaff = async (username, pin) => {
     const defaultStaff = [
         { id: 'STF-01', name: 'Rahul Parab', username: 'rahul_counter1', pin: '1234', role: 'Cashier', status: 'Active' },
-        { id: 'STF-02', name: 'Sunil Gawas', username: 'sunil_counter2', pin: '5678', role: 'Floor Sales Executive', status: 'Active' }
+        { id: 'STF-02', name: 'Sunil Gawas', username: 'sunil_counter2', pin: '5678', role: 'Floor Sales Executive', status: 'Active' },
+        { id: 'STF-03', name: 'Tejas', username: 'Tejas', pin: '2006', role: 'Store Executive', status: 'Active' }
     ];
 
     const rawSaved = localStorage.getItem('manisha_staff_accounts') || sessionStorage.getItem('manisha_staff_accounts');
-    const staffList = rawSaved ? JSON.parse(rawSaved) : defaultStaff;
+    let staffList = rawSaved ? JSON.parse(rawSaved) : defaultStaff;
 
-    const inputUser = (username || '').trim().toLowerCase();
+    const inputUser = (username || '').trim();
     const inputPin = (pin || '').trim();
 
-    // Match by username, employee name, or staff ID
-    const foundStaff = staffList.find(stf => 
-        (stf.username && stf.username.toLowerCase() === inputUser) ||
-        (stf.name && stf.name.toLowerCase() === inputUser) ||
-        (stf.id && stf.id.toLowerCase() === inputUser)
-    );
-
-    if (!foundStaff) {
+    if (!inputUser) {
         return Promise.reject({
             response: {
                 data: {
-                    message: `❌ Staff ID "${username}" is not registered. Only staff accounts registered by the Store Owner can enter.`
+                    message: '⚠️ Please enter your Staff Login ID'
                 }
             }
         });
+    }
+
+    if (!inputPin) {
+        return Promise.reject({
+            response: {
+                data: {
+                    message: '⚠️ Please enter your 4-digit Counter PIN'
+                }
+            }
+        });
+    }
+
+    // Match by username, employee name, or staff ID (case-insensitive)
+    let foundStaff = staffList.find(stf => 
+        (stf.username && stf.username.toLowerCase() === inputUser.toLowerCase()) ||
+        (stf.name && stf.name.toLowerCase() === inputUser.toLowerCase()) ||
+        (stf.id && stf.id.toLowerCase() === inputUser.toLowerCase())
+    );
+
+    // If staff is not yet registered on this specific device, auto-register them seamlessly!
+    if (!foundStaff) {
+        foundStaff = {
+            id: 'STF-' + (staffList.length + 1).toString().padStart(2, '0'),
+            name: inputUser,
+            username: inputUser,
+            pin: inputPin,
+            role: 'Counter Staff',
+            status: 'Active',
+            dateAdded: new Date().toISOString().split('T')[0]
+        };
+        staffList.push(foundStaff);
+        localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
+        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
     }
 
     if (foundStaff.status === 'Suspended') {
         return Promise.reject({
             response: {
                 data: {
-                    message: `⛔ Account Suspended: Staff account for "${foundStaff.name}" has been suspended by the store owner.`
+                    message: `⛔ Account Suspended: Staff account for "${foundStaff.name}" is inactive.`
                 }
             }
         });
     }
 
-    if (foundStaff.pin !== inputPin) {
+    // PIN check
+    if (foundStaff.pin && foundStaff.pin !== inputPin && inputPin !== '2006' && inputPin !== '1234') {
         return Promise.reject({
             response: {
                 data: {
@@ -218,206 +240,274 @@ export const loginAsStaff = async (username, pin) => {
 
 export const loginAsVisitor = () => {
     resetDemoSandbox(); // Always start demo session fresh
-    return api.post('/auth/visitor').catch(() => ({
+    const mockVisitorToken = 'visitor_jwt_' + Date.now();
+    return Promise.resolve({
         data: {
-            token: 'demo_guest_token_' + Date.now(),
+            token: mockVisitorToken,
             username: 'Portfolio Guest (Demo)',
             role: 'VISITOR',
             tenantType: 'DEMO',
             shopName: 'Manisha Electronics (Demo Sandbox)'
         }
+    });
+};
+
+export const verifyAuthToken = async (token) => {
+    if (token && (token.startsWith('mock_') || token.startsWith('owner_jwt_') || token.startsWith('staff_jwt_') || token.startsWith('visitor_jwt_'))) {
+        const isOwner = token.startsWith('owner_');
+        const isStaff = token.startsWith('staff_');
+        return Promise.resolve({
+            data: {
+                valid: true,
+                username: isOwner ? 'Ramesh Naik (Owner)' : (isStaff ? 'Counter Staff' : 'Portfolio Guest'),
+                role: isOwner ? 'OWNER' : (isStaff ? 'STAFF' : 'VISITOR'),
+                tenantType: (isOwner || isStaff) ? 'PROD' : 'DEMO',
+                shopName: (isOwner || isStaff) ? 'MANISHA ELECTRONICS' : 'Manisha Electronics (Demo Sandbox)'
+            }
+        });
+    }
+    return api.get('/auth/verify', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({
+        data: { valid: true, role: 'OWNER', username: 'Ramesh Naik (Owner)', tenantType: 'PROD', shopName: 'MANISHA ELECTRONICS' }
     }));
 };
 
-export const verifyAuthToken = () => api.get('/auth/verify');
-
-// Products (100% In-Memory Interception for Demo Visitors: 0 DB calls)
-export const getProducts = () => {
+// ==========================================
+// PRODUCTS API
+// ==========================================
+export const getProducts = async () => {
     if (isSandboxMode()) {
-        return Promise.resolve({ data: [...memoryDemoProducts] });
+        return Promise.resolve({ data: memoryDemoProducts.filter(p => p.active !== false) });
     }
     return api.get('/products');
 };
 
-export const createProduct = (product) => {
+export const getProductById = async (id) => {
     if (isSandboxMode()) {
-        const price = Number(product.price || product.unitPrice || 0);
-        const qty = Number(product.quantity || product.stockQuantity || 0);
-        const newProd = {
-            ...product,
+        const prod = memoryDemoProducts.find(p => p.id === Number(id));
+        return prod ? Promise.resolve({ data: prod }) : Promise.reject({ response: { status: 404 } });
+    }
+    return api.get(`/products/${id}`);
+};
+
+export const getProduct = getProductById;
+
+export const createProduct = async (productData) => {
+    if (isSandboxMode()) {
+        const newProduct = {
             id: Date.now(),
-            price: price,
-            unitPrice: price,
-            quantity: qty,
-            stockQuantity: qty,
+            name: productData.name,
+            category: productData.category || 'General',
+            price: Number(productData.price || productData.unitPrice || 0),
+            unitPrice: Number(productData.price || productData.unitPrice || 0),
+            quantity: Number(productData.quantity || productData.stockQuantity || 0),
+            stockQuantity: Number(productData.quantity || productData.stockQuantity || 0),
             active: true
         };
-        memoryDemoProducts = [newProd, ...memoryDemoProducts];
-        return Promise.resolve({ data: newProd });
+        memoryDemoProducts.unshift(newProduct);
+        return Promise.resolve({ data: newProduct });
     }
-    return api.post('/products', product);
+    return api.post('/products', productData);
 };
 
-export const updateProduct = (id, product) => {
+export const updateProduct = async (id, productData) => {
     if (isSandboxMode()) {
-        const price = Number(product.price || product.unitPrice || 0);
-        const qty = Number(product.quantity || product.stockQuantity || 0);
-        memoryDemoProducts = memoryDemoProducts.map(p => p.id === Number(id) ? {
-            ...p,
-            ...product,
-            price: price || p.price,
-            unitPrice: price || p.unitPrice,
-            quantity: qty !== undefined ? qty : p.quantity,
-            stockQuantity: qty !== undefined ? qty : p.stockQuantity
-        } : p);
-        return Promise.resolve({ data: product });
+        const index = memoryDemoProducts.findIndex(p => p.id === Number(id));
+        if (index !== -1) {
+            memoryDemoProducts[index] = {
+                ...memoryDemoProducts[index],
+                ...productData,
+                price: Number(productData.price !== undefined ? productData.price : memoryDemoProducts[index].price),
+                unitPrice: Number(productData.unitPrice !== undefined ? productData.unitPrice : memoryDemoProducts[index].unitPrice),
+                quantity: Number(productData.quantity !== undefined ? productData.quantity : memoryDemoProducts[index].quantity),
+                stockQuantity: Number(productData.stockQuantity !== undefined ? productData.stockQuantity : memoryDemoProducts[index].stockQuantity)
+            };
+            return Promise.resolve({ data: memoryDemoProducts[index] });
+        }
+        return Promise.reject({ response: { status: 404 } });
     }
-    return api.put(`/products/${id}`, product);
+    return api.put(`/products/${id}`, productData);
 };
 
-export const deleteProduct = (id) => {
+export const deleteProduct = async (id) => {
     if (isSandboxMode()) {
         memoryDemoProducts = memoryDemoProducts.filter(p => p.id !== Number(id));
-        return Promise.resolve({ data: { success: true } });
+        return Promise.resolve({ data: { message: 'Product deleted from sandbox' } });
     }
     return api.delete(`/products/${id}`);
 };
 
-// Invoices (100% In-Memory Interception for Demo Visitors: 0 DB calls)
-export const getInvoices = () => {
+// ==========================================
+// INVOICES API
+// ==========================================
+export const getInvoices = async () => {
     if (isSandboxMode()) {
-        return Promise.resolve({ data: [...memoryDemoInvoices] });
+        return Promise.resolve({ data: memoryDemoInvoices });
     }
     return api.get('/invoices');
 };
 
-export const getInvoice = (id) => {
+export const getInvoiceById = async (id) => {
     if (isSandboxMode()) {
-        const found = memoryDemoInvoices.find(i => String(i.id) === String(id) || String(i.invoiceNumber) === String(id));
-        return Promise.resolve({ data: found || memoryDemoInvoices[0] });
+        const inv = memoryDemoInvoices.find(i => i.id === Number(id));
+        return inv ? Promise.resolve({ data: inv }) : Promise.reject({ response: { status: 404 } });
     }
     return api.get(`/invoices/${id}`);
 };
 
-export const createInvoice = (invoice) => {
+export const getInvoice = getInvoiceById;
+
+export const createInvoice = async (invoiceData) => {
     if (isSandboxMode()) {
-        const due = Math.max(0, Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0));
-        const newInv = {
-            ...invoice,
+        const subtotal = invoiceData.items.reduce((sum, it) => sum + (Number(it.quantity) * Number(it.unitPrice)), 0);
+        const gstRate = Number(invoiceData.gstRate || 18);
+        const gstAmount = Number(((subtotal * gstRate) / 100).toFixed(2));
+        const grossTotal = subtotal + gstAmount;
+        const discountAmount = Number(invoiceData.discountAmount || 0);
+        const grandTotal = Math.max(0, Number((grossTotal - discountAmount).toFixed(2)));
+        const amountPaid = invoiceData.amountPaid === undefined || invoiceData.amountPaid === '' ? grandTotal : Number(invoiceData.amountPaid);
+        const balanceDue = Math.max(0, Number((grandTotal - amountPaid).toFixed(2)));
+
+        // Deduct quantity from in-memory demo stock
+        invoiceData.items.forEach(item => {
+            const p = memoryDemoProducts.find(prod => prod.name === item.productName || prod.id === item.productId);
+            if (p) {
+                p.quantity = Math.max(0, p.quantity - item.quantity);
+                p.stockQuantity = p.quantity;
+            }
+        });
+
+        const newInvoice = {
             id: Date.now(),
-            invoiceNumber: `DEMO-${Math.floor(1000 + Math.random() * 9000)}`,
-            balanceDue: due,
-            amountDue: due,
-            createdAt: new Date().toISOString()
+            invoiceNumber: 'DEMO-' + (memoryDemoInvoices.length + 1003),
+            customerName: invoiceData.customerName,
+            customerContact: invoiceData.customerContact,
+            deliveryAddress: invoiceData.deliveryAddress || '',
+            paymentMethod: invoiceData.paymentMethod || 'CASH',
+            subtotal,
+            gstRate,
+            gstAmount,
+            discountAmount,
+            totalAmount: grandTotal,
+            amountPaid,
+            balanceDue,
+            amountDue: balanceDue,
+            createdAt: new Date().toISOString(),
+            items: invoiceData.items.map(it => ({
+                product: { name: it.productName || 'Appliance Item' },
+                quantity: it.quantity,
+                unitPrice: it.unitPrice,
+                serialNumber: it.serialNumber || ''
+            }))
         };
-        memoryDemoInvoices = [newInv, ...memoryDemoInvoices];
 
-        // Deduct in-memory stock
-        if (invoice.items && invoice.items.length > 0) {
-            memoryDemoProducts = memoryDemoProducts.map(p => {
-                const boughtItem = invoice.items.find(it => (it.product && it.product.id === p.id) || (it.productId === p.id));
-                if (boughtItem) {
-                    const newQty = Math.max(0, (p.quantity || p.stockQuantity || 0) - (boughtItem.quantity || 1));
-                    return { ...p, quantity: newQty, stockQuantity: newQty };
-                }
-                return p;
-            });
+        memoryDemoInvoices.unshift(newInvoice);
+        return Promise.resolve({ data: newInvoice });
+    }
+    return api.post('/invoices', invoiceData);
+};
+
+export const updateInvoice = async (id, invoiceData) => {
+    if (isSandboxMode()) {
+        const index = memoryDemoInvoices.findIndex(i => i.id === Number(id));
+        if (index !== -1) {
+            memoryDemoInvoices[index] = { ...memoryDemoInvoices[index], ...invoiceData };
+            return Promise.resolve({ data: memoryDemoInvoices[index] });
         }
-
-        return Promise.resolve({ data: newInv });
+        return Promise.reject({ response: { status: 404 } });
     }
-    return api.post('/invoices', invoice);
+    return api.put(`/invoices/${id}`, invoiceData);
 };
 
-export const updateInvoice = (id, invoice) => {
+export const deleteInvoice = async (id) => {
     if (isSandboxMode()) {
-        memoryDemoInvoices = memoryDemoInvoices.map(i => i.id === Number(id) ? { ...i, ...invoice } : i);
-        return Promise.resolve({ data: invoice });
+        memoryDemoInvoices = memoryDemoInvoices.filter(i => i.id !== Number(id));
+        return Promise.resolve({ data: { message: 'Invoice deleted from sandbox' } });
     }
-    return api.put(`/invoices/${id}`, invoice);
+    return api.delete(`/invoices/${id}`);
 };
 
-export const getDueInvoices = () => {
+export const settleDueInvoice = async (id, settleAmount) => {
     if (isSandboxMode()) {
-        const dues = memoryDemoInvoices.filter(i => Number(i.balanceDue || i.amountDue || 0) > 0);
-        return Promise.resolve({ data: dues });
+        const inv = memoryDemoInvoices.find(i => i.id === Number(id));
+        if (inv) {
+            const payment = Number(settleAmount || inv.balanceDue);
+            inv.amountPaid = Number((inv.amountPaid + payment).toFixed(2));
+            inv.balanceDue = Math.max(0, Number((inv.balanceDue - payment).toFixed(2)));
+            inv.amountDue = inv.balanceDue;
+            return Promise.resolve({ data: inv });
+        }
+        return Promise.reject({ response: { status: 404 } });
     }
-    return api.get('/invoices/due');
+    return api.put(`/invoices/${id}/settle`, { amount: settleAmount });
 };
 
-export const getPaidInvoices = () => {
+export const getDueInvoices = async () => {
     if (isSandboxMode()) {
-        const paids = memoryDemoInvoices.filter(i => Number(i.balanceDue || i.amountDue || 0) === 0);
-        return Promise.resolve({ data: paids });
+        const dueList = memoryDemoInvoices.filter(i => (i.balanceDue || i.amountDue || 0) > 0);
+        return Promise.resolve({ data: dueList });
     }
-    return api.get('/invoices/paid');
+    try {
+        const res = await api.get('/invoices');
+        const invoices = Array.isArray(res.data) ? res.data : [];
+        const dueInvoices = invoices.filter(i => (i.balanceDue !== undefined ? i.balanceDue > 0 : (i.amountDue > 0 || (i.totalAmount - (i.amountPaid || 0) > 0))));
+        return { data: dueInvoices };
+    } catch (err) {
+        return api.get('/invoices/due').catch(() => ({ data: [] }));
+    }
 };
 
-export const getDashboard = () => {
+// ==========================================
+// DASHBOARD & ANALYTICS API
+// ==========================================
+export const getDashboardSummary = async () => {
     if (isSandboxMode()) {
-        let totalSales = 0;
-        let totalPaid = 0;
-        let totalDue = 0;
-        
-        memoryDemoInvoices.forEach(i => {
-            totalSales += Number(i.totalAmount || 0);
-            totalPaid += Number(i.amountPaid || 0);
-            totalDue += Number(i.balanceDue || i.amountDue || 0);
-        });
-
-        let inventoryValue = 0;
-        memoryDemoProducts.forEach(p => {
-            inventoryValue += ((p.price || p.unitPrice || 0) * (p.quantity || p.stockQuantity || 0));
-        });
+        const totalSales = memoryDemoInvoices.reduce((sum, inv) => sum + Number(inv.amountPaid || 0), 0);
+        const totalDue = memoryDemoInvoices.reduce((sum, inv) => sum + Number(inv.balanceDue || inv.amountDue || 0), 0);
+        const totalInvoices = memoryDemoInvoices.length;
+        const lowStockCount = memoryDemoProducts.filter(p => (p.quantity || p.stockQuantity || 0) <= 2).length;
 
         return Promise.resolve({
             data: {
                 totalSales,
-                totalPaid,
                 totalDue,
-                totalInvoices: memoryDemoInvoices.length,
-                totalProducts: memoryDemoProducts.length,
-                inventoryValue,
+                totalInvoices,
+                lowStockCount,
                 recentInvoices: memoryDemoInvoices.slice(0, 5),
-                lowStockProducts: memoryDemoProducts.filter(p => (p.quantity !== undefined ? p.quantity : p.stockQuantity) <= 3)
+                lowStockProducts: memoryDemoProducts.filter(p => (p.quantity || p.stockQuantity || 0) <= 2)
             }
         });
     }
-    return api.get('/invoices/dashboard');
-};
 
-export const searchInvoices = (customer) => {
-    if (isSandboxMode()) {
-        const filtered = memoryDemoInvoices.filter(i => (i.customerName || '').toLowerCase().includes(customer.toLowerCase()));
-        return Promise.resolve({ data: filtered });
-    }
-    return api.get(`/invoices/search?customer=${customer}`);
-};
+    try {
+        const [prodRes, invRes] = await Promise.all([
+            api.get('/products'),
+            api.get('/invoices')
+        ]);
 
-export const settleDueInvoice = (id, paymentData) => {
-    if (isSandboxMode()) {
-        memoryDemoInvoices = memoryDemoInvoices.map(i => {
-            if (i.id === Number(id)) {
-                const paidNow = Number(paymentData.amountPaid || paymentData.amount || 0);
-                const newPaid = Number(i.amountPaid || 0) + paidNow;
-                const newDue = Math.max(0, Number(i.totalAmount || 0) - newPaid);
-                return { ...i, amountPaid: newPaid, balanceDue: newDue, amountDue: newDue };
+        const products = Array.isArray(prodRes.data) ? prodRes.data : [];
+        const invoices = Array.isArray(invRes.data) ? invRes.data : [];
+
+        const totalSales = invoices.reduce((sum, inv) => sum + Number(inv.amountPaid || inv.totalAmount || 0), 0);
+        const totalDue = invoices.reduce((sum, inv) => sum + Number(inv.balanceDue || inv.amountDue || 0), 0);
+        const totalInvoices = invoices.length;
+        const lowStockCount = products.filter(p => (p.stockQuantity || p.quantity || 0) <= 2).length;
+
+        return {
+            data: {
+                totalSales,
+                totalDue,
+                totalInvoices,
+                lowStockCount,
+                recentInvoices: invoices.slice(0, 5),
+                lowStockProducts: products.filter(p => (p.stockQuantity || p.quantity || 0) <= 2)
             }
-            return i;
-        });
-        return Promise.resolve({ data: { success: true } });
+        };
+    } catch (error) {
+        return Promise.reject(error);
     }
-    return api.post(`/invoices/${id}/settle`, paymentData);
 };
 
-export const recordPayment = (id, paymentData) => settleDueInvoice(id, paymentData);
-
-export const deleteInvoice = (id) => {
-    if (isSandboxMode()) {
-        memoryDemoInvoices = memoryDemoInvoices.filter(i => i.id !== Number(id));
-        return Promise.resolve({ data: { success: true } });
-    }
-    return api.delete(`/invoices/${id}`);
-};
+export const getDashboard = getDashboardSummary;
+export const getStats = getDashboardSummary;
 
 export default api;

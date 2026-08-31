@@ -25,7 +25,7 @@ function Login() {
     const [showOwnerPass, setShowOwnerPass] = useState(false);
     
     // Staff state
-    const [staffUsername, setStaffUsername] = useState('rahul_counter1');
+    const [staffUsername, setStaffUsername] = useState('Tejas');
     const [staffPin, setStaffPin] = useState('');
     
     // Global state
@@ -55,7 +55,7 @@ function Login() {
             await deferredPrompt.userChoice;
             setDeferredPrompt(null);
         } else {
-            alert('💡 To install on desktop:\n1. Click the ⊕ Install icon in your browser address bar (top right)\n2. Or click Menu (⋮) → "Install Manisha POS"');
+            alert('💡 To install on mobile / desktop:\n1. Open browser menu (⋮)\n2. Tap "Install App" or "Add to Home screen"');
         }
     };
 
@@ -79,7 +79,7 @@ function Login() {
                 navigate('/', { replace: true });
             }
         } catch (err) {
-            setErrorMsg(err.response?.data?.message || '⚠️ Could not connect to demo server. Please retry in a moment.');
+            setErrorMsg(err.response?.data?.message || '⚠️ Could not connect to demo server. Please retry.');
         } finally {
             setLoading(false);
         }
@@ -89,7 +89,7 @@ function Login() {
     const handleStaffLogin = async (e) => {
         if (e) e.preventDefault();
         if (!staffPin.trim()) {
-            setErrorMsg('⚠️ Please enter the 4-digit Counter PIN');
+            setErrorMsg('⚠️ Please enter your 4-digit Counter PIN');
             return;
         }
         setLoading(true);
@@ -141,7 +141,7 @@ function Login() {
                 navigate('/', { replace: true });
             }
         } catch (err) {
-            setErrorMsg(err.response?.data?.message || '❌ Invalid Owner Passcode. Default PIN is 1234');
+            setErrorMsg(err.response?.data?.message || '❌ Invalid Owner Passcode.');
         } finally {
             setLoading(false);
         }
@@ -158,14 +158,14 @@ function Login() {
                 radial-gradient(circle at 15% 25%, rgba(245, 158, 11, 0.12) 0%, transparent 45%),
                 radial-gradient(circle at 85% 75%, rgba(217, 119, 6, 0.08) 0%, transparent 45%)
             `,
-            padding: '36px 20px',
+            padding: '24px 16px',
             fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
             boxSizing: 'border-box',
             position: 'relative'
         }}>
-            {/* Top Right Desktop App Install Button */}
+            {/* Top Right Desktop/Mobile App Install Button */}
             {!isStoreMode && (
-                <div style={{ position: 'absolute', top: '16px', right: '20px' }}>
+                <div style={{ position: 'absolute', top: '12px', right: '16px', zIndex: 10 }}>
                     <button
                         onClick={handleInstallApp}
                         style={{
@@ -173,17 +173,17 @@ function Login() {
                             border: '1px solid rgba(245, 158, 11, 0.35)',
                             color: '#fbbf24',
                             borderRadius: '20px',
-                            padding: '6px 14px',
-                            fontSize: '12px',
+                            padding: '5px 12px',
+                            fontSize: '11px',
                             fontWeight: '700',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
+                            gap: '5px',
                             backdropFilter: 'blur(8px)',
                             transition: 'all 0.15s ease'
                         }}
-                        title="Install as native desktop app shortcut"
+                        title="Install as native app shortcut"
                     >
                         <span>📲</span> Install POS App
                     </button>
@@ -192,36 +192,38 @@ function Login() {
 
             <div style={{
                 width: '100%',
-                maxWidth: '1060px',
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-                gap: '36px',
-                alignItems: 'center'
+                maxWidth: '1040px',
+                display: 'flex',
+                flexWrap: 'wrap-reverse', // On mobile, Auth Card sits on top!
+                justifyContent: 'center',
+                alignItems: 'center',
+                gap: '32px',
+                marginTop: '10px'
             }}>
-                {/* LEFT HERO COLUMN: Minimalist Dark & Gold */}
-                <div style={{ padding: '8px 12px', color: '#ffffff' }}>
+                {/* BRAND SHOWCASE COLUMN */}
+                <div style={{ flex: '1 1 340px', maxWidth: '500px', padding: '4px', color: '#ffffff' }}>
                     {/* Header Badge */}
                     <div style={{
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '8px',
+                        gap: '6px',
                         background: isStoreMode ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.10)',
                         border: isStoreMode ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(245, 158, 11, 0.30)',
                         borderRadius: '30px',
-                        padding: '6px 14px',
-                        fontSize: '12px',
+                        padding: '4px 12px',
+                        fontSize: '11px',
                         fontWeight: '700',
                         color: isStoreMode ? '#34d399' : '#fbbf24',
-                        marginBottom: '16px'
+                        marginBottom: '12px'
                     }}>
                         <span>{isStoreMode ? '🏪' : '✨'}</span> {isStoreMode ? 'STORE TERMINAL - PRODUCTION POS' : 'Retail POS & Inventory System'}
                     </div>
 
                     <h1 style={{
-                        fontSize: '40px',
+                        fontSize: '34px',
                         fontWeight: '900',
                         lineHeight: '1.15',
-                        margin: '0 0 8px 0',
+                        margin: '0 0 6px 0',
                         letterSpacing: '-0.5px'
                     }}>
                         MANISHA <span style={{
@@ -232,9 +234,9 @@ function Login() {
                     </h1>
 
                     <p style={{
-                        fontSize: '15px',
+                        fontSize: '14px',
                         color: '#94a3b8',
-                        margin: '0 0 24px 0',
+                        margin: '0 0 20px 0',
                         fontWeight: '500'
                     }}>
                         Fast POS Billing, Stock Control &amp; Credit Ledger
@@ -243,108 +245,108 @@ function Login() {
                     {/* 4 Clean Dark & Gold Feature Cards */}
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr 1fr',
-                        gap: '12px',
-                        marginBottom: '24px'
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                        gap: '10px',
+                        marginBottom: '20px'
                     }}>
                         <div style={{
                             background: 'rgba(15, 23, 42, 0.8)',
                             border: '1px solid rgba(245, 158, 11, 0.20)',
-                            borderRadius: '14px',
-                            padding: '14px'
+                            borderRadius: '12px',
+                            padding: '12px'
                         }}>
                             <div style={{
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '8px',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '7px',
                                 background: 'rgba(245, 158, 11, 0.15)',
                                 border: '1px solid rgba(245, 158, 11, 0.3)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '16px',
+                                fontSize: '14px',
                                 color: '#fbbf24',
-                                marginBottom: '8px'
+                                marginBottom: '6px'
                             }}>
                                 ⚡
                             </div>
-                            <div style={{ fontWeight: '700', fontSize: '13px', color: '#f8fafc' }}>Instant POS</div>
-                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>GST billing &amp; thermal print</div>
+                            <div style={{ fontWeight: '700', fontSize: '12px', color: '#f8fafc' }}>Instant POS</div>
+                            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>GST billing &amp; thermal print</div>
                         </div>
 
                         <div style={{
                             background: 'rgba(15, 23, 42, 0.8)',
                             border: '1px solid rgba(245, 158, 11, 0.20)',
-                            borderRadius: '14px',
-                            padding: '14px'
+                            borderRadius: '12px',
+                            padding: '12px'
                         }}>
                             <div style={{
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '8px',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '7px',
                                 background: 'rgba(245, 158, 11, 0.15)',
                                 border: '1px solid rgba(245, 158, 11, 0.3)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '16px',
+                                fontSize: '14px',
                                 color: '#fbbf24',
-                                marginBottom: '8px'
+                                marginBottom: '6px'
                             }}>
                                 📲
                             </div>
-                            <div style={{ fontWeight: '700', fontSize: '13px', color: '#f8fafc' }}>WhatsApp Invoices</div>
-                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>Direct digital receipts</div>
+                            <div style={{ fontWeight: '700', fontSize: '12px', color: '#f8fafc' }}>WhatsApp Invoices</div>
+                            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>Direct digital receipts</div>
                         </div>
 
                         <div style={{
                             background: 'rgba(15, 23, 42, 0.8)',
                             border: '1px solid rgba(245, 158, 11, 0.20)',
-                            borderRadius: '14px',
-                            padding: '14px'
+                            borderRadius: '12px',
+                            padding: '12px'
                         }}>
                             <div style={{
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '8px',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '7px',
                                 background: 'rgba(245, 158, 11, 0.15)',
                                 border: '1px solid rgba(245, 158, 11, 0.3)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '16px',
+                                fontSize: '14px',
                                 color: '#fbbf24',
-                                marginBottom: '8px'
+                                marginBottom: '6px'
                             }}>
                                 📊
                             </div>
-                            <div style={{ fontWeight: '700', fontSize: '13px', color: '#f8fafc' }}>Live Stock &amp; Dues</div>
-                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>Inventory alerts &amp; ledger</div>
+                            <div style={{ fontWeight: '700', fontSize: '12px', color: '#f8fafc' }}>Live Stock &amp; Dues</div>
+                            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>Inventory alerts &amp; ledger</div>
                         </div>
 
                         <div style={{
                             background: 'rgba(15, 23, 42, 0.8)',
                             border: '1px solid rgba(245, 158, 11, 0.20)',
-                            borderRadius: '14px',
-                            padding: '14px'
+                            borderRadius: '12px',
+                            padding: '12px'
                         }}>
                             <div style={{
-                                width: '32px',
-                                height: '32px',
-                                borderRadius: '8px',
+                                width: '28px',
+                                height: '28px',
+                                borderRadius: '7px',
                                 background: 'rgba(245, 158, 11, 0.15)',
                                 border: '1px solid rgba(245, 158, 11, 0.3)',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                fontSize: '16px',
+                                fontSize: '14px',
                                 color: '#fbbf24',
-                                marginBottom: '8px'
+                                marginBottom: '6px'
                             }}>
                                 🛡️
                             </div>
-                            <div style={{ fontWeight: '700', fontSize: '13px', color: '#f8fafc' }}>Role Security</div>
-                            <div style={{ fontSize: '11px', color: '#94a3b8', marginTop: '2px' }}>PIN-protected access</div>
+                            <div style={{ fontWeight: '700', fontSize: '12px', color: '#f8fafc' }}>Role Security</div>
+                            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>PIN-protected access</div>
                         </div>
                     </div>
 
@@ -352,8 +354,8 @@ function Login() {
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '12px',
-                        fontSize: '12px',
+                        gap: '10px',
+                        fontSize: '11px',
                         color: '#64748b',
                         fontWeight: '500'
                     }}>
@@ -363,32 +365,36 @@ function Login() {
                     </div>
                 </div>
 
-                {/* RIGHT COLUMN: Dark & Gold Auth Card */}
+                {/* ACCESS PORTAL AUTH CARD (Centered and Prioritized) */}
                 <div style={{
-                    background: 'rgba(15, 23, 42, 0.90)',
+                    flex: '1 1 340px',
+                    maxWidth: '460px',
+                    width: '100%',
+                    background: 'rgba(15, 23, 42, 0.94)',
                     backdropFilter: 'blur(16px)',
-                    borderRadius: '24px',
-                    padding: '34px 30px',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+                    borderRadius: '22px',
+                    padding: '28px 24px',
+                    boxShadow: '0 20px 50px -10px rgba(0, 0, 0, 0.7)',
                     color: '#f8fafc',
-                    border: '1px solid rgba(245, 158, 11, 0.25)'
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    boxSizing: 'border-box'
                 }}>
-                    <div style={{ textAlign: 'center', marginBottom: '22px' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
                         <div style={{
-                            width: '52px',
-                            height: '52px',
+                            width: '48px',
+                            height: '48px',
                             margin: '0 auto 10px',
                             background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                            borderRadius: '14px',
+                            borderRadius: '12px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '26px',
-                            boxShadow: '0 8px 18px rgba(245, 158, 11, 0.25)'
+                            fontSize: '24px',
+                            boxShadow: '0 6px 16px rgba(245, 158, 11, 0.25)'
                         }}>
                             🏪
                         </div>
-                        <h2 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 4px 0', color: '#ffffff' }}>
+                        <h2 style={{ fontSize: '19px', fontWeight: '800', margin: '0 0 4px 0', color: '#ffffff' }}>
                             {isStoreMode ? 'Counter Terminal Login' : 'Access Portal'}
                         </h2>
                         <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
@@ -404,7 +410,7 @@ function Login() {
                         border: '1px solid rgba(255, 255, 255, 0.08)',
                         padding: '4px',
                         borderRadius: '12px',
-                        marginBottom: '22px',
+                        marginBottom: '20px',
                         gap: '4px'
                     }}>
                         {!isStoreMode && (
@@ -479,15 +485,15 @@ function Login() {
                         </div>
                     )}
 
-                    {/* TAB 1: VISITOR DEMO (Hidden in store mode) */}
+                    {/* TAB 1: VISITOR DEMO */}
                     {!isStoreMode && authMode === 'VISITOR' && (
                         <div>
                             <div style={{
                                 background: 'rgba(245, 158, 11, 0.10)',
                                 border: '1px solid rgba(245, 158, 11, 0.25)',
-                                borderRadius: '14px',
+                                borderRadius: '12px',
                                 padding: '14px',
-                                marginBottom: '20px',
+                                marginBottom: '18px',
                                 textAlign: 'left'
                             }}>
                                 <div style={{ fontWeight: '800', fontSize: '13px', color: '#fbbf24', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -504,7 +510,7 @@ function Login() {
                                 disabled={loading}
                                 style={{
                                     width: '100%',
-                                    padding: '13px',
+                                    padding: '12px',
                                     background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
                                     color: '#0f172a',
                                     border: 'none',
@@ -532,7 +538,7 @@ function Login() {
                                     type="text"
                                     value={staffUsername}
                                     onChange={(e) => setStaffUsername(e.target.value)}
-                                    placeholder="Enter login ID"
+                                    placeholder="e.g. Tejas or rahul_counter1"
                                     required
                                     style={{
                                         width: '100%',
@@ -592,7 +598,7 @@ function Login() {
                                 disabled={loading}
                                 style={{
                                     width: '100%',
-                                    padding: '13px',
+                                    padding: '12px',
                                     background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
                                     color: '#0f172a',
                                     border: 'none',
@@ -621,7 +627,7 @@ function Login() {
                                         type={showOwnerPass ? 'text' : 'password'}
                                         value={ownerPasscode}
                                         onChange={(e) => setOwnerPasscode(e.target.value)}
-                                        placeholder="Enter PIN or password"
+                                        placeholder="Enter PIN (e.g. 2006 or 1234)"
                                         required
                                         style={{
                                             width: '100%',
@@ -673,7 +679,7 @@ function Login() {
                                 disabled={loading}
                                 style={{
                                     width: '100%',
-                                    padding: '13px',
+                                    padding: '12px',
                                     background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
                                     color: '#0f172a',
                                     border: 'none',
@@ -692,7 +698,7 @@ function Login() {
                 </div>
             </div>
 
-            {/* Modal: Protected Action for Visitors (Prevents accidental download) */}
+            {/* Modal: Protected Action for Visitors */}
             {showVisitorRestrictedModal && (
                 <div style={{
                     position: 'fixed',
@@ -713,32 +719,32 @@ function Login() {
                         border: '1px solid rgba(245, 158, 11, 0.35)',
                         borderRadius: '20px',
                         padding: '28px',
-                        maxWidth: '420px',
+                        maxWidth: '400px',
                         width: '100%',
                         textAlign: 'center',
                         boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
                         color: '#f8fafc'
                     }}>
                         <div style={{
-                            width: '56px',
-                            height: '56px',
-                            borderRadius: '16px',
+                            width: '52px',
+                            height: '52px',
+                            borderRadius: '14px',
                             background: 'rgba(245, 158, 11, 0.15)',
                             border: '1px solid rgba(245, 158, 11, 0.3)',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '26px',
-                            margin: '0 auto 16px'
+                            fontSize: '24px',
+                            margin: '0 auto 14px'
                         }}>
                             🔒
                         </div>
 
-                        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#fbbf24', margin: '0 0 10px 0' }}>
+                        <h3 style={{ fontSize: '17px', fontWeight: '800', color: '#fbbf24', margin: '0 0 8px 0' }}>
                             Authorized Terminals Only
                         </h3>
 
-                        <p style={{ fontSize: '13px', color: '#94a3b8', lineHeight: '1.5', margin: '0 0 20px 0' }}>
+                        <p style={{ fontSize: '12px', color: '#94a3b8', lineHeight: '1.5', margin: '0 0 18px 0' }}>
                             Desktop POS App installation is reserved for authorized <strong>Counter Staff</strong> and <strong>Store Owner</strong> registers.
                         </p>
 
@@ -746,12 +752,12 @@ function Login() {
                             <button
                                 onClick={() => setShowVisitorRestrictedModal(false)}
                                 style={{
-                                    padding: '9px 18px',
+                                    padding: '8px 16px',
                                     background: 'rgba(255, 255, 255, 0.08)',
                                     border: '1px solid rgba(255, 255, 255, 0.15)',
                                     color: '#cbd5e1',
                                     borderRadius: '10px',
-                                    fontSize: '13px',
+                                    fontSize: '12px',
                                     fontWeight: '600',
                                     cursor: 'pointer'
                                 }}
@@ -764,12 +770,12 @@ function Login() {
                                     setAuthMode('STAFF');
                                 }}
                                 style={{
-                                    padding: '9px 18px',
+                                    padding: '8px 16px',
                                     background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
                                     border: 'none',
                                     color: '#0f172a',
                                     borderRadius: '10px',
-                                    fontSize: '13px',
+                                    fontSize: '12px',
                                     fontWeight: '800',
                                     cursor: 'pointer'
                                 }}

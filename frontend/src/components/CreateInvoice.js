@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getProducts, createInvoice, getInvoices } from '../services/api';
+import { getProducts, createInvoice } from '../services/api';
 
 function CreateInvoice() {
     const navigate = useNavigate();
@@ -17,7 +17,6 @@ function CreateInvoice() {
     const [searchTerm, setSearchTerm] = useState('');
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [loading, setLoading] = useState(false);
-    const [pastCustomers, setPastCustomers] = useState([]);
     const dropdownRef = useRef(null);
 
     useEffect(() => {
@@ -36,29 +35,9 @@ function CreateInvoice() {
 
     const loadData = async () => {
         try {
-            const [prodRes, invRes] = await Promise.all([
-                getProducts(),
-                getInvoices()
-            ]);
-
+            const prodRes = await getProducts();
             if (prodRes.data && Array.isArray(prodRes.data)) {
                 setProducts(prodRes.data);
-            }
-
-            if (invRes.data && Array.isArray(invRes.data)) {
-                const uniqueCusts = [];
-                const seen = new Set();
-                invRes.data.forEach(inv => {
-                    if (inv.customerName && !seen.has(inv.customerName.toLowerCase().trim())) {
-                        seen.add(inv.customerName.toLowerCase().trim());
-                        uniqueCusts.push({
-                            name: inv.customerName,
-                            contact: inv.customerContact,
-                            address: inv.deliveryAddress
-                        });
-                    }
-                });
-                setPastCustomers(uniqueCusts);
             }
         } catch (error) {
             console.error('Error loading POS catalog:', error);
@@ -112,12 +91,6 @@ function CreateInvoice() {
 
     const removeItem = (index) => {
         setItems(items.filter((_, i) => i !== index));
-    };
-
-    const selectPastCustomer = (c) => {
-        setCustomerName(c.name || '');
-        setCustomerContact(c.contact || '');
-        setDeliveryAddress(c.address || '');
     };
 
     const handleSubmit = async (e) => {
@@ -224,33 +197,10 @@ function CreateInvoice() {
                         border: '1px solid var(--border-color)',
                         boxShadow: 'var(--shadow-md)'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                        <div style={{ marginBottom: '14px' }}>
                             <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
                                 👤 Customer Information
                             </h3>
-                            {pastCustomers.length > 0 && (
-                                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                                    Recent: {pastCustomers.slice(0, 3).map((c, i) => (
-                                        <button
-                                            key={i}
-                                            type="button"
-                                            onClick={() => selectPastCustomer(c)}
-                                            style={{
-                                                background: 'none',
-                                                border: 'none',
-                                                color: 'var(--primary-accent)',
-                                                textDecoration: 'underline',
-                                                cursor: 'pointer',
-                                                fontSize: '11px',
-                                                marginLeft: '6px',
-                                                fontWeight: '600'
-                                            }}
-                                        >
-                                            {c.name}
-                                        </button>
-                                    ))}
-                                </span>
-                            )}
                         </div>
 
                         <div className="customer-info-grid">
@@ -307,7 +257,7 @@ function CreateInvoice() {
                                     type="text"
                                     value={deliveryAddress}
                                     onChange={(e) => setDeliveryAddress(e.target.value)}
-                                    placeholder="e.g. Near SBI Bank, Valpoi"
+                                    placeholder="e.g. Near Central Plaza, Panaji"
                                     style={{
                                         width: '100%',
                                         padding: '10px 14px',
@@ -321,13 +271,13 @@ function CreateInvoice() {
                             </div>
                             <div>
                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
-                                    Bill Remarks / Notes
+                                    Bill Remarks / Warranty Notes
                                 </label>
                                 <input
                                     type="text"
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    placeholder="e.g. 1 Yr Full Warranty"
+                                    placeholder="e.g. 1 Yr Manufacturer Warranty"
                                     style={{
                                         width: '100%',
                                         padding: '10px 14px',

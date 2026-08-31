@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 
 function StaffManagement() {
-    const { isOwner } = useAuth();
+    const { isOwner, isVisitor } = useAuth();
     
-    // Store profile constants
-    const shopName = 'MANISHA ELECTRONICS';
-    const ownerUsername = 'Ramesh Naik (Owner)';
-    const gstin = '30AMYPN1753F1ZY';
-    const phone = '9309736172, 70205592347';
-    const address = 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa';
+    // Store profile constants (Masked in Demo Sandbox)
+    const shopName = isVisitor ? 'MANISHA ELECTRONICS (Demo Sandbox)' : 'MANISHA ELECTRONICS';
+    const ownerUsername = isVisitor ? 'Demo Administrator (Portfolio View)' : 'Ramesh Naik (Owner)';
+    const gstin = isVisitor ? '30AAAAA0000A1Z5 (Demo)' : '30AMYPN1753F1ZY';
+    const phone = isVisitor ? '+91 98000 00000' : '9309736172, 70205592347';
+    const address = isVisitor ? 'Sample Tech Complex, Commercial Plaza, Panaji - Goa' : 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa';
 
     // Owner PIN change state
     const [currentPin, setCurrentPin] = useState('');
@@ -147,7 +147,7 @@ function StaffManagement() {
                     </p>
                 </div>
 
-                {isOwner && (
+                {(isOwner || isVisitor) && (
                     <button
                         onClick={() => setShowAddModal(true)}
                         className="btn-primary"
@@ -166,8 +166,8 @@ function StaffManagement() {
                             👑
                         </div>
                         <div>
-                            <div style={{ fontWeight: '900', fontSize: '16px', color: 'var(--text-primary)' }}>Store Owner Profile</div>
-                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Master Administrative Privileges</div>
+                            <div style={{ fontWeight: '900', fontSize: '16px', color: 'var(--text-primary)' }}>Store Profile Overview</div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Administrative &amp; Tax Information</div>
                         </div>
                     </div>
 
@@ -395,7 +395,7 @@ function StaffManagement() {
                                     type="text"
                                     value={newStaffName}
                                     onChange={(e) => setNewStaffName(e.target.value)}
-                                    placeholder="e.g. Ramesh Naik"
+                                    placeholder="e.g. Rahul Parab"
                                     required
                                     style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
@@ -407,7 +407,7 @@ function StaffManagement() {
                                     type="text"
                                     value={newStaffUsername}
                                     onChange={(e) => setNewStaffUsername(e.target.value)}
-                                    placeholder="e.g. ramesh_counter1"
+                                    placeholder="e.g. rahul_counter1"
                                     required
                                     style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />

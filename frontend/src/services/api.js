@@ -41,14 +41,14 @@ const isSandboxMode = () => {
     return tenant === 'DEMO' || role === 'VISITOR';
 };
 
-// Initial Mock Sandbox Data for Visitors (Portfolio Demo)
+// Initial Mock Sandbox Data with mixed stock levels (> 3, < 3, 0) and dual property aliases
 const INITIAL_DEMO_PRODUCTS = [
-    { id: 101, name: 'Samsung Crystal 4K 55" Smart TV', category: 'Television', unitPrice: 46990, stockQuantity: 6, active: true },
-    { id: 102, name: 'LG 260L Double Door Refrigerator', category: 'Refrigerator', unitPrice: 26500, stockQuantity: 4, active: true },
-    { id: 103, name: 'Voltas 1.5 Ton 5-Star Split AC', category: 'Air Conditioner', unitPrice: 37490, stockQuantity: 5, active: true },
-    { id: 104, name: 'Sony HT-S20R 5.1ch Soundbar', category: 'Audio System', unitPrice: 17990, stockQuantity: 8, active: true },
-    { id: 105, name: 'Whirlpool 7.5kg Automatic Washing Machine', category: 'Washing Machine', unitPrice: 18750, stockQuantity: 3, active: true },
-    { id: 106, name: 'Havells 1200mm Ceiling Fan (Gold)', category: 'Small Appliances', unitPrice: 2450, stockQuantity: 14, active: true }
+    { id: 101, name: 'Samsung Crystal 4K 55" Smart TV', category: 'Television', price: 46990, unitPrice: 46990, quantity: 8, stockQuantity: 8, active: true },
+    { id: 102, name: 'LG 260L Double Door Refrigerator', category: 'Refrigerator', price: 26500, unitPrice: 26500, quantity: 2, stockQuantity: 2, active: true },
+    { id: 103, name: 'Voltas 1.5 Ton 5-Star Split AC', category: 'Air Conditioner', price: 37490, unitPrice: 37490, quantity: 5, stockQuantity: 5, active: true },
+    { id: 104, name: 'Sony HT-S20R 5.1ch Soundbar', category: 'Audio System', price: 17990, unitPrice: 17990, quantity: 1, stockQuantity: 1, active: true },
+    { id: 105, name: 'Whirlpool 7.5kg Automatic Washing Machine', category: 'Washing Machine', price: 18750, unitPrice: 18750, quantity: 6, stockQuantity: 6, active: true },
+    { id: 106, name: 'Havells 1200mm Ceiling Fan (Gold)', category: 'Small Appliances', price: 2450, unitPrice: 2450, quantity: 0, stockQuantity: 0, active: true }
 ];
 
 const INITIAL_DEMO_INVOICES = [
@@ -57,7 +57,7 @@ const INITIAL_DEMO_INVOICES = [
         invoiceNumber: 'DEMO-1001',
         customerName: 'Anand Shirodkar',
         customerContact: '9822123456',
-        deliveryAddress: 'Main Market, Valpoi, Goa',
+        deliveryAddress: 'Sample Tech Park, Panaji - Goa',
         paymentMethod: 'UPI',
         subtotal: 46990,
         gstRate: 18,
@@ -66,6 +66,7 @@ const INITIAL_DEMO_INVOICES = [
         totalAmount: 54448.20,
         amountPaid: 54448.20,
         balanceDue: 0,
+        amountDue: 0,
         createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
         items: [
             { product: { name: 'Samsung Crystal 4K 55" Smart TV' }, quantity: 1, unitPrice: 46990, serialNumber: 'SAM-55-TV-9921' }
@@ -76,7 +77,7 @@ const INITIAL_DEMO_INVOICES = [
         invoiceNumber: 'DEMO-1002',
         customerName: 'Pooja Naik',
         customerContact: '9765432100',
-        deliveryAddress: 'Near SBI Bank, Valpoi',
+        deliveryAddress: 'Near Central Plaza, Panaji',
         paymentMethod: 'CASH',
         subtotal: 26500,
         gstRate: 18,
@@ -85,6 +86,7 @@ const INITIAL_DEMO_INVOICES = [
         totalAmount: 30770,
         amountPaid: 20000,
         balanceDue: 10770,
+        amountDue: 10770,
         createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
         items: [
             { product: { name: 'LG 260L Double Door Refrigerator' }, quantity: 1, unitPrice: 26500, serialNumber: 'LG-REF-4412' }
@@ -123,7 +125,7 @@ export const loginAsStaff = (username, pin) => api.post('/auth/staff', { usernam
 export const loginAsVisitor = () => api.post('/auth/visitor');
 export const verifyAuthToken = () => api.get('/auth/verify');
 
-// Products (With isolated sandbox interceptor)
+// Products
 export const getProducts = () => {
     if (isSandboxMode()) {
         const prods = getSandboxProducts();
@@ -135,7 +137,17 @@ export const getProducts = () => {
 export const createProduct = (product) => {
     if (isSandboxMode()) {
         const prods = getSandboxProducts();
-        const newProd = { ...product, id: Date.now(), active: true };
+        const price = Number(product.price || product.unitPrice || 0);
+        const qty = Number(product.quantity || product.stockQuantity || 0);
+        const newProd = {
+            ...product,
+            id: Date.now(),
+            price: price,
+            unitPrice: price,
+            quantity: qty,
+            stockQuantity: qty,
+            active: true
+        };
         const updated = [newProd, ...prods];
         localStorage.setItem('demo_sandbox_products', JSON.stringify(updated));
         return Promise.resolve({ data: newProd });
@@ -146,7 +158,16 @@ export const createProduct = (product) => {
 export const updateProduct = (id, product) => {
     if (isSandboxMode()) {
         const prods = getSandboxProducts();
-        const updated = prods.map(p => p.id === Number(id) ? { ...p, ...product } : p);
+        const price = Number(product.price || product.unitPrice || 0);
+        const qty = Number(product.quantity || product.stockQuantity || 0);
+        const updated = prods.map(p => p.id === Number(id) ? {
+            ...p,
+            ...product,
+            price: price || p.price,
+            unitPrice: price || p.unitPrice,
+            quantity: qty !== undefined ? qty : p.quantity,
+            stockQuantity: qty !== undefined ? qty : p.stockQuantity
+        } : p);
         localStorage.setItem('demo_sandbox_products', JSON.stringify(updated));
         return Promise.resolve({ data: product });
     }
@@ -163,7 +184,7 @@ export const deleteProduct = (id) => {
     return api.delete(`/products/${id}`);
 };
 
-// Invoices (With isolated sandbox interceptor)
+// Invoices
 export const getInvoices = () => {
     if (isSandboxMode()) {
         const invs = getSandboxInvoices();
@@ -184,14 +205,32 @@ export const getInvoice = (id) => {
 export const createInvoice = (invoice) => {
     if (isSandboxMode()) {
         const invs = getSandboxInvoices();
+        const due = Math.max(0, Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0));
         const newInv = {
             ...invoice,
             id: Date.now(),
             invoiceNumber: `DEMO-${Math.floor(1000 + Math.random() * 9000)}`,
+            balanceDue: due,
+            amountDue: due,
             createdAt: new Date().toISOString()
         };
         const updated = [newInv, ...invs];
         localStorage.setItem('demo_sandbox_invoices', JSON.stringify(updated));
+
+        // Deduct demo product stock
+        if (invoice.items && invoice.items.length > 0) {
+            const prods = getSandboxProducts();
+            const updatedProds = prods.map(p => {
+                const boughtItem = invoice.items.find(it => (it.product && it.product.id === p.id) || (it.productId === p.id));
+                if (boughtItem) {
+                    const newQty = Math.max(0, (p.quantity || p.stockQuantity || 0) - (boughtItem.quantity || 1));
+                    return { ...p, quantity: newQty, stockQuantity: newQty };
+                }
+                return p;
+            });
+            localStorage.setItem('demo_sandbox_products', JSON.stringify(updatedProds));
+        }
+
         return Promise.resolve({ data: newInv });
     }
     return api.post('/invoices', invoice);
@@ -210,7 +249,7 @@ export const updateInvoice = (id, invoice) => {
 export const getDueInvoices = () => {
     if (isSandboxMode()) {
         const invs = getSandboxInvoices();
-        const dues = invs.filter(i => Number(i.balanceDue || 0) > 0);
+        const dues = invs.filter(i => Number(i.balanceDue || i.amountDue || 0) > 0);
         return Promise.resolve({ data: dues });
     }
     return api.get('/invoices/due');
@@ -219,7 +258,7 @@ export const getDueInvoices = () => {
 export const getPaidInvoices = () => {
     if (isSandboxMode()) {
         const invs = getSandboxInvoices();
-        const paids = invs.filter(i => Number(i.balanceDue || 0) === 0);
+        const paids = invs.filter(i => Number(i.balanceDue || i.amountDue || 0) === 0);
         return Promise.resolve({ data: paids });
     }
     return api.get('/invoices/paid');
@@ -237,12 +276,12 @@ export const getDashboard = () => {
         invs.forEach(i => {
             totalSales += Number(i.totalAmount || 0);
             totalPaid += Number(i.amountPaid || 0);
-            totalDue += Number(i.balanceDue || 0);
+            totalDue += Number(i.balanceDue || i.amountDue || 0);
         });
 
         let inventoryValue = 0;
         prods.forEach(p => {
-            inventoryValue += (Number(p.unitPrice || 0) * Number(p.stockQuantity || 0));
+            inventoryValue += ((p.price || p.unitPrice || 0) * (p.quantity || p.stockQuantity || 0));
         });
 
         return Promise.resolve({
@@ -254,7 +293,7 @@ export const getDashboard = () => {
                 totalProducts: prods.length,
                 inventoryValue,
                 recentInvoices: invs.slice(0, 5),
-                lowStockProducts: prods.filter(p => p.stockQuantity <= 5)
+                lowStockProducts: prods.filter(p => (p.quantity !== undefined ? p.quantity : p.stockQuantity) <= 3)
             }
         });
     }
@@ -275,10 +314,10 @@ export const settleDueInvoice = (id, paymentData) => {
         const invs = getSandboxInvoices();
         const updated = invs.map(i => {
             if (i.id === Number(id)) {
-                const paidNow = Number(paymentData.amountPaid || 0);
+                const paidNow = Number(paymentData.amountPaid || paymentData.amount || 0);
                 const newPaid = Number(i.amountPaid || 0) + paidNow;
                 const newDue = Math.max(0, Number(i.totalAmount || 0) - newPaid);
-                return { ...i, amountPaid: newPaid, balanceDue: newDue };
+                return { ...i, amountPaid: newPaid, balanceDue: newDue, amountDue: newDue };
             }
             return i;
         });

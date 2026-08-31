@@ -1,18 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getDueInvoices, recordPayment } from '../services/api';
+import { getDueInvoices, settleDueInvoice } from '../services/api';
 
 function DueInvoices() {
-    const navigate = useNavigate();
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [message, setMessage] = useState('');
-
-    // Payment Settlement Modal State
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [settleAmount, setSettleAmount] = useState('');
-    const [submittingPayment, setSubmittingPayment] = useState(false);
+    const [settleMethod, setSettleMethod] = useState('CASH');
+    const [settleNotes, setSettleNotes] = useState('');
+    const [submitting, setSubmitting] = useState(false);
+    const navigate = useNavigate();
 
     useEffect(() => {
         loadDueInvoices().catch(console.error);
@@ -29,274 +28,226 @@ function DueInvoices() {
         }
     };
 
-    const handleOpenSettleModal = (inv) => {
-        setSelectedInvoice(inv);
-        setSettleAmount(String(inv.amountDue || ''));
-        setMessage('');
+    const getDueAmount = (inv) => {
+        if (inv.balanceDue !== undefined && inv.balanceDue !== null) return Number(inv.balanceDue);
+        if (inv.amountDue !== undefined && inv.amountDue !== null) return Number(inv.amountDue);
+        return Math.max(0, Number(inv.totalAmount || 0) - Number(inv.amountPaid || 0));
     };
 
-    const handleConfirmPayment = async (e) => {
-        e.preventDefault();
-        const amt = parseFloat(settleAmount);
-
-        if (!amt || amt <= 0) {
-            alert('⚠️ Please enter a valid payment amount.');
-            return;
-        }
-
-        if (amt > selectedInvoice.amountDue) {
-            alert(`⚠️ Amount cannot exceed the remaining due amount (₹${selectedInvoice.amountDue})`);
-            return;
-        }
-
-        setSubmittingPayment(true);
-
-        try {
-            await recordPayment(selectedInvoice.id, amt);
-            setMessage(`✅ Payment of ₹${amt.toLocaleString('en-IN')} recorded for ${selectedInvoice.invoiceNumber}!`);
-            setSelectedInvoice(null);
-            setSettleAmount('');
-            await loadDueInvoices();
-            setTimeout(() => setMessage(''), 4000);
-        } catch (error) {
-            const apiMessage = error?.response?.data?.message;
-            const fallbackMessage = error instanceof Error ? error.message : String(error);
-            alert('❌ Error recording payment: ' + (apiMessage || fallbackMessage));
-        }
-
-        setSubmittingPayment(false);
-    };
-
-    // Calculate metrics
-    const totalDueCount = invoices.length;
-    const totalOutstandingAmount = invoices.reduce((s, i) => s + (Number(i.amountDue) || 0), 0);
+    const totalDueReceivables = invoices.reduce((acc, inv) => acc + getDueAmount(inv), 0);
 
     const filteredInvoices = invoices.filter(inv => {
-        const q = searchTerm.toLowerCase();
-        return (
-            (inv.customerName || '').toLowerCase().includes(q) ||
-            (inv.invoiceNumber || '').toLowerCase().includes(q) ||
-            (inv.customerContact || '').toLowerCase().includes(q)
-        );
+        const term = searchTerm.toLowerCase();
+        return (inv.customerName || '').toLowerCase().includes(term) ||
+               (inv.customerContact || '').includes(term) ||
+               (inv.invoiceNumber || '').toLowerCase().includes(term);
     });
+
+    const handleOpenSettleModal = (invoice) => {
+        setSelectedInvoice(invoice);
+        setSettleAmount(getDueAmount(invoice).toString());
+        setSettleMethod('CASH');
+        setSettleNotes('');
+    };
+
+    const handleCloseSettleModal = () => {
+        setSelectedInvoice(null);
+        setSettleAmount('');
+        setSettleNotes('');
+    };
+
+    const handleSettleSubmit = async (e) => {
+        e.preventDefault();
+        if (!selectedInvoice) return;
+
+        const amount = parseFloat(settleAmount);
+        const currentDue = getDueAmount(selectedInvoice);
+
+        if (isNaN(amount) || amount <= 0) {
+            alert('⚠️ Please enter a valid payment amount');
+            return;
+        }
+
+        if (amount > currentDue) {
+            alert(`⚠️ Settlement amount cannot exceed outstanding due of ₹${currentDue.toLocaleString('en-IN')}`);
+            return;
+        }
+
+        setSubmitting(true);
+        try {
+            await settleDueInvoice(selectedInvoice.id, {
+                amountPaid: amount,
+                paymentMethod: settleMethod,
+                notes: settleNotes
+            });
+            handleCloseSettleModal();
+            await loadDueInvoices();
+            alert('✅ Payment settled successfully!');
+        } catch (error) {
+            console.error('Error settling invoice:', error);
+            alert('❌ Failed to record payment settlement.');
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     if (loading) {
         return (
-            <div style={{ padding: '40px 20px', maxWidth: '1350px', margin: '0 auto' }}>
-                <h2 style={{ color: 'var(--text-primary)' }}>Loading pending dues...</h2>
+            <div className="page-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
+                <div style={{ fontSize: '32px', marginBottom: '12px' }}>🟡</div>
+                <div style={{ fontWeight: '700', fontSize: '16px', color: 'var(--text-primary)' }}>Loading Due Invoices Ledger...</div>
             </div>
         );
     }
 
     return (
-        <div style={{ maxWidth: '1350px', margin: '0 auto', padding: '24px 20px' }}>
+        <div className="page-container">
             {/* Header */}
-            <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '20px',
-                flexWrap: 'wrap',
-                gap: '14px'
-            }}>
-                <div>
-                    <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        🟡 <span>Due Invoices &amp; Credit Ledger</span>
-                    </h1>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '13px', margin: '4px 0 0 0' }}>
-                        Track pending customer dues and record settlements
-                    </p>
-                </div>
+            <div style={{ marginBottom: '24px' }}>
+                <h1 style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span>🟡</span> Due Invoices &amp; Credit Ledger
+                </h1>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+                    Track pending customer credit balances and record 1-click settlements
+                </p>
             </div>
 
-            {/* Notification message */}
-            {message && (
-                <div style={{
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    background: 'rgba(76, 175, 80, 0.15)',
-                    color: '#2e7d32',
-                    fontWeight: '700',
-                    fontSize: '13px',
-                    marginBottom: '20px',
-                    border: '1px solid rgba(76, 175, 80, 0.3)'
-                }}>
-                    {message}
-                </div>
-            )}
-
-            {/* Outstanding Summary Hero */}
-            <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '16px',
-                marginBottom: '20px'
-            }}>
-                <div style={{
-                    background: 'var(--bg-card)',
-                    padding: '20px',
-                    borderRadius: '12px',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                }}>
-                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>
+            {/* KPI Cards */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+                <div className="dashboard-card" style={{ background: 'var(--bg-card)', padding: '20px', borderRadius: '16px', border: '1px solid var(--border-color)' }}>
+                    <div style={{ fontSize: '11px', fontWeight: '800', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>
                         Customers With Pending Dues
                     </div>
-                    <div style={{ fontSize: '32px', fontWeight: '900', color: '#e65100', marginTop: '4px' }}>
-                        {totalDueCount}
+                    <div style={{ fontSize: '28px', fontWeight: '900', color: 'var(--text-primary)', marginTop: '8px' }}>
+                        {invoices.length}
                     </div>
                 </div>
 
-                <div style={{
-                    background: 'linear-gradient(135deg, #1a237e, #0d1445)',
-                    color: '#ffffff',
-                    padding: '20px',
-                    borderRadius: '12px',
-                    boxShadow: 'var(--shadow)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                }}>
-                    <div style={{ fontSize: '12px', opacity: 0.8, fontWeight: '700', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                <div className="dashboard-card" style={{ background: 'linear-gradient(135deg, #1e1b4b, #312e81)', padding: '20px', borderRadius: '16px', color: '#ffffff' }}>
+                    <div style={{ fontSize: '11px', fontWeight: '800', color: '#a5b4fc', textTransform: 'uppercase' }}>
                         Total Outstanding Receivables
                     </div>
-                    <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--gold)', marginTop: '4px' }}>
-                        ₹{totalOutstandingAmount.toLocaleString('en-IN')}
+                    <div style={{ fontSize: '28px', fontWeight: '900', color: '#fbbf24', marginTop: '8px' }}>
+                        ₹{totalDueReceivables.toLocaleString('en-IN')}
                     </div>
                 </div>
             </div>
 
-            {/* Search Box */}
-            <div style={{
-                background: 'var(--bg-card)',
-                padding: '16px 20px',
-                borderRadius: '12px',
-                border: '1px solid var(--border-color)',
-                boxShadow: 'var(--shadow)',
-                marginBottom: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '12px'
-            }}>
+            {/* Search Filter */}
+            <div style={{ marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'center' }}>
                 <input
                     type="text"
-                    placeholder="🔍 Filter by customer name, phone, or invoice #..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="🔍 Filter by customer name, phone, or invoice #..."
                     style={{
                         flex: 1,
-                        padding: '11px 16px',
+                        padding: '12px 16px',
                         border: '1px solid var(--border-color)',
-                        borderRadius: '8px',
-                        background: 'var(--bg-body)',
+                        borderRadius: '10px',
+                        background: 'var(--bg-card)',
                         color: 'var(--text-primary)',
-                        fontSize: '13px'
+                        fontSize: '14px'
                     }}
                 />
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '700', whiteSpace: 'nowrap' }}>
                     {filteredInvoices.length} due bill(s)
                 </span>
             </div>
 
-            {/* Due Invoices Table */}
-            <div style={{
-                background: 'var(--bg-card)',
-                borderRadius: '12px',
-                border: '1px solid var(--border-color)',
-                boxShadow: 'var(--shadow)',
-                overflow: 'hidden'
-            }}>
-                <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
-                    <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', fontSize: '13px' }}>
+            {/* Table */}
+            <div className="table-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
+                <div style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
                         <thead>
-                            <tr style={{ background: 'var(--primary)', color: '#ffffff' }}>
-                                <th style={{ padding: '12px 16px', textAlign: 'left', width: '130px' }}>Invoice #</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'left' }}>Customer Details</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'right', width: '120px' }}>Total Bill (₹)</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'right', width: '120px' }}>Paid (₹)</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'right', width: '140px' }}>Balance Due (₹)</th>
-                                <th style={{ padding: '12px 16px', textAlign: 'center', width: '200px' }}>Actions</th>
+                            <tr style={{ background: 'var(--bg-body)', color: 'var(--text-secondary)', borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
+                                <th style={{ padding: '14px 18px' }}>Invoice #</th>
+                                <th style={{ padding: '14px 18px' }}>Customer Details</th>
+                                <th style={{ padding: '14px 18px', textAlign: 'right' }}>Total Bill (₹)</th>
+                                <th style={{ padding: '14px 18px', textAlign: 'right' }}>Paid (₹)</th>
+                                <th style={{ padding: '14px 18px', textAlign: 'right' }}>Balance Due (₹)</th>
+                                <th style={{ padding: '14px 18px', textAlign: 'center' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {filteredInvoices.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px 20px', color: '#2e7d32', fontSize: '14px', fontWeight: '600' }}>
-                                        🎉 No due invoices found! All customer bills are fully paid.
+                                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px 20px', color: '#10b981', fontSize: '14px', fontWeight: '700' }}>
+                                        🎉 No pending customer dues found! All sales are fully settled.
                                     </td>
                                 </tr>
                             ) : (
-                                filteredInvoices.map((inv) => (
-                                    <tr
-                                        key={inv.id}
-                                        style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(26, 35, 126, 0.03)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        <td style={{ padding: '12px 16px', fontWeight: '800', color: 'var(--primary)' }}>
-                                            {inv.invoiceNumber}
-                                        </td>
-                                        <td style={{ padding: '12px 16px' }}>
-                                            <div style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
-                                                {inv.customerName}
-                                            </div>
-                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                                                {inv.customerContact && inv.customerContact !== 'N/A' && <span>📞 {inv.customerContact}</span>}
-                                                {inv.deliveryAddress && inv.deliveryAddress !== 'N/A' && <span> • 📍 {inv.deliveryAddress}</span>}
-                                            </div>
-                                        </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--text-secondary)' }}>
-                                            ₹{Number(inv.totalAmount || 0).toLocaleString('en-IN')}
-                                        </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', color: '#2e7d32', fontWeight: '600' }}>
-                                            ₹{Number(inv.amountPaid || 0).toLocaleString('en-IN')}
-                                        </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: '800', color: '#c62828', fontSize: '14px' }}>
-                                            ₹{Number(inv.amountDue || 0).toLocaleString('en-IN')}
-                                        </td>
-                                        <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                                            <div style={{ display: 'inline-flex', gap: '8px' }}>
-                                                <button
-                                                    onClick={() => handleOpenSettleModal(inv)}
-                                                    className="btn-success"
-                                                    style={{
-                                                        padding: '6px 14px',
-                                                        fontSize: '12px',
-                                                        fontWeight: '700',
-                                                        borderRadius: '6px'
-                                                    }}
-                                                >
-                                                    💰 Settle Due
-                                                </button>
-                                                <button
-                                                    onClick={() => navigate(`/invoice/${inv.id}`)}
-                                                    style={{
-                                                        padding: '6px 10px',
-                                                        borderRadius: '6px',
-                                                        border: '1px solid var(--border-color)',
-                                                        background: 'var(--bg-body)',
-                                                        color: 'var(--text-primary)',
-                                                        fontSize: '12px',
-                                                        cursor: 'pointer'
-                                                    }}
-                                                    title="View Bill"
-                                                >
-                                                    👁️
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
+                                filteredInvoices.map((inv) => {
+                                    const due = getDueAmount(inv);
+                                    return (
+                                        <tr key={inv.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                            <td style={{ padding: '14px 18px', fontWeight: '800', color: 'var(--gold)' }}>
+                                                {inv.invoiceNumber}
+                                            </td>
+                                            <td style={{ padding: '14px 18px' }}>
+                                                <div style={{ fontWeight: '800', color: 'var(--text-primary)' }}>{inv.customerName}</div>
+                                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                                                    {inv.customerContact && <span>📞 {inv.customerContact}</span>}
+                                                    {inv.deliveryAddress && <span> • 📍 {inv.deliveryAddress}</span>}
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '14px 18px', textAlign: 'right', color: 'var(--text-secondary)' }}>
+                                                ₹{Number(inv.totalAmount || 0).toLocaleString('en-IN')}
+                                            </td>
+                                            <td style={{ padding: '14px 18px', textAlign: 'right', color: '#10b981', fontWeight: '700' }}>
+                                                ₹{Number(inv.amountPaid || 0).toLocaleString('en-IN')}
+                                            </td>
+                                            <td style={{ padding: '14px 18px', textAlign: 'right', fontWeight: '900', color: '#ef4444', fontSize: '14px' }}>
+                                                ₹{due.toLocaleString('en-IN')}
+                                            </td>
+                                            <td style={{ padding: '14px 18px', textAlign: 'center' }}>
+                                                <div style={{ display: 'inline-flex', gap: '8px' }}>
+                                                    <button
+                                                        onClick={() => handleOpenSettleModal(inv)}
+                                                        style={{
+                                                            padding: '8px 16px',
+                                                            fontSize: '12px',
+                                                            fontWeight: '800',
+                                                            borderRadius: '8px',
+                                                            border: 'none',
+                                                            background: '#059669',
+                                                            color: '#ffffff',
+                                                            cursor: 'pointer',
+                                                            boxShadow: '0 2px 8px rgba(5, 150, 105, 0.3)',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px'
+                                                        }}
+                                                    >
+                                                        💰 Settle Due
+                                                    </button>
+                                                    <button
+                                                        onClick={() => navigate(`/invoice/${inv.id}`)}
+                                                        style={{
+                                                            padding: '8px 12px',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid var(--border-color)',
+                                                            background: 'var(--bg-body)',
+                                                            color: 'var(--text-primary)',
+                                                            fontSize: '12px',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        title="View Invoice"
+                                                    >
+                                                        👁️
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
                             )}
                         </tbody>
                     </table>
                 </div>
             </div>
 
-            {/* Quick Settle Payment Modal */}
+            {/* Quick Settle Modal */}
             {selectedInvoice && (
                 <div style={{
                     position: 'fixed',
@@ -304,113 +255,99 @@ function DueInvoices() {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    backdropFilter: 'blur(4px)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    zIndex: 1100,
-                    padding: '20px'
+                    zIndex: 9999,
+                    padding: '16px'
                 }}>
                     <div style={{
                         background: 'var(--bg-card)',
-                        borderRadius: '14px',
-                        border: '1px solid var(--border-color)',
-                        boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                        borderRadius: '20px',
+                        padding: '28px',
                         width: '100%',
-                        maxWidth: '460px',
-                        padding: '24px',
-                        position: 'relative'
+                        maxWidth: '440px',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                        color: 'var(--text-primary)'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
-                            <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
-                                💰 Settle Payment
-                            </h3>
-                            <button
-                                onClick={() => setSelectedInvoice(null)}
-                                style={{ background: 'none', border: 'none', fontSize: '18px', color: 'var(--text-muted)', cursor: 'pointer', fontWeight: 'bold' }}
-                            >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <div style={{ fontWeight: '900', fontSize: '18px' }}>
+                                💰 Settle Due Payment
+                            </div>
+                            <button onClick={handleCloseSettleModal} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                                 ✕
                             </button>
                         </div>
 
-                        <div style={{ background: 'var(--bg-body)', padding: '14px', borderRadius: '8px', marginBottom: '16px', fontSize: '13px' }}>
+                        <div style={{ background: 'var(--bg-body)', padding: '14px', borderRadius: '12px', marginBottom: '16px', fontSize: '13px' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Customer:</span>
-                                <strong style={{ color: 'var(--text-primary)' }}>{selectedInvoice.customerName}</strong>
+                                <span style={{ color: 'var(--text-secondary)' }}>Customer:</span>
+                                <strong>{selectedInvoice.customerName}</strong>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Invoice:</span>
-                                <strong style={{ color: 'var(--primary)' }}>{selectedInvoice.invoiceNumber}</strong>
+                                <span style={{ color: 'var(--text-secondary)' }}>Invoice No:</span>
+                                <strong>#{selectedInvoice.invoiceNumber}</strong>
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid var(--border-color)', paddingTop: '6px' }}>
-                                <span style={{ color: 'var(--text-muted)' }}>Current Due Balance:</span>
-                                <strong style={{ color: '#c62828', fontSize: '15px' }}>
-                                    ₹{Number(selectedInvoice.amountDue || 0).toLocaleString('en-IN')}
-                                </strong>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ef4444', fontWeight: '900', fontSize: '15px' }}>
+                                <span>Outstanding Due:</span>
+                                <span>₹{getDueAmount(selectedInvoice).toLocaleString('en-IN')}</span>
                             </div>
                         </div>
 
-                        <form onSubmit={handleConfirmPayment} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                        <form onSubmit={handleSettleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                    <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)' }}>
-                                        Amount Received Now (₹) *
-                                    </label>
-                                    <button
-                                        type="button"
-                                        onClick={() => setSettleAmount(String(selectedInvoice.amountDue))}
-                                        style={{
-                                            background: '#e8f5e9',
-                                            color: '#2e7d32',
-                                            border: 'none',
-                                            borderRadius: '4px',
-                                            fontSize: '11px',
-                                            padding: '2px 8px',
-                                            cursor: 'pointer',
-                                            fontWeight: 'bold'
-                                        }}
-                                    >
-                                        Full Settle (100%)
-                                    </button>
-                                </div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    Amount Received (₹) *
+                                </label>
                                 <input
                                     type="number"
+                                    step="0.01"
                                     value={settleAmount}
                                     onChange={(e) => setSettleAmount(e.target.value)}
-                                    placeholder="Enter amount received"
-                                    min="0.01"
-                                    max={selectedInvoice.amountDue}
-                                    step="0.01"
+                                    placeholder="Enter amount"
                                     required
-                                    style={{
-                                        width: '100%',
-                                        padding: '12px',
-                                        border: '2px solid var(--primary)',
-                                        borderRadius: '8px',
-                                        background: 'var(--bg-body)',
-                                        color: 'var(--text-primary)',
-                                        fontSize: '16px',
-                                        fontWeight: 'bold'
-                                    }}
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '15px', fontWeight: '700' }}
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setSelectedInvoice(null)}
-                                    className="btn-cancel"
-                                    style={{ flex: 1, padding: '12px', fontSize: '14px' }}
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    Payment Mode
+                                </label>
+                                <select
+                                    value={settleMethod}
+                                    onChange={(e) => setSettleMethod(e.target.value)}
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 >
+                                    <option value="CASH">💵 Cash</option>
+                                    <option value="UPI">📱 UPI / GPay</option>
+                                    <option value="CARD">💳 Card</option>
+                                    <option value="BANK_TRANSFER">🏦 Bank Transfer</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    Settlement Remarks (Optional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={settleNotes}
+                                    onChange={(e) => setSettleNotes(e.target.value)}
+                                    placeholder="e.g. Cleared via PhonePe"
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                                <button type="button" onClick={handleCloseSettleModal} className="btn-cancel" style={{ padding: '10px 16px' }}>
                                     Cancel
                                 </button>
-                                <button
-                                    type="submit"
-                                    disabled={submittingPayment}
-                                    className="btn-success"
-                                    style={{ flex: 1, padding: '12px', fontSize: '14px', fontWeight: '700' }}
-                                >
-                                    {submittingPayment ? 'Recording...' : '✅ Confirm Payment'}
+                                <button type="submit" disabled={submitting} className="btn-primary" style={{ padding: '10px 20px', background: '#059669' }}>
+                                    {submitting ? 'Recording...' : '✅ Confirm Settlement'}
                                 </button>
                             </div>
                         </form>

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getInvoice } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 function InvoiceDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { isVisitor } = useAuth();
     const [invoice, setInvoice] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -49,6 +51,10 @@ function InvoiceDetail() {
             `${idx + 1}. ${it.product?.name || 'Product'} (Qty: ${it.quantity}) - ₹${(it.quantity * it.unitPrice).toLocaleString('en-IN')}`
         ).join('\n');
 
+        const shopFooter = isVisitor
+            ? `Thank you for choosing *Manisha Electronics (Demo)*!\n📍 Goa • 📞 +91 98000 00000`
+            : `Thank you for choosing *Manisha Electronics*!\n📍 Valpoi, Goa • 📞 9309736172 / 70205592347`;
+
         const message = 
 `🏪 *MANISHA ELECTRONICS - TAX INVOICE*
 ----------------------------------------
@@ -65,10 +71,9 @@ ${itemsList}
 *GST (${invoice.gstRate}%):* ₹${Number(invoice.gstAmount || 0).toLocaleString('en-IN')}
 *Grand Total:* ₹${Number(invoice.totalAmount || 0).toLocaleString('en-IN')}
 *Amount Paid:* ₹${Number(invoice.amountPaid || 0).toLocaleString('en-IN')}
-${Number(invoice.balanceDue || 0) > 0 ? `*Balance Due:* ⚠️ ₹${Number(invoice.balanceDue).toLocaleString('en-IN')}` : '*Status:* ✅ Fully Paid'}
+${Number(invoice.balanceDue || invoice.amountDue || 0) > 0 ? `*Balance Due:* ⚠️ ₹${Number(invoice.balanceDue || invoice.amountDue).toLocaleString('en-IN')}` : '*Status:* ✅ Fully Paid'}
 
-Thank you for choosing *Manisha Electronics*!
-📍 Valpoi, Goa • 📞 9309736172 / 70205592347`;
+${shopFooter}`;
 
         const encoded = encodeURIComponent(message);
         const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
@@ -79,7 +84,7 @@ Thank you for choosing *Manisha Electronics*!
         return (
             <div className="page-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
                 <div style={{ fontSize: '32px', marginBottom: '12px' }}>🧾</div>
-                <div style={{ fontWeight: '700', fontSize: '16px' }}>Loading Tax Invoice...</div>
+                <div style={{ fontWeight: '700', fontSize: '16px', color: 'var(--text-primary)' }}>Loading Tax Invoice...</div>
             </div>
         );
     }
@@ -88,13 +93,26 @@ Thank you for choosing *Manisha Electronics*!
         return (
             <div className="page-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
                 <div style={{ fontSize: '32px', marginBottom: '12px' }}>❌</div>
-                <div style={{ fontWeight: '700', fontSize: '16px' }}>Invoice Not Found</div>
+                <div style={{ fontWeight: '700', fontSize: '16px', color: 'var(--text-primary)' }}>Invoice Not Found</div>
                 <button onClick={() => navigate('/invoices')} className="btn-primary" style={{ marginTop: '16px' }}>
                     View All Invoices
                 </button>
             </div>
         );
     }
+
+    // Dynamic Shop Info based on Role (hides confidential store info in Demo Sandbox)
+    const displayShopAddress = isVisitor
+        ? "Sample Tech Complex, Commercial Hub, Panaji - Goa (Demo Sandbox)"
+        : "EDEN GROVE Building, Nr. State Bank of India, Opp. Govt. Higher Secondary, Thane Road, Valpoi, Satartia - Goa";
+
+    const displayShopPhone = isVisitor
+        ? "📞 +91 98000 00000"
+        : "📞 9309736172, 70205592347";
+
+    const displayGSTIN = isVisitor
+        ? "30AAAAA0000A1Z5 (Demo)"
+        : "30AMYPN1753F1ZY";
 
     return (
         <div className="page-container">
@@ -163,10 +181,10 @@ Thank you for choosing *Manisha Electronics*!
                             ★ Complete Home Appliances &amp; Consumer Electronics
                         </div>
                         <div style={{ fontSize: '11px', color: '#64748b', marginTop: '4px', maxWidth: '380px' }}>
-                            EDEN GROVE Building, Nr. State Bank of India, Opp. Govt. Higher Secondary, Thane Road, Valpoi, Satartia - Goa
+                            {displayShopAddress}
                         </div>
                         <div style={{ fontSize: '11px', fontWeight: '700', color: '#0f172a', marginTop: '4px' }}>
-                            📞 9309736172, 70205592347 • <strong>GSTIN:</strong> 30AMYPN1753F1ZY
+                            {displayShopPhone} • <strong>GSTIN:</strong> {displayGSTIN}
                         </div>
                     </div>
 
@@ -296,10 +314,10 @@ Thank you for choosing *Manisha Electronics*!
                             <span>Amount Paid:</span>
                             <span>₹{Number(invoice.amountPaid || 0).toLocaleString('en-IN')}</span>
                         </div>
-                        {Number(invoice.balanceDue || 0) > 0 && (
+                        {Number(invoice.balanceDue || invoice.amountDue || 0) > 0 && (
                             <div style={{ display: 'flex', justifyContent: 'space-between', color: '#d97706', fontWeight: '900', fontSize: '14px' }}>
                                 <span>Balance Due:</span>
-                                <span>₹{Number(invoice.balanceDue).toLocaleString('en-IN')}</span>
+                                <span>₹{Number(invoice.balanceDue || invoice.amountDue).toLocaleString('en-IN')}</span>
                             </div>
                         )}
                     </div>
@@ -319,7 +337,7 @@ Thank you for choosing *Manisha Electronics*!
                         <div style={{ fontWeight: '700', color: '#0f172a', marginBottom: '4px' }}>Terms &amp; Conditions:</div>
                         <div>1. Goods once sold will not be taken back or exchanged.</div>
                         <div>2. Warranty as per manufacturer terms &amp; conditions.</div>
-                        <div>3. Subject to Valpoi / Goa jurisdiction.</div>
+                        <div>3. Subject to jurisdiction.</div>
                     </div>
 
                     <div style={{ textAlign: 'center', width: '180px' }}>

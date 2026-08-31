@@ -118,6 +118,34 @@ function Navbar() {
                         </NavLink>
                     )}
 
+                    {/* Desktop App Shortcut for Staff and Owner */}
+                    {(isStaff || isOwner) && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                alert('💡 To install Manisha POS on your desktop:\n1. Click the ⊕ Install icon in your browser address bar (top right)\n2. Or click Menu (⋮) → "Install Manisha POS"');
+                            }}
+                            title="Install as native Windows desktop app"
+                            style={{
+                                background: 'rgba(245, 158, 11, 0.15)',
+                                border: '1px solid rgba(245, 158, 11, 0.4)',
+                                color: '#fbbf24',
+                                padding: '8px 12px',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                transition: 'all 0.2s ease',
+                                marginLeft: '4px'
+                            }}
+                        >
+                            📲 Install POS
+                        </button>
+                    )}
+
                     <button
                         className="dark-toggle"
                         onClick={() => setDarkMode(!darkMode)}

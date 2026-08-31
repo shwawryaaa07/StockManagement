@@ -18,6 +18,7 @@ function Login() {
     
     // PWA Install prompt state
     const [deferredPrompt, setDeferredPrompt] = useState(null);
+    const [showVisitorRestrictedModal, setShowVisitorRestrictedModal] = useState(false);
 
     // Owner state
     const [ownerPasscode, setOwnerPasscode] = useState('');
@@ -43,6 +44,12 @@ function Login() {
     }, []);
 
     const handleInstallApp = async () => {
+        // If on visitor demo tab, prevent download and show authorized restriction message
+        if (authMode === 'VISITOR' && !isStoreMode) {
+            setShowVisitorRestrictedModal(true);
+            return;
+        }
+
         if (deferredPrompt) {
             deferredPrompt.prompt();
             await deferredPrompt.userChoice;
@@ -178,7 +185,7 @@ function Login() {
                         }}
                         title="Install as native desktop app shortcut"
                     >
-                        <span>📲</span> Install Desktop POS App
+                        <span>📲</span> Install POS App
                     </button>
                 </div>
             )}
@@ -434,7 +441,7 @@ function Login() {
                                 transition: 'all 0.15s ease'
                             }}
                         >
-                            👤 Counter Staff
+                            👤 Staff
                         </button>
                         <button
                             type="button"
@@ -451,7 +458,7 @@ function Login() {
                                 transition: 'all 0.15s ease'
                             }}
                         >
-                            👑 Store Owner
+                            👑 Owner
                         </button>
                     </div>
 
@@ -684,6 +691,95 @@ function Login() {
                     )}
                 </div>
             </div>
+
+            {/* Modal: Protected Action for Visitors (Prevents accidental download) */}
+            {showVisitorRestrictedModal && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                    backdropFilter: 'blur(6px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 99999,
+                    padding: '16px'
+                }}>
+                    <div style={{
+                        background: '#0f172a',
+                        border: '1px solid rgba(245, 158, 11, 0.35)',
+                        borderRadius: '20px',
+                        padding: '28px',
+                        maxWidth: '420px',
+                        width: '100%',
+                        textAlign: 'center',
+                        boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+                        color: '#f8fafc'
+                    }}>
+                        <div style={{
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '16px',
+                            background: 'rgba(245, 158, 11, 0.15)',
+                            border: '1px solid rgba(245, 158, 11, 0.3)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '26px',
+                            margin: '0 auto 16px'
+                        }}>
+                            🔒
+                        </div>
+
+                        <h3 style={{ fontSize: '18px', fontWeight: '800', color: '#fbbf24', margin: '0 0 10px 0' }}>
+                            Authorized Terminals Only
+                        </h3>
+
+                        <p style={{ fontSize: '13px', color: '#94a3b8', lineHeight: '1.5', margin: '0 0 20px 0' }}>
+                            Desktop POS App installation is reserved for authorized <strong>Counter Staff</strong> and <strong>Store Owner</strong> registers.
+                        </p>
+
+                        <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+                            <button
+                                onClick={() => setShowVisitorRestrictedModal(false)}
+                                style={{
+                                    padding: '9px 18px',
+                                    background: 'rgba(255, 255, 255, 0.08)',
+                                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                                    color: '#cbd5e1',
+                                    borderRadius: '10px',
+                                    fontSize: '13px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                Close
+                            </button>
+                            <button
+                                onClick={() => {
+                                    setShowVisitorRestrictedModal(false);
+                                    setAuthMode('STAFF');
+                                }}
+                                style={{
+                                    padding: '9px 18px',
+                                    background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+                                    border: 'none',
+                                    color: '#0f172a',
+                                    borderRadius: '10px',
+                                    fontSize: '13px',
+                                    fontWeight: '800',
+                                    cursor: 'pointer'
+                                }}
+                            >
+                                👤 Staff Login
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

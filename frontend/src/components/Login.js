@@ -20,12 +20,12 @@ function Login() {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [showVisitorRestrictedModal, setShowVisitorRestrictedModal] = useState(false);
 
-    // Owner state
+    // Owner state - Clean, no pre-filled text
     const [ownerPasscode, setOwnerPasscode] = useState('');
     const [showOwnerPass, setShowOwnerPass] = useState(false);
     
-    // Staff state
-    const [staffUsername, setStaffUsername] = useState('Tejas');
+    // Staff state - Clean, no pre-filled text
+    const [staffUsername, setStaffUsername] = useState('');
     const [staffPin, setStaffPin] = useState('');
     
     // Global state
@@ -44,7 +44,6 @@ function Login() {
     }, []);
 
     const handleInstallApp = async () => {
-        // If on visitor demo tab, prevent download and show authorized restriction message
         if (authMode === 'VISITOR' && !isStoreMode) {
             setShowVisitorRestrictedModal(true);
             return;
@@ -88,6 +87,10 @@ function Login() {
     // 2. Handle Staff PIN Login
     const handleStaffLogin = async (e) => {
         if (e) e.preventDefault();
+        if (!staffUsername.trim()) {
+            setErrorMsg('⚠️ Please enter your Staff Login ID');
+            return;
+        }
         if (!staffPin.trim()) {
             setErrorMsg('⚠️ Please enter your 4-digit Counter PIN');
             return;
@@ -95,7 +98,7 @@ function Login() {
         setLoading(true);
         setErrorMsg('');
         try {
-            const res = await loginAsStaff(staffUsername, staffPin.trim());
+            const res = await loginAsStaff(staffUsername.trim(), staffPin.trim());
             if (res.data && res.data.token) {
                 login(
                     res.data.token,
@@ -110,7 +113,7 @@ function Login() {
                 navigate('/', { replace: true });
             }
         } catch (err) {
-            setErrorMsg(err.response?.data?.message || '❌ Invalid Staff PIN.');
+            setErrorMsg(err.response?.data?.message || '❌ Invalid Staff ID or PIN.');
         } finally {
             setLoading(false);
         }
@@ -194,7 +197,7 @@ function Login() {
                 width: '100%',
                 maxWidth: '1040px',
                 display: 'flex',
-                flexWrap: 'wrap-reverse', // On mobile, Auth Card sits on top!
+                flexWrap: 'wrap-reverse', // Mobile: Form on top
                 justifyContent: 'center',
                 alignItems: 'center',
                 gap: '32px',
@@ -365,7 +368,7 @@ function Login() {
                     </div>
                 </div>
 
-                {/* ACCESS PORTAL AUTH CARD (Centered and Prioritized) */}
+                {/* ACCESS PORTAL AUTH CARD */}
                 <div style={{
                     flex: '1 1 340px',
                     maxWidth: '460px',
@@ -527,7 +530,7 @@ function Login() {
                         </div>
                     )}
 
-                    {/* TAB 2: STAFF LOGIN */}
+                    {/* TAB 2: STAFF LOGIN (Zero PIN hints, clean inputs) */}
                     {authMode === 'STAFF' && (
                         <form onSubmit={handleStaffLogin}>
                             <div style={{ marginBottom: '14px', textAlign: 'left' }}>
@@ -538,7 +541,7 @@ function Login() {
                                     type="text"
                                     value={staffUsername}
                                     onChange={(e) => setStaffUsername(e.target.value)}
-                                    placeholder="e.g. Tejas or rahul_counter1"
+                                    placeholder="Enter Staff ID"
                                     required
                                     style={{
                                         width: '100%',
@@ -563,7 +566,7 @@ function Login() {
                                     maxLength={6}
                                     value={staffPin}
                                     onChange={(e) => setStaffPin(e.target.value)}
-                                    placeholder="Enter 4-digit PIN"
+                                    placeholder="••••"
                                     required
                                     style={{
                                         width: '100%',
@@ -615,7 +618,7 @@ function Login() {
                         </form>
                     )}
 
-                    {/* TAB 3: OWNER LOGIN */}
+                    {/* TAB 3: OWNER LOGIN (Zero PIN hints, clean inputs) */}
                     {authMode === 'OWNER' && (
                         <form onSubmit={handleOwnerLogin}>
                             <div style={{ marginBottom: '16px', textAlign: 'left' }}>
@@ -627,7 +630,7 @@ function Login() {
                                         type={showOwnerPass ? 'text' : 'password'}
                                         value={ownerPasscode}
                                         onChange={(e) => setOwnerPasscode(e.target.value)}
-                                        placeholder="Enter PIN (e.g. 2006 or 1234)"
+                                        placeholder="Enter PIN or Password"
                                         required
                                         style={{
                                             width: '100%',

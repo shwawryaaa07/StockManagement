@@ -282,7 +282,7 @@ function Login() {
                                 type="text"
                                 value={staffUsername}
                                 onChange={(e) => setStaffUsername(e.target.value)}
-                                placeholder="e.g. staff1 or Rahul"
+                                placeholder="Enter staff register ID"
                                 style={{
                                     width: '100%',
                                     padding: '12px 14px',
@@ -305,7 +305,7 @@ function Login() {
                                 maxLength={6}
                                 value={staffPin}
                                 onChange={(e) => setStaffPin(e.target.value)}
-                                placeholder="Enter 4-digit PIN (1234)"
+                                placeholder="Enter 4-digit PIN"
                                 style={{
                                     width: '100%',
                                     padding: '12px 14px',
@@ -317,9 +317,6 @@ function Login() {
                                     boxSizing: 'border-box'
                                 }}
                             />
-                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
-                                💡 Default Counter PIN: <strong>1234</strong>
-                            </div>
                         </div>
 
                         <button
@@ -346,7 +343,7 @@ function Login() {
                 {/* MODE 3: STORE OWNER LOGIN */}
                 {authMode === 'OWNER' && (
                     <form onSubmit={handleOwnerLogin} style={{ textAlign: 'left' }}>
-                        <div style={{ marginBottom: '16px' }}>
+                        <div style={{ marginBottom: '20px' }}>
                             <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
                                 Owner Passcode or PIN
                             </label>
@@ -355,7 +352,7 @@ function Login() {
                                     type={showOwnerPass ? "text" : "password"}
                                     value={ownerPasscode}
                                     onChange={(e) => setOwnerPasscode(e.target.value)}
-                                    placeholder="Enter Owner PIN (1234) or Password"
+                                    placeholder="Enter Owner PIN or Password"
                                     style={{
                                         width: '100%',
                                         padding: '12px 42px 12px 14px',
@@ -383,9 +380,6 @@ function Login() {
                                 >
                                     {showOwnerPass ? '🙈' : '👁️'}
                                 </button>
-                            </div>
-                            <div style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
-                                💡 Default Owner PIN: <strong>1234</strong>
                             </div>
                         </div>
 

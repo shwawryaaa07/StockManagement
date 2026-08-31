@@ -30,25 +30,37 @@ function StaffManagement() {
         ];
     });
 
-    // New staff modal state
+    // Add Staff Modal State
     const [showAddModal, setShowAddModal] = useState(false);
     const [newStaffName, setNewStaffName] = useState('');
     const [newStaffUsername, setNewStaffUsername] = useState('');
     const [newStaffPin, setNewStaffPin] = useState('');
     const [newStaffCounter, setNewStaffCounter] = useState('Counter 1 (Main POS)');
-    const [modalError, setModalError] = useState('');
+    const [addModalError, setAddModalError] = useState('');
+
+    // Edit Staff Modal State
+    const [editingStaff, setEditingStaff] = useState(null);
+    const [editName, setEditName] = useState('');
+    const [editUsername, setEditUsername] = useState('');
+    const [editPin, setEditPin] = useState('');
+    const [editCounter, setEditCounter] = useState('Counter 1 (Main POS)');
+    const [editStatus, setEditStatus] = useState('Active');
+    const [editModalError, setEditModalError] = useState('');
 
     useEffect(() => {
         localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
     }, [staffList]);
 
+    // Handle Owner PIN Update
     const handleOwnerPinChange = (e) => {
         e.preventDefault();
         setPinSuccessMsg('');
         setPinErrorMsg('');
 
-        if (currentPin !== '1234' && currentPin !== '1506') {
-            setPinErrorMsg('❌ Current PIN is incorrect (Default is 1234)');
+        const savedOwnerPin = localStorage.getItem('owner_master_pin') || '1234';
+
+        if (currentPin !== savedOwnerPin && currentPin !== '1506') {
+            setPinErrorMsg('❌ Current PIN is incorrect');
             return;
         }
 
@@ -63,23 +75,68 @@ function StaffManagement() {
         }
 
         localStorage.setItem('owner_master_pin', newPin);
-        setPinSuccessMsg('✅ Owner Master PIN successfully updated to ' + newPin);
+        setPinSuccessMsg('✅ Owner Master PIN successfully updated');
         setCurrentPin('');
         setNewPin('');
         setConfirmPin('');
     };
 
+    // Open Edit Modal
+    const handleOpenEdit = (staff) => {
+        setEditingStaff(staff);
+        setEditName(staff.name || '');
+        setEditUsername(staff.username || '');
+        setEditPin(staff.pin || '');
+        setEditCounter(staff.counter || 'Counter 1 (Main POS)');
+        setEditStatus(staff.status || 'Active');
+        setEditModalError('');
+    };
+
+    // Save Edited Staff
+    const handleSaveEdit = (e) => {
+        e.preventDefault();
+        setEditModalError('');
+
+        if (!editName.trim() || !editUsername.trim() || !editPin.trim()) {
+            setEditModalError('⚠️ Please fill all required fields');
+            return;
+        }
+
+        if (editPin.length < 4 || !/^\d+$/.test(editPin)) {
+            setEditModalError('⚠️ Staff PIN must be at least 4 numeric digits');
+            return;
+        }
+
+        const updated = staffList.map(stf => {
+            if (stf.id === editingStaff.id) {
+                return {
+                    ...stf,
+                    name: editName.trim(),
+                    username: editUsername.trim().toLowerCase(),
+                    pin: editPin.trim(),
+                    counter: editCounter,
+                    status: editStatus
+                };
+            }
+            return stf;
+        });
+
+        setStaffList(updated);
+        setEditingStaff(null);
+    };
+
+    // Add New Staff
     const handleAddStaff = (e) => {
         e.preventDefault();
-        setModalError('');
+        setAddModalError('');
 
         if (!newStaffName.trim() || !newStaffUsername.trim() || !newStaffPin.trim()) {
-            setModalError('⚠️ Please fill all required fields');
+            setAddModalError('⚠️ Please fill all required fields');
             return;
         }
 
         if (newStaffPin.length < 4 || !/^\d+$/.test(newStaffPin)) {
-            setModalError('⚠️ Staff PIN must be a 4-digit number');
+            setAddModalError('⚠️ Staff PIN must be a 4-digit number');
             return;
         }
 
@@ -143,7 +200,7 @@ function StaffManagement() {
                         <span>👥</span> Staff &amp; Store Security Management
                     </h1>
                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>
-                        Supervise counter staff registers, reset PINs, and manage store credentials
+                        Supervise counter staff registers, edit staff profiles &amp; PINs, and update store credentials
                     </p>
                 </div>
 
@@ -226,7 +283,7 @@ function StaffManagement() {
                                 maxLength={6}
                                 value={currentPin}
                                 onChange={(e) => setCurrentPin(e.target.value)}
-                                placeholder="Enter current PIN (1234)"
+                                placeholder={isVisitor ? "Enter current PIN (1234)" : "Enter current PIN"}
                                 style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                             />
                         </div>
@@ -238,7 +295,7 @@ function StaffManagement() {
                                     maxLength={6}
                                     value={newPin}
                                     onChange={(e) => setNewPin(e.target.value)}
-                                    placeholder="4 digits"
+                                    placeholder="New 4-digit PIN"
                                     style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
                             </div>
@@ -249,7 +306,7 @@ function StaffManagement() {
                                     maxLength={6}
                                     value={confirmPin}
                                     onChange={(e) => setConfirmPin(e.target.value)}
-                                    placeholder="Confirm"
+                                    placeholder="Confirm PIN"
                                     style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
                             </div>
@@ -266,7 +323,7 @@ function StaffManagement() {
                 <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div>
                         <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text-primary)' }}>Active Staff Cashiers &amp; Counter Registers</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Staff members can bill sales and issue WhatsApp receipts without accessing wholesale costs.</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Staff members can bill sales and issue receipts without accessing confidential financial reports.</div>
                     </div>
                     <span style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--gold)', fontWeight: '800', fontSize: '12px', padding: '4px 10px', borderRadius: '8px' }}>
                         {staffList.length} Active Registers
@@ -281,7 +338,7 @@ function StaffManagement() {
                                 <th style={{ padding: '12px 18px' }}>Employee Name</th>
                                 <th style={{ padding: '12px 18px' }}>Counter Login ID</th>
                                 <th style={{ padding: '12px 18px' }}>Assigned Register</th>
-                                <th style={{ padding: '12px 18px' }}>Assigned PIN</th>
+                                <th style={{ padding: '12px 18px' }}>Current PIN</th>
                                 <th style={{ padding: '12px 18px' }}>Status</th>
                                 <th style={{ padding: '12px 18px', textAlign: 'right' }}>Actions</th>
                             </tr>
@@ -318,12 +375,20 @@ function StaffManagement() {
                                     <td style={{ padding: '14px 18px', textAlign: 'right' }}>
                                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
                                             <button
-                                                onClick={() => handleResetStaffPin(stf.id, stf.name)}
-                                                className="btn-cancel"
-                                                title="Reset 4-Digit PIN"
+                                                onClick={() => handleOpenEdit(stf)}
+                                                className="btn-primary"
+                                                title="Edit staff details and custom PIN"
                                                 style={{ padding: '6px 12px', fontSize: '11px' }}
                                             >
-                                                🔑 Reset PIN
+                                                ✏️ Edit
+                                            </button>
+                                            <button
+                                                onClick={() => handleResetStaffPin(stf.id, stf.name)}
+                                                className="btn-cancel"
+                                                title="Quick Auto-Generate PIN"
+                                                style={{ padding: '6px 12px', fontSize: '11px' }}
+                                            >
+                                                🔑 Quick PIN
                                             </button>
                                             <button
                                                 onClick={() => toggleStaffStatus(stf.id)}
@@ -348,7 +413,124 @@ function StaffManagement() {
                 </div>
             </div>
 
-            {/* Add Staff Modal */}
+            {/* Modal 1: Edit Staff Profile & Custom PIN */}
+            {editingStaff && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0,0,0,0.6)',
+                    backdropFilter: 'blur(4px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 9999,
+                    padding: '16px'
+                }}>
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        borderRadius: '20px',
+                        padding: '28px',
+                        width: '100%',
+                        maxWidth: '440px',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <div style={{ fontWeight: '900', fontSize: '18px', color: 'var(--text-primary)' }}>
+                                ✏️ Edit Staff Profile &amp; PIN
+                            </div>
+                            <button onClick={() => setEditingStaff(null)} style={{ background: 'none', border: 'none', fontSize: '18px', cursor: 'pointer', color: 'var(--text-secondary)' }}>
+                                ✕
+                            </button>
+                        </div>
+
+                        {editModalError && (
+                            <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: '700', marginBottom: '14px' }}>
+                                {editModalError}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Full Name *</label>
+                                <input
+                                    type="text"
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    placeholder="Enter full name"
+                                    required
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Counter Login ID *</label>
+                                <input
+                                    type="text"
+                                    value={editUsername}
+                                    onChange={(e) => setEditUsername(e.target.value)}
+                                    placeholder="Enter login username"
+                                    required
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>4-Digit Counter PIN *</label>
+                                    <input
+                                        type="text"
+                                        maxLength={6}
+                                        value={editPin}
+                                        onChange={(e) => setEditPin(e.target.value)}
+                                        placeholder="Enter PIN"
+                                        required
+                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px', fontWeight: '700' }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Account Status</label>
+                                    <select
+                                        value={editStatus}
+                                        onChange={(e) => setEditStatus(e.target.value)}
+                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                    >
+                                        <option value="Active">Active</option>
+                                        <option value="Suspended">Suspended</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Assigned Register</label>
+                                <select
+                                    value={editCounter}
+                                    onChange={(e) => setEditCounter(e.target.value)}
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                >
+                                    <option value="Counter 1 (Main POS)">Counter 1 (Main POS)</option>
+                                    <option value="Counter 2 (Appliances)">Counter 2 (Appliances)</option>
+                                    <option value="Floor Sales Mobile">Floor Sales Mobile</option>
+                                </select>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                                <button type="button" onClick={() => setEditingStaff(null)} className="btn-cancel" style={{ padding: '10px 16px' }}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn-primary" style={{ padding: '10px 20px' }}>
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal 2: Add New Staff */}
             {showAddModal && (
                 <div style={{
                     position: 'fixed',
@@ -382,32 +564,32 @@ function StaffManagement() {
                             </button>
                         </div>
 
-                        {modalError && (
+                        {addModalError && (
                             <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '10px 14px', borderRadius: '10px', fontSize: '13px', fontWeight: '700', marginBottom: '14px' }}>
-                                {modalError}
+                                {addModalError}
                             </div>
                         )}
 
                         <form onSubmit={handleAddStaff} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Full Name</label>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Full Name *</label>
                                 <input
                                     type="text"
                                     value={newStaffName}
                                     onChange={(e) => setNewStaffName(e.target.value)}
-                                    placeholder="e.g. Rahul Parab"
+                                    placeholder={isVisitor ? "e.g. Rahul Parab" : "Enter staff full name"}
                                     required
                                     style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Counter Login ID</label>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Counter Login ID *</label>
                                 <input
                                     type="text"
                                     value={newStaffUsername}
                                     onChange={(e) => setNewStaffUsername(e.target.value)}
-                                    placeholder="e.g. rahul_counter1"
+                                    placeholder={isVisitor ? "e.g. rahul_counter1" : "Enter staff login username"}
                                     required
                                     style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
@@ -415,13 +597,13 @@ function StaffManagement() {
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>4-Digit Counter PIN</label>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>4-Digit Counter PIN *</label>
                                     <input
                                         type="password"
                                         maxLength={6}
                                         value={newStaffPin}
                                         onChange={(e) => setNewStaffPin(e.target.value)}
-                                        placeholder="e.g. 4321"
+                                        placeholder={isVisitor ? "e.g. 4321" : "4-digit numeric PIN"}
                                         required
                                         style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                     />

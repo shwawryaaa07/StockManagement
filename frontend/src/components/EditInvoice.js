@@ -369,7 +369,7 @@ function EditInvoice() {
                                 type="text"
                                 value={deliveryAddress}
                                 onChange={(e) => setDeliveryAddress(e.target.value)}
-                                placeholder="e.g. Near Bus Stand, Valpoi, Sattari - Goa"
+                                placeholder="Delivery / Billing Address"
                                 style={{
                                     width: '100%',
                                     padding: '10px 12px',
@@ -560,7 +560,7 @@ function EditInvoice() {
                                                             <div style={{ flex: 1, minWidth: '130px' }}>
                                                                 <input
                                                                     type="text"
-                                                                    placeholder="Model No (e.g. Ams:1833)"
+                                                                    placeholder="Model number (optional)"
                                                                     value={item.modelNumber || ''}
                                                                     onChange={(e) => {
                                                                         const updated = [...items];
@@ -605,7 +605,7 @@ function EditInvoice() {
                                                                         </select>
                                                                         <input
                                                                             type="text"
-                                                                            placeholder="or scan/type S/N"
+                                                                            placeholder="Or type custom S/N"
                                                                             value={item.serialNumber || ''}
                                                                             onChange={(e) => {
                                                                                 const updated = [...items];
@@ -626,7 +626,7 @@ function EditInvoice() {
                                                                 ) : (
                                                                     <input
                                                                         type="text"
-                                                                        placeholder="Serial No / S/N (e.g. QA507B26NLZ)"
+                                                                        placeholder="Serial number / S/N (optional)"
                                                                         value={item.serialNumber || ''}
                                                                         onChange={(e) => {
                                                                             const updated = [...items];

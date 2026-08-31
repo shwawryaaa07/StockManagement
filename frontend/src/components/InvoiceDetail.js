@@ -3,12 +3,23 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getInvoice } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
+import { getStoreProfile } from '../services/storeProfile';
+
 function InvoiceDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { isVisitor } = useAuth();
     const [invoice, setInvoice] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [storeProfile, setStoreProfile] = useState(getStoreProfile);
+
+    useEffect(() => {
+        const handleProfileUpdate = (e) => {
+            if (e.detail) setStoreProfile(e.detail);
+        };
+        window.addEventListener('store-profile-updated', handleProfileUpdate);
+        return () => window.removeEventListener('store-profile-updated', handleProfileUpdate);
+    }, []);
 
     useEffect(() => {
         loadInvoice().catch(console.error);
@@ -51,12 +62,13 @@ function InvoiceDetail() {
             `${idx + 1}. ${it.product?.name || 'Product'} (Qty: ${it.quantity}) - ₹${(it.quantity * it.unitPrice).toLocaleString('en-IN')}`
         ).join('\n');
 
-        const shopFooter = isVisitor
+        const displayShopName = isVisitor ? 'Manisha Electronics (Demo Sandbox)' : storeProfile.shopName;
+        const displayShopFooter = isVisitor
             ? `Thank you for choosing *Manisha Electronics (Demo)*!\n📍 Goa • 📞 +91 98000 00000`
-            : `Thank you for choosing *Manisha Electronics*!\n📍 Valpoi, Goa • 📞 9309736172 / 70205592347`;
+            : `Thank you for choosing *${storeProfile.shopName}*!\n📍 ${storeProfile.address} • 📞 ${storeProfile.phone}`;
 
         const message = 
-`🏪 *MANISHA ELECTRONICS - TAX INVOICE*
+`🏪 *${displayShopName.toUpperCase()} - TAX INVOICE*
 ----------------------------------------
 *Invoice No:* #${invoice.invoiceNumber}
 *Date:* ${formatDate(invoice.createdAt)}
@@ -73,7 +85,7 @@ ${itemsList}
 *Amount Paid:* ₹${Number(invoice.amountPaid || 0).toLocaleString('en-IN')}
 ${Number(invoice.balanceDue || invoice.amountDue || 0) > 0 ? `*Balance Due:* ⚠️ ₹${Number(invoice.balanceDue || invoice.amountDue).toLocaleString('en-IN')}` : '*Status:* ✅ Fully Paid'}
 
-${shopFooter}`;
+${displayShopFooter}`;
 
         const encoded = encodeURIComponent(message);
         const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
@@ -104,15 +116,19 @@ ${shopFooter}`;
     // Dynamic Shop Info based on Role (hides confidential store info in Demo Sandbox)
     const displayShopAddress = isVisitor
         ? "Sample Tech Complex, Commercial Hub, Panaji - Goa (Demo Sandbox)"
-        : "EDEN GROVE Building, Nr. State Bank of India, Opp. Govt. Higher Secondary, Thane Road, Valpoi, Satartia - Goa";
+        : storeProfile.address;
 
     const displayShopPhone = isVisitor
         ? "📞 +91 98000 00000"
-        : "📞 9309736172, 70205592347";
+        : "📞 " + storeProfile.phone;
 
     const displayGSTIN = isVisitor
         ? "30AAAAA0000A1Z5 (Demo)"
-        : "30AMYPN1753F1ZY";
+        : storeProfile.gstin;
+
+    const displayShopName = isVisitor
+        ? "MANISHA ELECTRONICS"
+        : storeProfile.shopName;
 
     return (
         <div className="page-container">
@@ -175,7 +191,7 @@ ${shopFooter}`;
                 }}>
                     <div>
                         <div style={{ fontSize: '24px', fontWeight: '900', color: '#0f172a', letterSpacing: '0.5px' }}>
-                            MANISHA <span style={{ color: '#d97706' }}>ELECTRONICS</span>
+                            {displayShopName}
                         </div>
                         <div style={{ fontSize: '11px', fontWeight: '700', color: '#475569', marginTop: '2px' }}>
                             ★ Complete Home Appliances &amp; Consumer Electronics

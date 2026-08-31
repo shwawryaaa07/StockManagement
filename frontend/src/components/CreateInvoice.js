@@ -1,11 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProducts, createInvoice } from '../services/api';
-import { useAuth } from '../context/AuthContext';
 
 function CreateInvoice() {
     const navigate = useNavigate();
-    const { isVisitor } = useAuth();
     const [products, setProducts] = useState([]);
     const [customerName, setCustomerName] = useState('');
     const [customerContact, setCustomerContact] = useState('');
@@ -214,7 +212,7 @@ function CreateInvoice() {
                                     type="text"
                                     value={customerName}
                                     onChange={(e) => setCustomerName(e.target.value)}
-                                    placeholder={isVisitor ? "e.g. Ramesh Parab" : "Customer full name"}
+                                    placeholder="Customer full name"
                                     required
                                     style={{
                                         width: '100%',
@@ -236,7 +234,7 @@ function CreateInvoice() {
                                     type="tel"
                                     value={customerContact}
                                     onChange={(e) => setCustomerContact(e.target.value)}
-                                    placeholder={isVisitor ? "e.g. 9822123456" : "10-digit phone number"}
+                                    placeholder="10-digit phone number"
                                     style={{
                                         width: '100%',
                                         padding: '11px 14px',
@@ -259,7 +257,7 @@ function CreateInvoice() {
                                     type="text"
                                     value={deliveryAddress}
                                     onChange={(e) => setDeliveryAddress(e.target.value)}
-                                    placeholder={isVisitor ? "e.g. Near Central Plaza, Panaji" : "Delivery / Village address (optional)"}
+                                    placeholder="Delivery / Village address (optional)"
                                     style={{
                                         width: '100%',
                                         padding: '10px 14px',
@@ -279,7 +277,7 @@ function CreateInvoice() {
                                     type="text"
                                     value={notes}
                                     onChange={(e) => setNotes(e.target.value)}
-                                    placeholder={isVisitor ? "e.g. 1 Yr Manufacturer Warranty" : "Bill remarks / warranty notes (optional)"}
+                                    placeholder="Bill remarks / warranty notes (optional)"
                                     style={{
                                         width: '100%',
                                         padding: '10px 14px',
@@ -309,7 +307,7 @@ function CreateInvoice() {
 
                         <input
                             type="text"
-                            placeholder={isVisitor ? "Type product name, model (e.g. Samsung 55 TV, LG Fridge)..." : "Search product name, model, or category..."}
+                            placeholder="Search product name, model, or category..."
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);

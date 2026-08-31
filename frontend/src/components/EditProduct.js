@@ -133,7 +133,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                                 type="text"
                                 value={modelNumber}
                                 onChange={(e) => setModelNumber(e.target.value)}
-                                placeholder="e.g. Ams:1833"
+                                placeholder="Model number (optional)"
                                 style={{
                                     width: '100%',
                                     padding: '10px 12px',
@@ -180,7 +180,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                                 type="number"
                                 value={quantity}
                                 onChange={(e) => setQuantity(e.target.value)}
-                                placeholder="e.g. 5"
+                                placeholder="Stock quantity"
                                 min="0"
                                 required
                                 style={{
@@ -231,7 +231,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                             type="text"
                             value={serialNumbers}
                             onChange={(e) => setSerialNumbers(e.target.value)}
-                            placeholder="e.g. QA507B26NLZ, TK02235, SN88910"
+                            placeholder="Enter serial numbers separated by comma"
                             style={{
                                 width: '100%',
                                 padding: '10px 12px',

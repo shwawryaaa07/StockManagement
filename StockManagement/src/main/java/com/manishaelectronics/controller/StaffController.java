@@ -125,4 +125,32 @@ public class StaffController {
         }
         return ResponseEntity.badRequest().body(Map.of("message", "PIN must be at least 4 digits"));
     }
+
+    // Dynamic Store Profile Overview State
+    private static final Map<String, String> storeProfile = new java.util.concurrent.ConcurrentHashMap<>(Map.of(
+            "shopName", "MANISHA ELECTRONICS",
+            "ownerName", "Ramesh Naik (Owner)",
+            "gstin", "30AMYPN1753F1ZY",
+            "phone", "9309736172, 70205592347",
+            "address", "EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa"
+    ));
+
+    // GET /api/staff/store-profile - Get dynamic store profile
+    @GetMapping("/store-profile")
+    public ResponseEntity<Map<String, String>> getStoreProfile() {
+        return ResponseEntity.ok(storeProfile);
+    }
+
+    // POST /api/staff/store-profile - Update store profile overview
+    @PostMapping("/store-profile")
+    public ResponseEntity<?> updateStoreProfile(@RequestBody Map<String, String> updated) {
+        if (updated != null) {
+            storeProfile.putAll(updated);
+        }
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "Store profile updated successfully",
+                "storeProfile", storeProfile
+        ));
+    }
 }

@@ -122,7 +122,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="e.g. AMSTRAD 1.5 Ton AC"
+                                placeholder="Product name or brand"
                                 required
                                 style={{
                                     width: '100%',
@@ -144,7 +144,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                                 type="text"
                                 value={modelNumber}
                                 onChange={(e) => setModelNumber(e.target.value)}
-                                placeholder="e.g. Ams:1833"
+                                placeholder="Model number (optional)"
                                 style={{
                                     width: '100%',
                                     padding: '10px 12px',
@@ -191,7 +191,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                                 type="number"
                                 value={quantity}
                                 onChange={(e) => setQuantity(e.target.value)}
-                                placeholder="e.g. 5"
+                                placeholder="Stock quantity"
                                 min="0"
                                 required
                                 style={{
@@ -265,7 +265,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                             type="text"
                             value={serialNumbers}
                             onChange={(e) => setSerialNumbers(e.target.value)}
-                            placeholder="e.g. QA507B26NLZ, TK02235, SN88910"
+                            placeholder="Enter serial numbers separated by comma"
                             style={{
                                 width: '100%',
                                 padding: '10px 12px',

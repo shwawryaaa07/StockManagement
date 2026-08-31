@@ -337,7 +337,7 @@ function DueInvoices() {
                                     type="text"
                                     value={settleNotes}
                                     onChange={(e) => setSettleNotes(e.target.value)}
-                                    placeholder="e.g. Cleared via PhonePe"
+                                    placeholder="Settlement notes or transaction ref"
                                     style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
                             </div>

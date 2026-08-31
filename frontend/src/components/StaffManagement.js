@@ -1,16 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
+import { getStoreProfile, saveStoreProfile } from '../services/storeProfile';
 
 function StaffManagement() {
     const { isVisitor } = useAuth();
     
-    // Store profile constants (Masked in Demo Sandbox)
-    const shopName = isVisitor ? 'MANISHA ELECTRONICS (Demo Sandbox)' : 'MANISHA ELECTRONICS';
-    const ownerUsername = isVisitor ? 'Demo Administrator (Portfolio View)' : 'Ramesh Naik (Owner)';
-    const gstin = isVisitor ? '30AAAAA0000A1Z5 (Demo)' : '30AMYPN1753F1ZY';
-    const phone = isVisitor ? '+91 98000 00000' : '9309736172, 70205592347';
-    const address = isVisitor ? 'Sample Tech Complex, Commercial Plaza, Panaji - Goa' : 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa';
+    // Store profile state (Synced across components)
+    const [storeProfile, setStoreProfile] = useState(getStoreProfile);
+
+    // Profile Edit Modal State
+    const [showProfileModal, setShowProfileModal] = useState(false);
+    const [editShopName, setEditShopName] = useState(storeProfile.shopName);
+    const [editOwnerName, setEditOwnerName] = useState(storeProfile.ownerName);
+    const [editGstin, setEditGstin] = useState(storeProfile.gstin);
+    const [editPhone, setEditPhone] = useState(storeProfile.phone);
+    const [editAddress, setEditAddress] = useState(storeProfile.address);
+    const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
+
+    // Dynamic Display values
+    const shopName = isVisitor ? 'MANISHA ELECTRONICS (Demo Sandbox)' : storeProfile.shopName;
+    const ownerUsername = isVisitor ? 'Demo Administrator (Portfolio View)' : storeProfile.ownerName;
+    const gstin = isVisitor ? '30AAAAA0000A1Z5 (Demo)' : storeProfile.gstin;
+    const phone = isVisitor ? '+91 98000 00000' : storeProfile.phone;
+    const address = isVisitor ? 'Sample Tech Complex, Commercial Plaza, Panaji - Goa' : storeProfile.address;
 
     // Owner PIN change state
     const [currentPin, setCurrentPin] = useState('');
@@ -60,21 +73,53 @@ function StaffManagement() {
 
     // Load from cloud sync on mount
     useEffect(() => {
+        // 1. Fetch Staff List
         api.get('/staff').then(res => {
             if (res.data && Array.isArray(res.data) && res.data.length > 0) {
                 setStaffList(res.data);
                 localStorage.setItem('manisha_staff_accounts', JSON.stringify(res.data));
                 sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(res.data));
             }
-        }).catch(() => {
-            // Offline fallback
-        });
+        }).catch(() => { });
+
+        // 2. Fetch Store Profile
+        api.get('/staff/store-profile').then(res => {
+            if (res.data && res.data.shopName) {
+                const saved = saveStoreProfile(res.data);
+                setStoreProfile(saved);
+            }
+        }).catch(() => { });
     }, []);
 
     useEffect(() => {
         localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
         sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
     }, [staffList]);
+
+    // Handle Store Profile Save
+    const handleSaveStoreProfile = async (e) => {
+        e.preventDefault();
+        const updated = {
+            shopName: editShopName.trim() || 'MANISHA ELECTRONICS',
+            ownerName: editOwnerName.trim() || 'Ramesh Naik (Owner)',
+            gstin: editGstin.trim() || '30AMYPN1753F1ZY',
+            phone: editPhone.trim() || '9309736172, 70205592347',
+            address: editAddress.trim() || 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa'
+        };
+
+        const saved = saveStoreProfile(updated);
+        setStoreProfile(saved);
+
+        try {
+            await api.post('/staff/store-profile', updated);
+        } catch (err) { }
+
+        setProfileSuccessMsg('✅ Store Profile updated and synced to all invoices!');
+        setTimeout(() => {
+            setProfileSuccessMsg('');
+            setShowProfileModal(false);
+        }, 1200);
+    };
 
     // Handle Owner PIN Update
     const handleOwnerPinChange = async (e) => {
@@ -293,16 +338,36 @@ function StaffManagement() {
 
             {/* Top Row: Store Profile & Owner PIN Settings */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '28px' }}>
-                {/* Store Profile Card */}
-                <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--gold-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                            👑
+                {/* Store Profile Card with Edit Button */}
+                <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', position: 'relative' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--gold-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                                👑
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: '800', fontSize: '15px', color: 'var(--text-primary)' }}>Store Profile Overview</div>
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Administrative &amp; Tax Information</div>
+                            </div>
                         </div>
-                        <div>
-                            <div style={{ fontWeight: '800', fontSize: '15px', color: 'var(--text-primary)' }}>Store Profile Overview</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Administrative &amp; Tax Information</div>
-                        </div>
+
+                        {!isVisitor && (
+                            <button
+                                onClick={() => {
+                                    setEditShopName(storeProfile.shopName);
+                                    setEditOwnerName(storeProfile.ownerName);
+                                    setEditGstin(storeProfile.gstin);
+                                    setEditPhone(storeProfile.phone);
+                                    setEditAddress(storeProfile.address);
+                                    setShowProfileModal(true);
+                                }}
+                                className="btn-cancel"
+                                style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '700' }}
+                                title="Edit Store Details (Syncs to all Invoices)"
+                            >
+                                ✏️ Edit Profile
+                            </button>
+                        )}
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
@@ -497,6 +562,115 @@ function StaffManagement() {
                     </table>
                 </div>
             </div>
+
+            {/* EDIT STORE PROFILE MODAL */}
+            {showProfileModal && (
+                <div style={{
+                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, padding: '16px'
+                }}>
+                    <div style={{
+                        background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px',
+                        padding: '28px', maxWidth: '520px', width: '100%', boxShadow: 'var(--shadow-xl)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+                            <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>
+                                👑 Edit Store Profile &amp; Invoice Details
+                            </h3>
+                            <button onClick={() => setShowProfileModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+                        </div>
+
+                        {profileSuccessMsg && (
+                            <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', color: '#10b981', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', marginBottom: '14px' }}>
+                                {profileSuccessMsg}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSaveStoreProfile} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    Store Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editShopName}
+                                    onChange={(e) => setEditShopName(e.target.value)}
+                                    placeholder="Enter store name"
+                                    required
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                        Primary Administrator *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editOwnerName}
+                                        onChange={(e) => setEditOwnerName(e.target.value)}
+                                        placeholder="Owner name"
+                                        required
+                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                        Official GSTIN *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        value={editGstin}
+                                        onChange={(e) => setEditGstin(e.target.value)}
+                                        placeholder="GSTIN number"
+                                        required
+                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px', fontFamily: 'monospace' }}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    Contact Numbers (Separated by comma) *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={editPhone}
+                                    onChange={(e) => setEditPhone(e.target.value)}
+                                    placeholder="Phone numbers"
+                                    required
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    Store Location &amp; Address *
+                                </label>
+                                <textarea
+                                    value={editAddress}
+                                    onChange={(e) => setEditAddress(e.target.value)}
+                                    placeholder="Store physical address"
+                                    required
+                                    rows={2}
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px', resize: 'vertical' }}
+                                />
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
+                                <button type="button" onClick={() => setShowProfileModal(false)} className="btn-cancel" style={{ padding: '9px 16px', fontSize: '13px' }}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className="btn-primary" style={{ padding: '9px 20px', fontSize: '13px' }}>
+                                    💾 Save Store Profile
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             {/* ADD STAFF MODAL */}
             {showAddModal && (

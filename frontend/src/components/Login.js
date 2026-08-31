@@ -13,7 +13,7 @@ function Login() {
     const [showOwnerPass, setShowOwnerPass] = useState(false);
     
     // Staff state
-    const [staffUsername, setStaffUsername] = useState('staff1');
+    const [staffUsername, setStaffUsername] = useState('rahul_counter1');
     const [staffPin, setStaffPin] = useState('');
     
     // Global state
@@ -115,326 +115,452 @@ function Login() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#0f172a',
-            padding: '24px',
-            fontFamily: 'Inter, system-ui, -apple-system, sans-serif'
+            backgroundColor: '#090d16',
+            backgroundImage: 'radial-gradient(circle at 15% 25%, rgba(245, 158, 11, 0.08) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(59, 130, 246, 0.08) 0%, transparent 45%)',
+            padding: '32px 20px',
+            fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
+            boxSizing: 'border-box'
         }}>
             <div style={{
                 width: '100%',
-                maxWidth: '480px',
-                background: '#ffffff',
-                borderRadius: '24px',
-                padding: '36px 32px',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
-                textAlign: 'center',
-                color: '#0f172a'
+                maxWidth: '1120px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+                gap: '36px',
+                alignItems: 'center'
             }}>
-                {/* Shop Branding Header */}
-                <div style={{
-                    width: '64px',
-                    height: '64px',
-                    margin: '0 auto 16px',
-                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '32px',
-                    boxShadow: '0 10px 20px rgba(245, 158, 11, 0.3)'
-                }}>
-                    🏪
-                </div>
-
-                <h1 style={{ fontSize: '24px', fontWeight: '900', letterSpacing: '-0.5px', margin: '0 0 4px', color: '#0f172a' }}>
-                    MANISHA <span style={{ color: '#d97706' }}>ELECTRONICS</span>
-                </h1>
-                <p style={{ fontSize: '13px', color: '#64748b', fontWeight: '500', margin: '0 0 24px' }}>
-                    Cloud Retail POS &amp; Enterprise Inventory ERP
-                </p>
-
-                {/* 3-Way Role Selector Tabs */}
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: '1fr 1fr 1fr',
-                    gap: '6px',
-                    background: '#f1f5f9',
-                    padding: '5px',
-                    borderRadius: '14px',
-                    marginBottom: '24px'
-                }}>
-                    <button
-                        type="button"
-                        onClick={() => { setAuthMode('VISITOR'); setErrorMsg(''); }}
-                        style={{
-                            padding: '10px 4px',
-                            fontSize: '12px',
-                            fontWeight: '700',
-                            borderRadius: '10px',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            background: authMode === 'VISITOR' ? '#ffffff' : 'transparent',
-                            color: authMode === 'VISITOR' ? '#d97706' : '#64748b',
-                            boxShadow: authMode === 'VISITOR' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
-                        }}
-                    >
-                        🚀 Demo Sandbox
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => { setAuthMode('STAFF'); setErrorMsg(''); }}
-                        style={{
-                            padding: '10px 4px',
-                            fontSize: '12px',
-                            fontWeight: '700',
-                            borderRadius: '10px',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            background: authMode === 'STAFF' ? '#ffffff' : 'transparent',
-                            color: authMode === 'STAFF' ? '#0f172a' : '#64748b',
-                            boxShadow: authMode === 'STAFF' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
-                        }}
-                    >
-                        👤 Counter Staff
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => { setAuthMode('OWNER'); setErrorMsg(''); }}
-                        style={{
-                            padding: '10px 4px',
-                            fontSize: '12px',
-                            fontWeight: '700',
-                            borderRadius: '10px',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'all 0.2s',
-                            background: authMode === 'OWNER' ? '#ffffff' : 'transparent',
-                            color: authMode === 'OWNER' ? '#0f172a' : '#64748b',
-                            boxShadow: authMode === 'OWNER' ? '0 2px 8px rgba(0,0,0,0.08)' : 'none'
-                        }}
-                    >
-                        👑 Store Owner
-                    </button>
-                </div>
-
-                {/* Error Banner */}
-                {errorMsg && (
+                {/* LEFT HERO COLUMN: Store Branding & Capabilities */}
+                <div style={{ color: '#ffffff', padding: '10px 16px' }}>
+                    {/* Badge */}
                     <div style={{
-                        background: '#fef2f2',
-                        border: '1px solid #fecaca',
-                        color: '#b91c1c',
-                        padding: '12px 16px',
-                        borderRadius: '12px',
-                        fontSize: '13px',
-                        fontWeight: '600',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        background: 'rgba(245, 158, 11, 0.12)',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        borderRadius: '30px',
+                        padding: '6px 14px',
+                        fontSize: '12px',
+                        fontWeight: '700',
+                        color: '#fbbf24',
                         marginBottom: '20px',
-                        textAlign: 'left'
+                        letterSpacing: '0.5px'
                     }}>
-                        {errorMsg}
+                        <span>✨</span> Cloud POS &amp; Inventory Management ERP
                     </div>
-                )}
 
-                {/* MODE 1: VISITOR / DEMO SANDBOX */}
-                {authMode === 'VISITOR' && (
-                    <div style={{ textAlign: 'left' }}>
+                    <h1 style={{
+                        fontSize: '38px',
+                        fontWeight: '900',
+                        lineHeight: '1.2',
+                        margin: '0 0 14px 0',
+                        letterSpacing: '-1px'
+                    }}>
+                        MANISHA <span style={{
+                            background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent'
+                        }}>ELECTRONICS</span>
+                    </h1>
+
+                    <p style={{
+                        fontSize: '15px',
+                        color: '#94a3b8',
+                        lineHeight: '1.6',
+                        margin: '0 0 28px 0',
+                        maxWidth: '480px'
+                    }}>
+                        Complete cloud retail solution powering smart billing, live multi-category stock control, WhatsApp invoice sharing, and customer credit ledger tracking.
+                    </p>
+
+                    {/* Feature Highlights Grid */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '14px',
+                        marginBottom: '32px'
+                    }}>
                         <div style={{
-                            background: '#fffbeb',
-                            border: '1px solid #fef3c7',
-                            padding: '16px',
+                            background: 'rgba(30, 41, 59, 0.6)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
                             borderRadius: '14px',
-                            marginBottom: '20px'
+                            padding: '14px 16px'
                         }}>
-                            <div style={{ fontSize: '14px', fontWeight: '800', color: '#b45309', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <span>🚀</span> Recruiter &amp; Portfolio Guest Access
-                            </div>
-                            <div style={{ fontSize: '12px', color: '#92400e', marginTop: '6px', lineHeight: '1.5' }}>
-                                Explore the live POS counter, create test invoices, check product catalog, and test WhatsApp receipts in an <strong>isolated sandbox environment</strong> with zero risk to production data.
-                            </div>
+                            <div style={{ fontSize: '20px', marginBottom: '6px' }}>⚡</div>
+                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc', marginBottom: '2px' }}>Instant POS Billing</div>
+                            <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>Automated GST tax breakdown and thermal printing</div>
                         </div>
 
+                        <div style={{
+                            background: 'rgba(30, 41, 59, 0.6)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '14px',
+                            padding: '14px 16px'
+                        }}>
+                            <div style={{ fontSize: '20px', marginBottom: '6px' }}>📲</div>
+                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc', marginBottom: '2px' }}>WhatsApp Invoicing</div>
+                            <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>1-Click direct digital receipts sent to customer phones</div>
+                        </div>
+
+                        <div style={{
+                            background: 'rgba(30, 41, 59, 0.6)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '14px',
+                            padding: '14px 16px'
+                        }}>
+                            <div style={{ fontSize: '20px', marginBottom: '6px' }}>📊</div>
+                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc', marginBottom: '2px' }}>Live Stock &amp; Dues</div>
+                            <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>Real-time inventory levels, low-stock alerts &amp; ledger</div>
+                        </div>
+
+                        <div style={{
+                            background: 'rgba(30, 41, 59, 0.6)',
+                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            borderRadius: '14px',
+                            padding: '14px 16px'
+                        }}>
+                            <div style={{ fontSize: '20px', marginBottom: '6px' }}>🛡️</div>
+                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc', marginBottom: '2px' }}>Role-Based Access</div>
+                            <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>PIN-protected counters with owner master security</div>
+                        </div>
+                    </div>
+
+                    {/* Trust Badges */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                        fontSize: '12px',
+                        color: '#64748b',
+                        flexWrap: 'wrap'
+                    }}>
+                        <span>🔒 256-Bit SSL Encrypted</span>
+                        <span>•</span>
+                        <span>⚡ 100% Client Isolation</span>
+                        <span>•</span>
+                        <span>📍 Valpoi, Goa</span>
+                    </div>
+                </div>
+
+                {/* RIGHT COLUMN: Interactive Login Card */}
+                <div style={{
+                    background: '#ffffff',
+                    borderRadius: '24px',
+                    padding: '36px 32px',
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+                    color: '#0f172a',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                }}>
+                    <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+                        <div style={{
+                            width: '54px',
+                            height: '54px',
+                            margin: '0 auto 12px',
+                            background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                            borderRadius: '14px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '26px',
+                            boxShadow: '0 10px 20px rgba(245, 158, 11, 0.25)'
+                        }}>
+                            🏪
+                        </div>
+                        <h2 style={{ fontSize: '20px', fontWeight: '900', margin: '0 0 4px 0', color: '#0f172a' }}>
+                            Access Portal
+                        </h2>
+                        <p style={{ fontSize: '13px', color: '#64748b', margin: 0 }}>
+                            Select your portal role to authenticate
+                        </p>
+                    </div>
+
+                    {/* 3-Tier Navigation Tabs */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr 1fr',
+                        background: '#f1f5f9',
+                        padding: '4px',
+                        borderRadius: '12px',
+                        marginBottom: '22px',
+                        gap: '4px'
+                    }}>
                         <button
                             type="button"
-                            onClick={handleVisitorLogin}
-                            disabled={loading}
+                            onClick={() => { setAuthMode('VISITOR'); setErrorMsg(''); }}
                             style={{
-                                width: '100%',
-                                padding: '15px',
-                                fontSize: '15px',
-                                fontWeight: '800',
-                                color: '#ffffff',
-                                background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                                 border: 'none',
-                                borderRadius: '12px',
+                                padding: '9px 4px',
+                                borderRadius: '9px',
+                                fontSize: '12px',
+                                fontWeight: authMode === 'VISITOR' ? '800' : '600',
+                                background: authMode === 'VISITOR' ? '#ffffff' : 'transparent',
+                                color: authMode === 'VISITOR' ? '#d97706' : '#64748b',
                                 cursor: 'pointer',
-                                boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
-                                transition: 'all 0.2s'
+                                boxShadow: authMode === 'VISITOR' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                                transition: 'all 0.15s ease'
                             }}
                         >
-                            {loading ? '⚡ Connecting to Sandbox...' : '✨ Enter Live Demo (1-Click)'}
+                            🚀 Demo Sandbox
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { setAuthMode('STAFF'); setErrorMsg(''); }}
+                            style={{
+                                border: 'none',
+                                padding: '9px 4px',
+                                borderRadius: '9px',
+                                fontSize: '12px',
+                                fontWeight: authMode === 'STAFF' ? '800' : '600',
+                                background: authMode === 'STAFF' ? '#ffffff' : 'transparent',
+                                color: authMode === 'STAFF' ? '#2563eb' : '#64748b',
+                                cursor: 'pointer',
+                                boxShadow: authMode === 'STAFF' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                                transition: 'all 0.15s ease'
+                            }}
+                        >
+                            👤 Counter Staff
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => { setAuthMode('OWNER'); setErrorMsg(''); }}
+                            style={{
+                                border: 'none',
+                                padding: '9px 4px',
+                                borderRadius: '9px',
+                                fontSize: '12px',
+                                fontWeight: authMode === 'OWNER' ? '800' : '600',
+                                background: authMode === 'OWNER' ? '#ffffff' : 'transparent',
+                                color: authMode === 'OWNER' ? '#d97706' : '#64748b',
+                                cursor: 'pointer',
+                                boxShadow: authMode === 'OWNER' ? '0 2px 6px rgba(0,0,0,0.06)' : 'none',
+                                transition: 'all 0.15s ease'
+                            }}
+                        >
+                            👑 Store Owner
                         </button>
                     </div>
-                )}
 
-                {/* MODE 2: COUNTER STAFF LOGIN */}
-                {authMode === 'STAFF' && (
-                    <form onSubmit={handleStaffLogin} style={{ textAlign: 'left' }}>
-                        <div style={{ marginBottom: '16px' }}>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
-                                Staff Register / ID
-                            </label>
-                            <input
-                                type="text"
-                                value={staffUsername}
-                                onChange={(e) => setStaffUsername(e.target.value)}
-                                placeholder="Enter staff register ID"
+                    {/* Error Display */}
+                    {errorMsg && (
+                        <div style={{
+                            background: '#fef2f2',
+                            border: '1px solid #fecaca',
+                            color: '#b91c1c',
+                            padding: '10px 14px',
+                            borderRadius: '10px',
+                            fontSize: '13px',
+                            fontWeight: '600',
+                            marginBottom: '16px',
+                            lineHeight: '1.4'
+                        }}>
+                            {errorMsg}
+                        </div>
+                    )}
+
+                    {/* TAB 1: VISITOR DEMO */}
+                    {authMode === 'VISITOR' && (
+                        <div>
+                            <div style={{
+                                background: '#fffbeb',
+                                border: '1px solid #fef3c7',
+                                borderRadius: '14px',
+                                padding: '16px',
+                                marginBottom: '22px',
+                                textAlign: 'left'
+                            }}>
+                                <div style={{ fontWeight: '800', fontSize: '13px', color: '#92400e', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <span>🚀</span> Recruiter &amp; Portfolio Guest Access
+                                </div>
+                                <p style={{ fontSize: '12px', color: '#78350f', margin: 0, lineHeight: '1.5' }}>
+                                    Explore the live POS counter, create test invoices, check product inventory, and test WhatsApp receipts in an <strong>isolated sandbox environment</strong> with zero risk to production data.
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={handleVisitorLogin}
+                                disabled={loading}
                                 style={{
                                     width: '100%',
-                                    padding: '12px 14px',
-                                    borderRadius: '10px',
-                                    border: '1px solid #cbd5e1',
-                                    fontSize: '14px',
-                                    outline: 'none',
-                                    boxSizing: 'border-box'
+                                    padding: '14px',
+                                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontSize: '15px',
+                                    fontWeight: '800',
+                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
+                                    transition: 'all 0.15s ease'
                                 }}
-                            />
+                            >
+                                {loading ? '✨ Initializing Sandbox...' : '✨ Enter Live Demo (1-Click)'}
+                            </button>
                         </div>
+                    )}
 
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
-                                4-Digit Counter PIN
-                            </label>
-                            <input
-                                type="password"
-                                inputMode="numeric"
-                                maxLength={6}
-                                value={staffPin}
-                                onChange={(e) => setStaffPin(e.target.value)}
-                                placeholder="Enter 4-digit PIN"
-                                style={{
-                                    width: '100%',
-                                    padding: '12px 14px',
-                                    borderRadius: '10px',
-                                    border: '1px solid #cbd5e1',
-                                    fontSize: '14px',
-                                    letterSpacing: '2px',
-                                    outline: 'none',
-                                    boxSizing: 'border-box'
-                                }}
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            style={{
-                                width: '100%',
-                                padding: '14px',
-                                fontSize: '15px',
-                                fontWeight: '800',
-                                color: '#ffffff',
-                                background: '#0f172a',
-                                border: 'none',
-                                borderRadius: '12px',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            {loading ? '🔓 Unlocking Register...' : '✅ Open Counter Register'}
-                        </button>
-                    </form>
-                )}
-
-                {/* MODE 3: STORE OWNER LOGIN */}
-                {authMode === 'OWNER' && (
-                    <form onSubmit={handleOwnerLogin} style={{ textAlign: 'left' }}>
-                        <div style={{ marginBottom: '20px' }}>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
-                                Owner Passcode or PIN
-                            </label>
-                            <div style={{ position: 'relative' }}>
+                    {/* TAB 2: STAFF LOGIN */}
+                    {authMode === 'STAFF' && (
+                        <form onSubmit={handleStaffLogin}>
+                            <div style={{ marginBottom: '14px', textAlign: 'left' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
+                                    Staff Counter Login ID
+                                </label>
                                 <input
-                                    type={showOwnerPass ? "text" : "password"}
-                                    value={ownerPasscode}
-                                    onChange={(e) => setOwnerPasscode(e.target.value)}
-                                    placeholder="Enter Owner PIN or Password"
+                                    type="text"
+                                    value={staffUsername}
+                                    onChange={(e) => setStaffUsername(e.target.value)}
+                                    placeholder="Enter your assigned login ID"
+                                    required
                                     style={{
                                         width: '100%',
-                                        padding: '12px 42px 12px 14px',
+                                        padding: '11px 14px',
                                         borderRadius: '10px',
-                                        border: '1px solid #cbd5e1',
+                                        border: '1.5px solid #e2e8f0',
                                         fontSize: '14px',
                                         outline: 'none',
                                         boxSizing: 'border-box'
                                     }}
                                 />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowOwnerPass(!showOwnerPass)}
-                                    style={{
-                                        position: 'absolute',
-                                        right: '12px',
-                                        top: '50%',
-                                        transform: 'translateY(-50%)',
-                                        background: 'none',
-                                        border: 'none',
-                                        cursor: 'pointer',
-                                        fontSize: '16px',
-                                        color: '#64748b'
-                                    }}
-                                >
-                                    {showOwnerPass ? '🙈' : '👁️'}
-                                </button>
                             </div>
-                        </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
-                            <input
-                                type="checkbox"
-                                id="ownerRemember"
-                                checked={rememberMe}
-                                onChange={(e) => setRememberMe(e.target.checked)}
-                                style={{ cursor: 'pointer', accentColor: '#d97706' }}
-                            />
-                            <label htmlFor="ownerRemember" style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }}>
-                                Keep owner counter signed in (30 days)
-                            </label>
-                        </div>
+                            <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
+                                    4-Digit Counter PIN
+                                </label>
+                                <input
+                                    type="password"
+                                    maxLength={6}
+                                    value={staffPin}
+                                    onChange={(e) => setStaffPin(e.target.value)}
+                                    placeholder="Enter 4-digit PIN"
+                                    required
+                                    style={{
+                                        width: '100%',
+                                        padding: '11px 14px',
+                                        borderRadius: '10px',
+                                        border: '1.5px solid #e2e8f0',
+                                        fontSize: '14px',
+                                        outline: 'none',
+                                        boxSizing: 'border-box',
+                                        letterSpacing: '2px'
+                                    }}
+                                />
+                            </div>
 
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            style={{
-                                width: '100%',
-                                padding: '14px',
-                                fontSize: '15px',
-                                fontWeight: '800',
-                                color: '#ffffff',
-                                background: 'linear-gradient(135deg, #0f172a, #1e293b)',
-                                border: 'none',
-                                borderRadius: '12px',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
-                            }}
-                        >
-                            {loading ? '👑 Authenticating Owner...' : '👑 Sign in as Store Owner'}
-                        </button>
-                    </form>
-                )}
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', textAlign: 'left' }}>
+                                <input
+                                    type="checkbox"
+                                    id="rememberStaff"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    style={{ marginRight: '8px', cursor: 'pointer' }}
+                                />
+                                <label htmlFor="rememberStaff" style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }}>
+                                    Remember register session
+                                </label>
+                            </div>
 
-                {/* Footer Security Badge */}
-                <div style={{
-                    marginTop: '28px',
-                    paddingTop: '16px',
-                    borderTop: '1px solid #f1f5f9',
-                    fontSize: '11px',
-                    color: '#94a3b8',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                }}>
-                    <span>🛡️</span> 256-Bit SSL Encrypted • Rate-Limited Protection
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontSize: '15px',
+                                    fontWeight: '800',
+                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+                                    transition: 'all 0.15s ease'
+                                }}
+                            >
+                                {loading ? 'Verifying Counter PIN...' : '🔓 Unlock Staff Counter'}
+                            </button>
+                        </form>
+                    )}
+
+                    {/* TAB 3: OWNER LOGIN */}
+                    {authMode === 'OWNER' && (
+                        <form onSubmit={handleOwnerLogin}>
+                            <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#475569', marginBottom: '6px' }}>
+                                    Owner Master PIN or Password
+                                </label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        type={showOwnerPass ? 'text' : 'password'}
+                                        value={ownerPasscode}
+                                        onChange={(e) => setOwnerPasscode(e.target.value)}
+                                        placeholder="Enter 4-digit PIN or master password"
+                                        required
+                                        style={{
+                                            width: '100%',
+                                            padding: '11px 40px 11px 14px',
+                                            borderRadius: '10px',
+                                            border: '1.5px solid #e2e8f0',
+                                            fontSize: '14px',
+                                            outline: 'none',
+                                            boxSizing: 'border-box'
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowOwnerPass(!showOwnerPass)}
+                                        style={{
+                                            position: 'absolute',
+                                            right: '12px',
+                                            top: '50%',
+                                            transform: 'translateY(-50%)',
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            color: '#64748b'
+                                        }}
+                                    >
+                                        {showOwnerPass ? '🙈' : '👁️'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', textAlign: 'left' }}>
+                                <input
+                                    type="checkbox"
+                                    id="rememberOwner"
+                                    checked={rememberMe}
+                                    onChange={(e) => setRememberMe(e.target.checked)}
+                                    style={{ marginRight: '8px', cursor: 'pointer' }}
+                                />
+                                <label htmlFor="rememberOwner" style={{ fontSize: '12px', color: '#64748b', cursor: 'pointer' }}>
+                                    Keep owner logged in
+                                </label>
+                            </div>
+
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                style={{
+                                    width: '100%',
+                                    padding: '14px',
+                                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                                    color: '#ffffff',
+                                    border: 'none',
+                                    borderRadius: '12px',
+                                    fontSize: '15px',
+                                    fontWeight: '800',
+                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
+                                    transition: 'all 0.15s ease'
+                                }}
+                            >
+                                {loading ? 'Authenticating Store Owner...' : '👑 Enter Owner Portal'}
+                            </button>
+                        </form>
+                    )}
                 </div>
             </div>
         </div>

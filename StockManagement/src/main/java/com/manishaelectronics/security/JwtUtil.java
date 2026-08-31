@@ -25,12 +25,17 @@ public class JwtUtil {
     }
 
     public String generateToken(String username, String role) {
+        return generateToken(username, role, "PROD");
+    }
+
+    public String generateToken(String username, String role, String tenantType) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expirationMs);
 
         return Jwts.builder()
                 .subject(username)
                 .claim("role", role)
+                .claim("tenantType", tenantType)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(secretKey)
@@ -45,6 +50,28 @@ public class JwtUtil {
                 .getPayload();
 
         return claims.getSubject();
+    }
+
+    public String getRoleFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        Object role = claims.get("role");
+        return role != null ? role.toString() : "ROLE_ADMIN";
+    }
+
+    public String getTenantTypeFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        Object tenant = claims.get("tenantType");
+        return tenant != null ? tenant.toString() : "PROD";
     }
 
     public boolean validateToken(String token) {

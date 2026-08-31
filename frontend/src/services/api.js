@@ -25,8 +25,7 @@ api.interceptors.response.use((response) => {
     return response;
 }, (error) => {
     if (error.response && error.response.status === 401) {
-        // If not on login endpoint, clear invalid token and trigger re-auth
-        if (!error.config.url.includes('/auth/login')) {
+        if (!error.config.url.includes('/auth/login') && !error.config.url.includes('/auth/staff') && !error.config.url.includes('/auth/visitor')) {
             localStorage.removeItem('authToken');
             sessionStorage.removeItem('authToken');
             window.dispatchEvent(new Event('auth-logout'));
@@ -35,9 +34,17 @@ api.interceptors.response.use((response) => {
     return Promise.reject(error);
 });
 
-// Authentication
-export const loginWithPin = (pin) => api.post('/auth/login', { pin });
-export const loginWithCredentials = (username, password) => api.post('/auth/login', { username, password });
+// 3-Tier Authentication
+export const loginAsOwner = (pinOrPassword) => {
+    if (/^\d+$/.test(pinOrPassword.trim())) {
+        return api.post('/auth/login', { pin: pinOrPassword.trim() });
+    } else {
+        return api.post('/auth/login', { username: 'admin', password: pinOrPassword });
+    }
+};
+
+export const loginAsStaff = (username, pin) => api.post('/auth/staff', { username, pin });
+export const loginAsVisitor = () => api.post('/auth/visitor');
 export const verifyAuthToken = () => api.get('/auth/verify');
 
 // Products

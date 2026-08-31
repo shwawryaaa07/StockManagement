@@ -7,7 +7,13 @@ export function AuthProvider({ children }) {
     const [isAuthenticated, setIsAuthenticated] = useState(() => {
         return !!(localStorage.getItem('authToken') || sessionStorage.getItem('authToken'));
     });
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState(() => {
+        const cachedRole = localStorage.getItem('userRole') || sessionStorage.getItem('userRole') || 'VISITOR';
+        const cachedUsername = localStorage.getItem('userName') || sessionStorage.getItem('userName') || 'User';
+        const cachedShop = localStorage.getItem('shopName') || sessionStorage.getItem('shopName') || 'MANISHA ELECTRONICS';
+        const cachedTenant = localStorage.getItem('tenantType') || sessionStorage.getItem('tenantType') || 'PROD';
+        return { role: cachedRole, username: cachedUsername, shopName: cachedShop, tenantType: cachedTenant };
+    });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -17,7 +23,13 @@ export function AuthProvider({ children }) {
                 .then(res => {
                     if (res.data && res.data.valid) {
                         setIsAuthenticated(true);
-                        setUser({ username: res.data.username, shopName: res.data.shopName });
+                        const userData = {
+                            username: res.data.username,
+                            role: res.data.role,
+                            tenantType: res.data.tenantType,
+                            shopName: res.data.shopName
+                        };
+                        setUser(userData);
                     } else {
                         logout();
                     }
@@ -45,24 +57,36 @@ export function AuthProvider({ children }) {
     const login = (token, userData, rememberMe = true) => {
         if (rememberMe) {
             localStorage.setItem('authToken', token);
-            sessionStorage.removeItem('authToken');
+            localStorage.setItem('userRole', userData.role || 'OWNER');
+            localStorage.setItem('userName', userData.username || 'User');
+            localStorage.setItem('shopName', userData.shopName || 'MANISHA ELECTRONICS');
+            localStorage.setItem('tenantType', userData.tenantType || 'PROD');
+            sessionStorage.clear();
         } else {
             sessionStorage.setItem('authToken', token);
-            localStorage.removeItem('authToken');
+            sessionStorage.setItem('userRole', userData.role || 'OWNER');
+            sessionStorage.setItem('userName', userData.username || 'User');
+            sessionStorage.setItem('shopName', userData.shopName || 'MANISHA ELECTRONICS');
+            sessionStorage.setItem('tenantType', userData.tenantType || 'PROD');
+            localStorage.clear();
         }
         setIsAuthenticated(true);
         setUser(userData);
     };
 
     const logout = () => {
-        localStorage.removeItem('authToken');
-        sessionStorage.removeItem('authToken');
+        localStorage.clear();
+        sessionStorage.clear();
         setIsAuthenticated(false);
         setUser(null);
     };
 
+    const isOwner = user?.role === 'OWNER' || user?.role === 'ADMIN';
+    const isStaff = user?.role === 'STAFF';
+    const isVisitor = user?.role === 'VISITOR' || user?.tenantType === 'DEMO';
+
     return (
-        <AuthContext.Provider value={{ isAuthenticated, user, loading, login, logout }}>
+        <AuthContext.Provider value={{ isAuthenticated, user, isOwner, isStaff, isVisitor, loading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

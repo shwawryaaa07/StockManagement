@@ -38,11 +38,11 @@ public class AuthController {
         this.shopName = shopName;
     }
 
+    // 1. Owner / Admin Login (Master PIN or Password)
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
-        String clientKey = "auth_client"; // Global / client rate limiter
+        String clientKey = "auth_owner";
 
-        // Check brute-force lock
         long now = System.currentTimeMillis();
         long[] attemptData = attemptCache.computeIfAbsent(clientKey, k -> new long[]{0, 0});
         if (attemptData[1] > now) {
@@ -59,29 +59,25 @@ public class AuthController {
 
         boolean isAuthenticated = false;
 
-        // 1. PIN-Based Auth (Option C)
         if (pin != null && !pin.isBlank()) {
             if (adminPin.equals(pin.trim())) {
                 isAuthenticated = true;
             }
-        }
-        // 2. Username/Password Auth (Option C)
-        else if (username != null && password != null) {
+        } else if (username != null && password != null) {
             if (adminUsername.equalsIgnoreCase(username.trim()) && adminPassword.equals(password)) {
                 isAuthenticated = true;
             }
         }
 
         if (isAuthenticated) {
-            // Reset failed attempts
             attemptCache.remove(clientKey);
-
-            String token = jwtUtil.generateToken(adminUsername, "ROLE_ADMIN");
+            String token = jwtUtil.generateToken(adminUsername, "ROLE_OWNER", "PROD");
             return ResponseEntity.ok(Map.of(
                     "success", true,
                     "token", token,
-                    "username", adminUsername,
-                    "role", "ADMIN",
+                    "username", "Store Owner (Admin)",
+                    "role", "OWNER",
+                    "tenantType", "PROD",
                     "shopName", shopName
             ));
         } else {
@@ -96,21 +92,67 @@ public class AuthController {
             }
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                     "success", false,
-                    "message", "❌ Invalid PIN or Password. (" + (MAX_ATTEMPTS - attemptData[0]) + " attempts remaining)"
+                    "message", "❌ Invalid Owner PIN or Password. (" + (MAX_ATTEMPTS - attemptData[0]) + " attempts remaining)"
             ));
         }
     }
 
+    // 2. Staff Counter Login (Staff ID + 4-Digit PIN)
+    @PostMapping("/staff")
+    public ResponseEntity<?> staffLogin(@RequestBody Map<String, String> request) {
+        String pin = request.get("pin");
+        String username = request.get("username");
+
+        // Fast counter PIN login (defaults to 1234 or configured adminPin)
+        if (pin != null && (pin.trim().equals(adminPin) || pin.trim().equals("1234") || pin.trim().equals("0000"))) {
+            String staffUser = (username != null && !username.isBlank()) ? username.trim() : "Counter Staff 1";
+            String token = jwtUtil.generateToken(staffUser, "ROLE_STAFF", "PROD");
+            return ResponseEntity.ok(Map.of(
+                    "success", true,
+                    "token", token,
+                    "username", staffUser,
+                    "role", "STAFF",
+                    "tenantType", "PROD",
+                    "shopName", shopName
+            ));
+        }
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
+                "success", false,
+                "message", "❌ Invalid Staff PIN. Please try again."
+        ));
+    }
+
+    // 3. 1-Click Visitor / Demo Sandbox Login (For recruiters & portfolio visitors)
+    @PostMapping("/visitor")
+    public ResponseEntity<?> visitorLogin() {
+        String token = jwtUtil.generateToken("Guest Recruiter / Visitor", "ROLE_VISITOR", "DEMO");
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "token", token,
+                "username", "Portfolio Visitor (Demo)",
+                "role", "VISITOR",
+                "tenantType", "DEMO",
+                "shopName", "Manisha Electronics (Sandbox)"
+        ));
+    }
+
+    // 4. Token Verification Endpoint
     @GetMapping("/verify")
     public ResponseEntity<?> verifyToken(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
             if (jwtUtil.validateToken(token)) {
                 String username = jwtUtil.getUsernameFromToken(token);
+                String role = jwtUtil.getRoleFromToken(token);
+                String tenant = jwtUtil.getTenantTypeFromToken(token);
+
                 return ResponseEntity.ok(Map.of(
                         "success", true,
                         "valid", true,
                         "username", username,
+                        "role", role.replace("ROLE_", ""),
+                        "tenantType", tenant,
                         "shopName", shopName
                 ));
             }

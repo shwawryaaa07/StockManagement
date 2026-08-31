@@ -76,7 +76,7 @@ function Navbar() {
                     gap: '8px'
                 }}>
                     <span>🚀</span>
-                    <span>You are exploring in <strong>Portfolio Sandbox Mode</strong>. Feel free to create test bills &amp; explore all features!</span>
+                    <span>You are exploring in <strong>Portfolio Sandbox Mode</strong>. Real store database is isolated and protected.</span>
                 </div>
             )}
 
@@ -110,6 +110,13 @@ function Navbar() {
                     <NavLink to="/due-invoices" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                         <span className="icon">🟡</span> Due Bills
                     </NavLink>
+
+                    {/* Staff & Store Settings (Available to Owner and in Demo Sandbox) */}
+                    {(isOwner || isVisitor) && (
+                        <NavLink to="/staff-management" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                            <span className="icon">👥</span> Staff &amp; Accounts
+                        </NavLink>
+                    )}
 
                     <button
                         className="dark-toggle"

@@ -8,6 +8,7 @@ import InvoiceList from './components/InvoiceList';
 import DueInvoices from './components/DueInvoices';
 import InvoiceDetail from './components/InvoiceDetail';
 import EditInvoice from './components/EditInvoice';
+import StaffManagement from './components/StaffManagement';
 import FloatingButton from './components/FloatingButton';
 import Login from './components/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -51,6 +52,7 @@ function AppContent() {
                     <Route path="/invoice/:id" element={<InvoiceDetail />} />
                     <Route path="/edit-invoice/:id" element={<EditInvoice />} />
                     <Route path="/due-invoices" element={<DueInvoices />} />
+                    <Route path="/staff-management" element={<StaffManagement />} />
                     <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
                 <FloatingButton />

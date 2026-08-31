@@ -19,18 +19,21 @@ function StaffManagement() {
     const [pinSuccessMsg, setPinSuccessMsg] = useState('');
     const [pinErrorMsg, setPinErrorMsg] = useState('');
 
-    // Default pristine staff list
+    // Default staff list (Only authorized staff registered by Owner)
     const DEFAULT_STAFF = [
-        { id: 'STF-01', name: 'Tejas', username: 'tejas11', pin: '0987', role: 'Inventory Specialist', status: 'Active', dateAdded: '2026-08-31' },
-        { id: 'STF-02', name: 'Rahul Parab', username: 'rahul_counter1', pin: '1234', role: 'Cashier', status: 'Active', dateAdded: '2026-08-15' },
-        { id: 'STF-03', name: 'Sunil Gawas', username: 'sunil_counter2', pin: '5678', role: 'Floor Sales Executive', status: 'Active', dateAdded: '2026-08-20' }
+        { id: 'STF-01', name: 'Tejas', username: 'tejas11', pin: '0987', role: 'Inventory Specialist', status: 'Active', dateAdded: '2026-08-31' }
     ];
 
     // Staff accounts state
     const [staffList, setStaffList] = useState(() => {
         const saved = localStorage.getItem('manisha_staff_accounts') || sessionStorage.getItem('manisha_staff_accounts');
         if (saved) {
-            try { return JSON.parse(saved); } catch (e) { }
+            try { 
+                const parsed = JSON.parse(saved);
+                // Filter out any unwanted demo accounts if previously cached
+                const filtered = parsed.filter(s => s.username !== 'rahul_counter1' && s.username !== 'sunil_counter2');
+                if (filtered.length > 0) return filtered;
+            } catch (e) { }
         }
         return JSON.parse(JSON.stringify(DEFAULT_STAFF));
     });

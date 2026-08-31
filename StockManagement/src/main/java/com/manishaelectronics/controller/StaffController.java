@@ -1,108 +1,114 @@
 package com.manishaelectronics.controller;
 
+import com.manishaelectronics.model.StaffAccount;
+import com.manishaelectronics.repository.StaffAccountRepository;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @RestController
 @RequestMapping("/api/staff")
 public class StaffController {
 
+    private final StaffAccountRepository staffAccountRepository;
     private static String masterOwnerPin = "2006";
 
-    private static final List<Map<String, Object>> staffAccounts = new CopyOnWriteArrayList<>(List.of(
-            new HashMap<>(Map.of(
-                    "id", "STF-01",
-                    "name", "Tejas",
-                    "username", "tejas11",
-                    "pin", "0987",
-                    "role", "Inventory Specialist",
-                    "status", "Active",
-                    "dateAdded", "2026-08-31"
-            )),
-            new HashMap<>(Map.of(
-                    "id", "STF-02",
-                    "name", "Rahul Parab",
-                    "username", "rahul_counter1",
-                    "pin", "1234",
-                    "role", "Cashier",
-                    "status", "Active",
-                    "dateAdded", "2026-08-15"
-            )),
-            new HashMap<>(Map.of(
-                    "id", "STF-03",
-                    "name", "Sunil Gawas",
-                    "username", "sunil_counter2",
-                    "pin", "5678",
-                    "role", "Floor Sales Executive",
-                    "status", "Active",
-                    "dateAdded", "2026-08-20"
-            ))
-    ));
+    public StaffController(StaffAccountRepository staffAccountRepository) {
+        this.staffAccountRepository = staffAccountRepository;
+    }
 
-    // GET /api/staff - List all staff
+    // GET /api/staff - List all staff accounts from MySQL
     @GetMapping
-    public ResponseEntity<List<Map<String, Object>>> getStaffList() {
-        return ResponseEntity.ok(new ArrayList<>(staffAccounts));
+    public ResponseEntity<List<StaffAccount>> getStaffList() {
+        List<StaffAccount> list = staffAccountRepository.findAll();
+        // If first time initialization, seed with Tejas
+        if (list.isEmpty()) {
+            StaffAccount initial = new StaffAccount(
+                    "STF-01",
+                    "Tejas",
+                    "tejas11",
+                    "0987",
+                    "Inventory Specialist",
+                    "Active",
+                    LocalDate.now().toString()
+            );
+            staffAccountRepository.save(initial);
+            list = List.of(initial);
+        }
+        return ResponseEntity.ok(list);
     }
 
-    // POST /api/staff - Sync or Add staff profile
+    // POST /api/staff - Save or update staff in MySQL
     @PostMapping
-    public ResponseEntity<?> addOrUpdateStaff(@RequestBody Map<String, Object> newStaff) {
-        String username = (String) newStaff.get("username");
-        if (username == null || username.isBlank()) {
-            return ResponseEntity.badRequest().body(Map.of("message", "Username is required"));
+    public ResponseEntity<?> addOrUpdateStaff(@RequestBody Map<String, Object> request) {
+        String username = (String) request.get("username");
+        String name = (String) request.get("name");
+        String pin = (String) request.get("pin");
+        String role = (String) request.get("role");
+        String status = (String) request.get("status");
+
+        if (username == null || username.isBlank() || name == null || pin == null) {
+            return ResponseEntity.badRequest().body(Map.of("message", "Name, username, and PIN are required"));
         }
 
-        // Check if exists, update or append
-        boolean updated = false;
-        for (int i = 0; i < staffAccounts.size(); i++) {
-            Map<String, Object> existing = staffAccounts.get(i);
-            if (username.equalsIgnoreCase((String) existing.get("username")) ||
-                (newStaff.get("id") != null && newStaff.get("id").equals(existing.get("id")))) {
-                staffAccounts.set(i, new HashMap<>(newStaff));
-                updated = true;
-                break;
+        Optional<StaffAccount> existingOpt = staffAccountRepository.findByUsernameIgnoreCase(username.trim());
+        StaffAccount staff;
+        if (existingOpt.isPresent()) {
+            staff = existingOpt.get();
+            staff.setName(name.trim());
+            staff.setPin(pin.trim());
+            if (role != null) staff.setRole(role.trim());
+            if (status != null) staff.setStatus(status.trim());
+        } else {
+            long count = staffAccountRepository.count() + 1;
+            String code = (String) request.get("id");
+            if (code == null || code.isBlank()) {
+                code = "STF-0" + count;
             }
+            staff = new StaffAccount(
+                    code,
+                    name.trim(),
+                    username.trim(),
+                    pin.trim(),
+                    role != null ? role.trim() : "Cashier",
+                    status != null ? status.trim() : "Active",
+                    LocalDate.now().toString()
+            );
         }
 
-        if (!updated) {
-            if (newStaff.get("id") == null) {
-                newStaff.put("id", "STF-0" + (staffAccounts.size() + 1));
-            }
-            if (newStaff.get("status") == null) {
-                newStaff.put("status", "Active");
-            }
-            staffAccounts.add(new HashMap<>(newStaff));
-        }
-
-        return ResponseEntity.ok(Map.of(
-                "success", true,
-                "message", "Staff account synchronized successfully",
-                "staff", staffAccounts
-        ));
+        StaffAccount saved = staffAccountRepository.save(staff);
+        return ResponseEntity.ok(saved);
     }
 
-    // DELETE /api/staff/{id} - Delete staff profile
+    // DELETE /api/staff/{id} - Delete from MySQL database
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteStaff(@PathVariable String id) {
-        staffAccounts.removeIf(s -> id.equalsIgnoreCase(String.valueOf(s.get("id"))) ||
-                                   id.equalsIgnoreCase(String.valueOf(s.get("username"))));
+        // Try deleting by Long id, staffCode, or username
+        try {
+            Long numId = Long.parseLong(id);
+            staffAccountRepository.deleteById(numId);
+        } catch (NumberFormatException e) {
+            Optional<StaffAccount> byCode = staffAccountRepository.findByStaffCode(id);
+            if (byCode.isPresent()) {
+                staffAccountRepository.delete(byCode.get());
+            } else {
+                Optional<StaffAccount> byUser = staffAccountRepository.findByUsernameIgnoreCase(id);
+                byUser.ifPresent(staffAccountRepository::delete);
+            }
+        }
+
         return ResponseEntity.ok(Map.of(
                 "success", true,
-                "message", "Staff profile deleted",
-                "staff", staffAccounts
+                "message", "Staff account deleted from database"
         ));
     }
 
-    // GET /api/staff/pin - Get master PIN status
+    // GET /api/staff/pin - Get master PIN
     @GetMapping("/pin")
     public ResponseEntity<?> getMasterPin() {
-        return ResponseEntity.ok(Map.of(
-                "masterPin", masterOwnerPin
-        ));
+        return ResponseEntity.ok(Map.of("masterPin", masterOwnerPin));
     }
 
     // POST /api/staff/pin - Update master PIN
@@ -117,9 +123,6 @@ public class StaffController {
                     "masterPin", masterOwnerPin
             ));
         }
-        return ResponseEntity.badRequest().body(Map.of(
-                "success", false,
-                "message", "Invalid PIN format"
-        ));
+        return ResponseEntity.badRequest().body(Map.of("message", "PIN must be at least 4 digits"));
     }
 }

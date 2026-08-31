@@ -19,7 +19,7 @@ function Navbar() {
                 <span style={{
                     background: 'linear-gradient(135deg, #f59e0b, #d97706)',
                     color: '#000',
-                    fontWeight: '800',
+                    fontWeight: '900',
                     fontSize: '11px',
                     padding: '3px 8px',
                     borderRadius: '6px',
@@ -35,7 +35,7 @@ function Navbar() {
                     background: 'rgba(59, 130, 246, 0.2)',
                     color: '#93c5fd',
                     border: '1px solid rgba(59, 130, 246, 0.4)',
-                    fontWeight: '700',
+                    fontWeight: '800',
                     fontSize: '11px',
                     padding: '3px 8px',
                     borderRadius: '6px'
@@ -49,52 +49,54 @@ function Navbar() {
                 background: 'rgba(16, 185, 129, 0.2)',
                 color: '#6ee7b7',
                 border: '1px solid rgba(16, 185, 129, 0.4)',
-                fontWeight: '700',
+                fontWeight: '800',
                 fontSize: '11px',
                 padding: '3px 8px',
                 borderRadius: '6px'
             }}>
-                🚀 DEMO SANDBOX
+                🚀 DEMO
             </span>
         );
     };
 
     return (
         <>
-            {/* Visitor Sandbox Top Notification Bar */}
+            {/* Visitor Sandbox Top Banner */}
             {isVisitor && (
                 <div style={{
                     background: 'linear-gradient(90deg, #d97706, #b45309)',
                     color: '#ffffff',
-                    padding: '6px 16px',
+                    padding: '6px 14px',
                     fontSize: '12px',
                     fontWeight: '700',
                     textAlign: 'center',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    gap: '8px'
+                    gap: '6px'
                 }}>
                     <span>🚀</span>
-                    <span>You are exploring in <strong>Portfolio Sandbox Mode</strong>. Real store database is isolated and protected.</span>
+                    <span><strong>Demo Sandbox Mode</strong> • Real store database is isolated.</span>
                 </div>
             )}
 
-            <nav className="navbar">
-                <div className="navbar-left">
-                    <span className="navbar-logo">🏪</span>
+            {/* TOP DESKTOP & MOBILE HEADER */}
+            <nav className="navbar" style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
+                <div className="navbar-left" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span className="navbar-logo" style={{ fontSize: '24px' }}>🏪</span>
                     <div className="navbar-brand">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span className="main">
+                            <span className="main" style={{ fontWeight: '900', letterSpacing: '-0.3px' }}>
                                 MANISHA <span className="gold">ELECTRONICS</span>
                             </span>
                             {getRoleBadge()}
                         </div>
-                        <span className="tagline">★ Complete Electronics &amp; Home Appliances Store</span>
+                        <span className="tagline desktop-only">★ Complete Electronics &amp; Home Appliances Store</span>
                     </div>
                 </div>
 
-                <div className="navbar-links">
+                {/* Desktop Navigation Links */}
+                <div className="navbar-links desktop-only">
                     <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} end>
                         <span className="icon">📊</span> Dashboard
                     </NavLink>
@@ -111,7 +113,7 @@ function Navbar() {
                         <span className="icon">🟡</span> Due Bills
                     </NavLink>
 
-                    {/* Staff & Store Settings (Available to Owner and in Demo Sandbox) */}
+                    {/* Staff & Store Settings */}
                     {(isOwner || isVisitor) && (
                         <NavLink to="/staff-management" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
                             <span className="icon">👥</span> Staff &amp; Accounts
@@ -130,7 +132,7 @@ function Navbar() {
                                 background: 'rgba(245, 158, 11, 0.15)',
                                 border: '1px solid rgba(245, 158, 11, 0.4)',
                                 color: '#fbbf24',
-                                padding: '8px 12px',
+                                padding: '7px 12px',
                                 borderRadius: '8px',
                                 fontSize: '12px',
                                 fontWeight: '700',
@@ -154,13 +156,13 @@ function Navbar() {
                             background: 'rgba(255,255,255,0.12)',
                             border: '1px solid rgba(255,255,255,0.2)',
                             color: '#fff',
-                            padding: '8px 14px',
+                            padding: '7px 12px',
                             borderRadius: '8px',
-                            fontSize: '13px',
+                            fontSize: '12px',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '6px',
+                            gap: '4px',
                             transition: 'all 0.2s ease',
                             marginLeft: '4px'
                         }}
@@ -176,9 +178,9 @@ function Navbar() {
                             background: 'rgba(239, 83, 80, 0.2)',
                             border: '1px solid rgba(239, 83, 80, 0.4)',
                             color: '#ffcdd2',
-                            padding: '8px 12px',
+                            padding: '7px 12px',
                             borderRadius: '8px',
-                            fontSize: '13px',
+                            fontSize: '12px',
                             fontWeight: '700',
                             cursor: 'pointer',
                             display: 'flex',
@@ -192,7 +194,80 @@ function Navbar() {
                         🔒 Lock
                     </button>
                 </div>
+
+                {/* Mobile Header Quick Actions (Top Right) */}
+                <div className="mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                        onClick={() => setDarkMode(!darkMode)}
+                        style={{
+                            background: 'rgba(255,255,255,0.12)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            color: '#fff',
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        {darkMode ? '☀️' : '🌙'}
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={logout}
+                        style={{
+                            background: 'rgba(239, 83, 80, 0.25)',
+                            border: '1px solid rgba(239, 83, 80, 0.4)',
+                            color: '#ffcdd2',
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: '800',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        🔒 Lock
+                    </button>
+                </div>
             </nav>
+
+            {/* MOBILE BOTTOM NAVIGATION BAR (Fixed at bottom for easy thumb access) */}
+            <div className="mobile-bottom-bar no-print">
+                <NavLink to="/" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`} end>
+                    <span className="tab-icon">📊</span>
+                    <span className="tab-label">Dashboard</span>
+                </NavLink>
+
+                <NavLink to="/products" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                    <span className="tab-icon">📦</span>
+                    <span className="tab-label">Products</span>
+                </NavLink>
+
+                {/* Primary Center Action: New POS Bill */}
+                <NavLink to="/create-invoice" className="mobile-tab-pos">
+                    <div className="pos-btn-inner">
+                        <span style={{ fontSize: '18px' }}>🧾</span>
+                        <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px' }}>POS Bill</span>
+                    </div>
+                </NavLink>
+
+                <NavLink to="/invoices" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                    <span className="tab-icon">📋</span>
+                    <span className="tab-label">Invoices</span>
+                </NavLink>
+
+                {(isOwner || isVisitor) ? (
+                    <NavLink to="/staff-management" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                        <span className="tab-icon">👥</span>
+                        <span className="tab-label">Staff</span>
+                    </NavLink>
+                ) : (
+                    <NavLink to="/due-invoices" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                        <span className="tab-icon">🟡</span>
+                        <span className="tab-label">Dues</span>
+                    </NavLink>
+                )}
+            </div>
         </>
     );
 }

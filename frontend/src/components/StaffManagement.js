@@ -16,7 +16,6 @@ function StaffManagement() {
     const [editGstin, setEditGstin] = useState(storeProfile.gstin);
     const [editPhone, setEditPhone] = useState(storeProfile.phone);
     const [editAddress, setEditAddress] = useState(storeProfile.address);
-    const [profileSuccessMsg, setProfileSuccessMsg] = useState('');
 
     // Dynamic Display values
     const shopName = isVisitor ? 'MANISHA ELECTRONICS (Demo Sandbox)' : storeProfile.shopName;
@@ -96,29 +95,23 @@ function StaffManagement() {
         sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
     }, [staffList]);
 
-    // Handle Store Profile Save
-    const handleSaveStoreProfile = async (e) => {
-        e.preventDefault();
+    // Handle Store Profile Save (Instant Sync)
+    const handleSaveStoreProfile = (e) => {
+        if (e) e.preventDefault();
         const updated = {
-            shopName: editShopName.trim() || 'MANISHA ELECTRONICS',
-            ownerName: editOwnerName.trim() || 'Ramesh Naik (Owner)',
-            gstin: editGstin.trim() || '30AMYPN1753F1ZY',
-            phone: editPhone.trim() || '9309736172, 70205592347',
-            address: editAddress.trim() || 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa'
+            shopName: (editShopName || '').trim() || 'MANISHA ELECTRONICS',
+            ownerName: (editOwnerName || '').trim() || 'Ramesh Naik (Owner)',
+            gstin: (editGstin || '').trim() || '30AMYPN1753F1ZY',
+            phone: (editPhone || '').trim() || '9309736172, 70205592347',
+            address: (editAddress || '').trim() || 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa'
         };
 
         const saved = saveStoreProfile(updated);
         setStoreProfile(saved);
+        setShowProfileModal(false);
 
-        try {
-            await api.post('/staff/store-profile', updated);
-        } catch (err) { }
-
-        setProfileSuccessMsg('✅ Store Profile updated and synced to all invoices!');
-        setTimeout(() => {
-            setProfileSuccessMsg('');
-            setShowProfileModal(false);
-        }, 1200);
+        api.post('/staff/store-profile', updated).catch(() => { });
+        alert(`✅ Store Profile for "${updated.shopName}" updated and synced to all invoices!`);
     };
 
     // Handle Owner PIN Update
@@ -581,12 +574,6 @@ function StaffManagement() {
                             <button onClick={() => setShowProfileModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
                         </div>
 
-                        {profileSuccessMsg && (
-                            <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', color: '#10b981', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', marginBottom: '14px' }}>
-                                {profileSuccessMsg}
-                            </div>
-                        )}
-
                         <form onSubmit={handleSaveStoreProfile} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <div>
                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
@@ -663,7 +650,7 @@ function StaffManagement() {
                                 <button type="button" onClick={() => setShowProfileModal(false)} className="btn-cancel" style={{ padding: '9px 16px', fontSize: '13px' }}>
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn-primary" style={{ padding: '9px 20px', fontSize: '13px' }}>
+                                <button type="button" onClick={handleSaveStoreProfile} className="btn-primary" style={{ padding: '9px 20px', fontSize: '13px' }}>
                                     💾 Save Store Profile
                                 </button>
                             </div>

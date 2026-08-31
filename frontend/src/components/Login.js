@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginAsOwner, loginAsStaff, loginAsVisitor } from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -6,8 +6,19 @@ import { useAuth } from '../context/AuthContext';
 function Login() {
     const { login } = useAuth();
     const navigate = useNavigate();
-    const [authMode, setAuthMode] = useState('VISITOR'); // 'VISITOR', 'STAFF', 'OWNER'
+
+    // Detect if launched as Standalone Desktop App or in ?mode=store
+    const queryParams = new URLSearchParams(window.location.search);
+    const isStoreMode = queryParams.get('mode') === 'store' || 
+                        queryParams.get('mode') === 'pos' || 
+                        window.matchMedia('(display-mode: standalone)').matches || 
+                        window.navigator.standalone === true;
+
+    const [authMode, setAuthMode] = useState(isStoreMode ? 'STAFF' : 'VISITOR'); // 'VISITOR', 'STAFF', 'OWNER'
     
+    // PWA Install prompt state
+    const [deferredPrompt, setDeferredPrompt] = useState(null);
+
     // Owner state
     const [ownerPasscode, setOwnerPasscode] = useState('');
     const [showOwnerPass, setShowOwnerPass] = useState(false);
@@ -20,6 +31,26 @@ function Login() {
     const [rememberMe, setRememberMe] = useState(true);
     const [errorMsg, setErrorMsg] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        // Listen for native install prompt (Chrome / Edge / Android)
+        const handleBeforeInstall = (e) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+        };
+        window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+        return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+    }, []);
+
+    const handleInstallApp = async () => {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            await deferredPrompt.userChoice;
+            setDeferredPrompt(null);
+        } else {
+            alert('💡 To install on desktop:\n1. Click the ⊕ Install icon in your browser address bar (top right)\n2. Or click Menu (⋮) → "Install Manisha POS"');
+        }
+    };
 
     // 1. Handle Visitor 1-Click Sandbox Login
     const handleVisitorLogin = async () => {
@@ -122,8 +153,36 @@ function Login() {
             `,
             padding: '36px 20px',
             fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
-            boxSizing: 'border-box'
+            boxSizing: 'border-box',
+            position: 'relative'
         }}>
+            {/* Top Right Desktop App Install Button */}
+            {!isStoreMode && (
+                <div style={{ position: 'absolute', top: '16px', right: '20px' }}>
+                    <button
+                        onClick={handleInstallApp}
+                        style={{
+                            background: 'rgba(245, 158, 11, 0.12)',
+                            border: '1px solid rgba(245, 158, 11, 0.35)',
+                            color: '#fbbf24',
+                            borderRadius: '20px',
+                            padding: '6px 14px',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            backdropFilter: 'blur(8px)',
+                            transition: 'all 0.15s ease'
+                        }}
+                        title="Install as native desktop app shortcut"
+                    >
+                        <span>📲</span> Install Desktop POS App
+                    </button>
+                </div>
+            )}
+
             <div style={{
                 width: '100%',
                 maxWidth: '1060px',
@@ -139,16 +198,16 @@ function Login() {
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '8px',
-                        background: 'rgba(245, 158, 11, 0.10)',
-                        border: '1px solid rgba(245, 158, 11, 0.30)',
+                        background: isStoreMode ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.10)',
+                        border: isStoreMode ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(245, 158, 11, 0.30)',
                         borderRadius: '30px',
                         padding: '6px 14px',
                         fontSize: '12px',
                         fontWeight: '700',
-                        color: '#fbbf24',
+                        color: isStoreMode ? '#34d399' : '#fbbf24',
                         marginBottom: '16px'
                     }}>
-                        <span>✨</span> Retail POS &amp; Inventory System
+                        <span>{isStoreMode ? '🏪' : '✨'}</span> {isStoreMode ? 'STORE TERMINAL - PRODUCTION POS' : 'Retail POS & Inventory System'}
                     </div>
 
                     <h1 style={{
@@ -323,17 +382,17 @@ function Login() {
                             🏪
                         </div>
                         <h2 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 4px 0', color: '#ffffff' }}>
-                            Access Portal
+                            {isStoreMode ? 'Counter Terminal Login' : 'Access Portal'}
                         </h2>
                         <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
-                            Select role to authenticate
+                            {isStoreMode ? 'Enter register credentials to unlock terminal' : 'Select role to authenticate'}
                         </p>
                     </div>
 
-                    {/* 3-Tier Navigation Tabs */}
+                    {/* Role Navigation Tabs (Auto-hides Demo in Store Mode!) */}
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: '1fr 1fr 1fr',
+                        gridTemplateColumns: isStoreMode ? '1fr 1fr' : '1fr 1fr 1fr',
                         background: 'rgba(2, 6, 23, 0.7)',
                         border: '1px solid rgba(255, 255, 255, 0.08)',
                         padding: '4px',
@@ -341,23 +400,25 @@ function Login() {
                         marginBottom: '22px',
                         gap: '4px'
                     }}>
-                        <button
-                            type="button"
-                            onClick={() => { setAuthMode('VISITOR'); setErrorMsg(''); }}
-                            style={{
-                                padding: '9px 4px',
-                                borderRadius: '8px',
-                                fontSize: '12px',
-                                fontWeight: authMode === 'VISITOR' ? '800' : '600',
-                                background: authMode === 'VISITOR' ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' : 'transparent',
-                                color: authMode === 'VISITOR' ? '#0f172a' : '#94a3b8',
-                                cursor: 'pointer',
-                                border: 'none',
-                                transition: 'all 0.15s ease'
-                            }}
-                        >
-                            🚀 Demo
-                        </button>
+                        {!isStoreMode && (
+                            <button
+                                type="button"
+                                onClick={() => { setAuthMode('VISITOR'); setErrorMsg(''); }}
+                                style={{
+                                    padding: '9px 4px',
+                                    borderRadius: '8px',
+                                    fontSize: '12px',
+                                    fontWeight: authMode === 'VISITOR' ? '800' : '600',
+                                    background: authMode === 'VISITOR' ? 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)' : 'transparent',
+                                    color: authMode === 'VISITOR' ? '#0f172a' : '#94a3b8',
+                                    cursor: 'pointer',
+                                    border: 'none',
+                                    transition: 'all 0.15s ease'
+                                }}
+                            >
+                                🚀 Demo
+                            </button>
+                        )}
                         <button
                             type="button"
                             onClick={() => { setAuthMode('STAFF'); setErrorMsg(''); }}
@@ -373,7 +434,7 @@ function Login() {
                                 transition: 'all 0.15s ease'
                             }}
                         >
-                            👤 Staff
+                            👤 Counter Staff
                         </button>
                         <button
                             type="button"
@@ -390,7 +451,7 @@ function Login() {
                                 transition: 'all 0.15s ease'
                             }}
                         >
-                            👑 Owner
+                            👑 Store Owner
                         </button>
                     </div>
 
@@ -411,8 +472,8 @@ function Login() {
                         </div>
                     )}
 
-                    {/* TAB 1: VISITOR DEMO */}
-                    {authMode === 'VISITOR' && (
+                    {/* TAB 1: VISITOR DEMO (Hidden in store mode) */}
+                    {!isStoreMode && authMode === 'VISITOR' && (
                         <div>
                             <div style={{
                                 background: 'rgba(245, 158, 11, 0.10)',

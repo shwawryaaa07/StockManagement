@@ -24,12 +24,9 @@ function StaffManagement() {
         { id: 'STF-02', name: 'Sunil Gawas', username: 'sunil_counter2', pin: '5678', role: 'Floor Sales Executive', status: 'Active', dateAdded: '2026-08-20' }
     ];
 
-    // Staff accounts state (Resets on refresh in Demo Sandbox)
+    // Staff accounts state
     const [staffList, setStaffList] = useState(() => {
-        if (isVisitor) {
-            return JSON.parse(JSON.stringify(DEFAULT_STAFF));
-        }
-        const saved = localStorage.getItem('manisha_staff_accounts');
+        const saved = localStorage.getItem('manisha_staff_accounts') || sessionStorage.getItem('manisha_staff_accounts');
         if (saved) {
             try { return JSON.parse(saved); } catch (e) { }
         }
@@ -57,10 +54,9 @@ function StaffManagement() {
     const commonRoles = ['Cashier', 'Floor Sales Executive', 'Store Manager', 'Accountant', 'Inventory Specialist', 'Technician'];
 
     useEffect(() => {
-        if (!isVisitor) {
-            localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
-        }
-    }, [staffList, isVisitor]);
+        localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
+        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
+    }, [staffList]);
 
     // Handle Owner PIN Update
     const handleOwnerPinChange = (e) => {
@@ -68,25 +64,30 @@ function StaffManagement() {
         setPinSuccessMsg('');
         setPinErrorMsg('');
 
-        const savedOwnerPin = localStorage.getItem('owner_master_pin') || '1234';
+        const cur = currentPin.trim();
+        const np = newPin.trim();
+        const cp = confirmPin.trim();
 
-        if (currentPin !== savedOwnerPin && currentPin !== '1506' && currentPin !== '1234') {
+        const savedOwnerPin = localStorage.getItem('owner_master_pin') || sessionStorage.getItem('owner_master_pin') || '1234';
+
+        if (cur !== savedOwnerPin && cur !== '1506' && cur !== '1234') {
             setPinErrorMsg('❌ Current PIN is incorrect');
             return;
         }
 
-        if (newPin.length < 4 || !/^\d+$/.test(newPin)) {
+        if (np.length < 4 || !/^\d+$/.test(np)) {
             setPinErrorMsg('⚠️ New PIN must be at least 4 numeric digits');
             return;
         }
 
-        if (newPin !== confirmPin) {
+        if (np !== cp) {
             setPinErrorMsg('⚠️ New PIN and Confirm PIN do not match');
             return;
         }
 
-        localStorage.setItem('owner_master_pin', newPin);
-        setPinSuccessMsg('✅ Owner Master PIN successfully updated to ' + newPin);
+        localStorage.setItem('owner_master_pin', np);
+        sessionStorage.setItem('owner_master_pin', np);
+        setPinSuccessMsg(`✅ Owner Master PIN successfully updated to ${np}`);
         setCurrentPin('');
         setNewPin('');
         setConfirmPin('');
@@ -108,17 +109,20 @@ function StaffManagement() {
         e.preventDefault();
         setEditModalError('');
 
-        if (!editName.trim() || !editUsername.trim() || !editPin.trim() || !editRole.trim()) {
+        const cleanName = editName.trim();
+        const cleanRole = editRole.trim();
+        const cleanUsername = editUsername.trim().toLowerCase();
+        const cleanPin = editPin.trim();
+
+        if (!cleanName || !cleanUsername || !cleanPin || !cleanRole) {
             setEditModalError('⚠️ Please fill all required fields');
             return;
         }
 
-        if (editPin.length < 4 || !/^\d+$/.test(editPin)) {
+        if (cleanPin.length < 4 || !/^\d+$/.test(cleanPin)) {
             setEditModalError('⚠️ Staff PIN must be at least 4 numeric digits');
             return;
         }
-
-        const cleanUsername = editUsername.trim().toLowerCase();
 
         // Check unique username among other staff
         const duplicate = staffList.some(stf => stf.id !== editingStaff.id && stf.username.toLowerCase() === cleanUsername);
@@ -131,10 +135,10 @@ function StaffManagement() {
             if (stf.id === editingStaff.id) {
                 return {
                     ...stf,
-                    name: editName.trim(),
-                    role: editRole.trim(),
+                    name: cleanName,
+                    role: cleanRole,
                     username: cleanUsername,
-                    pin: editPin.trim(),
+                    pin: cleanPin,
                     status: editStatus
                 };
             }
@@ -142,7 +146,10 @@ function StaffManagement() {
         });
 
         setStaffList(updated);
+        localStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
+        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
         setEditingStaff(null);
+        alert(`✅ Staff profile for ${cleanName} updated! PIN is set to ${cleanPin}`);
     };
 
     // Add New Staff
@@ -150,19 +157,21 @@ function StaffManagement() {
         e.preventDefault();
         setAddModalError('');
 
-        if (!newStaffName.trim() || !newStaffUsername.trim() || !newStaffPin.trim() || !newStaffRole.trim()) {
+        const cleanName = newStaffName.trim();
+        const cleanRole = newStaffRole.trim();
+        const cleanUsername = newStaffUsername.trim().toLowerCase();
+        const cleanPin = newStaffPin.trim();
+
+        if (!cleanName || !cleanUsername || !cleanPin || !cleanRole) {
             setAddModalError('⚠️ Please fill all required fields');
             return;
         }
 
-        if (newStaffPin.length < 4 || !/^\d+$/.test(newStaffPin)) {
+        if (cleanPin.length < 4 || !/^\d+$/.test(cleanPin)) {
             setAddModalError('⚠️ Staff PIN must be a 4-digit number');
             return;
         }
 
-        const cleanUsername = newStaffUsername.trim().toLowerCase();
-
-        // Check if username already exists
         const exists = staffList.some(stf => stf.username.toLowerCase() === cleanUsername);
         if (exists) {
             setAddModalError(`⚠️ Login ID "${cleanUsername}" is already in use. Please choose a unique ID.`);
@@ -171,45 +180,58 @@ function StaffManagement() {
 
         const newStaff = {
             id: `STF-0${staffList.length + 1}`,
-            name: newStaffName.trim(),
-            role: newStaffRole.trim(),
+            name: cleanName,
+            role: cleanRole,
             username: cleanUsername,
-            pin: newStaffPin.trim(),
+            pin: cleanPin,
             status: 'Active',
             dateAdded: new Date().toISOString().split('T')[0]
         };
 
-        setStaffList([...staffList, newStaff]);
+        const updated = [...staffList, newStaff];
+        setStaffList(updated);
+        localStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
+        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
         setShowAddModal(false);
         setNewStaffName('');
         setNewStaffRole('Cashier');
         setNewStaffUsername('');
         setNewStaffPin('');
+        alert(`✅ New Staff Profile created for ${cleanName}! Login ID: ${cleanUsername} | PIN: ${cleanPin}`);
     };
 
     const toggleStaffStatus = (id) => {
-        setStaffList(staffList.map(stf => {
+        const updated = staffList.map(stf => {
             if (stf.id === id) {
                 return { ...stf, status: stf.status === 'Active' ? 'Suspended' : 'Active' };
             }
             return stf;
-        }));
+        });
+        setStaffList(updated);
+        localStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
+        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
     };
 
     const handleDeleteStaff = (id, name) => {
         if (window.confirm(`Are you sure you want to remove staff account "${name}"? Only registered staff will be allowed access.`)) {
-            setStaffList(staffList.filter(stf => stf.id !== id));
+            const updated = staffList.filter(stf => stf.id !== id);
+            setStaffList(updated);
+            localStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
+            sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
         }
     };
 
     const handleResetStaffPin = (id, name) => {
         const generatedPin = Math.floor(1000 + Math.random() * 9000).toString();
-        setStaffList(staffList.map(stf => {
+        const updated = staffList.map(stf => {
             if (stf.id === id) {
                 return { ...stf, pin: generatedPin };
             }
             return stf;
-        }));
+        });
+        setStaffList(updated);
+        localStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
+        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
         alert(`✅ New 4-Digit PIN for ${name}: ${generatedPin}`);
     };
 

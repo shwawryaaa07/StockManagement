@@ -106,7 +106,7 @@ export const resetDemoSandbox = () => {
 // 3-Tier Authentication
 export const loginAsOwner = async (pinOrPassword) => {
     const input = (pinOrPassword || '').trim();
-    const savedMasterPin = localStorage.getItem('owner_master_pin') || '1234';
+    const savedMasterPin = localStorage.getItem('owner_master_pin') || sessionStorage.getItem('owner_master_pin') || '1234';
 
     // 1. PIN-based check
     if (/^\d+$/.test(input)) {
@@ -156,14 +156,13 @@ export const loginAsOwner = async (pinOrPassword) => {
 };
 
 export const loginAsStaff = async (username, pin) => {
-    const isVisitor = localStorage.getItem('tenantType') === 'DEMO';
     const defaultStaff = [
         { id: 'STF-01', name: 'Rahul Parab', username: 'rahul_counter1', pin: '1234', role: 'Cashier', status: 'Active' },
         { id: 'STF-02', name: 'Sunil Gawas', username: 'sunil_counter2', pin: '5678', role: 'Floor Sales Executive', status: 'Active' }
     ];
 
-    const rawSaved = localStorage.getItem('manisha_staff_accounts');
-    const staffList = (isVisitor || !rawSaved) ? defaultStaff : JSON.parse(rawSaved);
+    const rawSaved = localStorage.getItem('manisha_staff_accounts') || sessionStorage.getItem('manisha_staff_accounts');
+    const staffList = rawSaved ? JSON.parse(rawSaved) : defaultStaff;
 
     const inputUser = (username || '').trim().toLowerCase();
     const inputPin = (pin || '').trim();

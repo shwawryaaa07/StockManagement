@@ -16,6 +16,14 @@ export function AuthProvider({ children }) {
     });
     const [loading, setLoading] = useState(true);
 
+    const clearAuthOnly = () => {
+        const authKeys = ['authToken', 'userRole', 'userName', 'shopName', 'tenantType'];
+        authKeys.forEach(k => {
+            localStorage.removeItem(k);
+            sessionStorage.removeItem(k);
+        });
+    };
+
     useEffect(() => {
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         if (token) {
@@ -52,31 +60,25 @@ export function AuthProvider({ children }) {
         return () => {
             window.removeEventListener('auth-logout', handleLogoutEvent);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const login = (token, userData, rememberMe = true) => {
-        if (rememberMe) {
-            localStorage.setItem('authToken', token);
-            localStorage.setItem('userRole', userData.role || 'OWNER');
-            localStorage.setItem('userName', userData.username || 'User');
-            localStorage.setItem('shopName', userData.shopName || 'MANISHA ELECTRONICS');
-            localStorage.setItem('tenantType', userData.tenantType || 'PROD');
-            sessionStorage.clear();
-        } else {
-            sessionStorage.setItem('authToken', token);
-            sessionStorage.setItem('userRole', userData.role || 'OWNER');
-            sessionStorage.setItem('userName', userData.username || 'User');
-            sessionStorage.setItem('shopName', userData.shopName || 'MANISHA ELECTRONICS');
-            sessionStorage.setItem('tenantType', userData.tenantType || 'PROD');
-            localStorage.clear();
-        }
+        clearAuthOnly();
+        const targetStorage = rememberMe ? localStorage : sessionStorage;
+        
+        targetStorage.setItem('authToken', token);
+        targetStorage.setItem('userRole', userData.role || 'OWNER');
+        targetStorage.setItem('userName', userData.username || 'User');
+        targetStorage.setItem('shopName', userData.shopName || 'MANISHA ELECTRONICS');
+        targetStorage.setItem('tenantType', userData.tenantType || 'PROD');
+
         setIsAuthenticated(true);
         setUser(userData);
     };
 
     const logout = () => {
-        localStorage.clear();
-        sessionStorage.clear();
+        clearAuthOnly();
         setIsAuthenticated(false);
         setUser(null);
     };
@@ -95,3 +97,5 @@ export function AuthProvider({ children }) {
 export function useAuth() {
     return useContext(AuthContext);
 }
+
+export default AuthContext;

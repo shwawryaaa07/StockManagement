@@ -115,36 +115,35 @@ function Login() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: '#090d16',
-            backgroundImage: 'radial-gradient(circle at 15% 25%, rgba(245, 158, 11, 0.08) 0%, transparent 45%), radial-gradient(circle at 85% 75%, rgba(59, 130, 246, 0.08) 0%, transparent 45%)',
-            padding: '32px 20px',
+            backgroundColor: '#f8fafc',
+            backgroundImage: 'radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.06) 0%, transparent 40%), radial-gradient(circle at 90% 80%, rgba(37, 99, 235, 0.05) 0%, transparent 40%)',
+            padding: '36px 20px',
             fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
             boxSizing: 'border-box'
         }}>
             <div style={{
                 width: '100%',
-                maxWidth: '1120px',
+                maxWidth: '1140px',
                 display: 'grid',
                 gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-                gap: '36px',
+                gap: '40px',
                 alignItems: 'center'
             }}>
-                {/* LEFT HERO COLUMN: Store Branding & Capabilities */}
-                <div style={{ color: '#ffffff', padding: '10px 16px' }}>
+                {/* LEFT HERO COLUMN: Subtle Light Store Showcase */}
+                <div style={{ padding: '8px 12px' }}>
                     {/* Badge */}
                     <div style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '8px',
-                        background: 'rgba(245, 158, 11, 0.12)',
-                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        background: '#fffbeb',
+                        border: '1px solid #fde68a',
                         borderRadius: '30px',
                         padding: '6px 14px',
                         fontSize: '12px',
                         fontWeight: '700',
-                        color: '#fbbf24',
-                        marginBottom: '20px',
-                        letterSpacing: '0.5px'
+                        color: '#b45309',
+                        marginBottom: '18px'
                     }}>
                         <span>✨</span> Cloud POS &amp; Inventory Management ERP
                     </div>
@@ -154,10 +153,11 @@ function Login() {
                         fontWeight: '900',
                         lineHeight: '1.2',
                         margin: '0 0 14px 0',
-                        letterSpacing: '-1px'
+                        color: '#0f172a',
+                        letterSpacing: '-0.5px'
                     }}>
                         MANISHA <span style={{
-                            background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
+                            background: 'linear-gradient(135deg, #d97706 0%, #b45309 100%)',
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: 'transparent'
                         }}>ELECTRONICS</span>
@@ -165,12 +165,12 @@ function Login() {
 
                     <p style={{
                         fontSize: '15px',
-                        color: '#94a3b8',
+                        color: '#64748b',
                         lineHeight: '1.6',
                         margin: '0 0 28px 0',
                         maxWidth: '480px'
                     }}>
-                        Complete cloud retail solution powering smart billing, live multi-category stock control, WhatsApp invoice sharing, and customer credit ledger tracking.
+                        Complete cloud retail solution powering smart billing, live multi-category stock control, WhatsApp tax invoices, and customer credit ledger tracking.
                     </p>
 
                     {/* Feature Highlights Grid */}
@@ -178,58 +178,62 @@ function Login() {
                         display: 'grid',
                         gridTemplateColumns: '1fr 1fr',
                         gap: '14px',
-                        marginBottom: '32px'
+                        marginBottom: '28px'
                     }}>
                         <div style={{
-                            background: 'rgba(30, 41, 59, 0.6)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
                             borderRadius: '14px',
-                            padding: '14px 16px'
+                            padding: '16px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
                         }}>
-                            <div style={{ fontSize: '20px', marginBottom: '6px' }}>⚡</div>
-                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc', marginBottom: '2px' }}>Instant POS Billing</div>
-                            <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>Automated GST tax breakdown and thermal printing</div>
+                            <div style={{ fontSize: '22px', marginBottom: '6px' }}>⚡</div>
+                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#1e293b', marginBottom: '2px' }}>Instant POS Billing</div>
+                            <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>Automated GST tax breakdown &amp; thermal invoice printing</div>
                         </div>
 
                         <div style={{
-                            background: 'rgba(30, 41, 59, 0.6)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
                             borderRadius: '14px',
-                            padding: '14px 16px'
+                            padding: '16px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
                         }}>
-                            <div style={{ fontSize: '20px', marginBottom: '6px' }}>📲</div>
-                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc', marginBottom: '2px' }}>WhatsApp Invoicing</div>
-                            <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>1-Click direct digital receipts sent to customer phones</div>
+                            <div style={{ fontSize: '22px', marginBottom: '6px' }}>📲</div>
+                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#1e293b', marginBottom: '2px' }}>WhatsApp Invoicing</div>
+                            <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>1-Click digital receipts sent directly to customer phones</div>
                         </div>
 
                         <div style={{
-                            background: 'rgba(30, 41, 59, 0.6)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
                             borderRadius: '14px',
-                            padding: '14px 16px'
+                            padding: '16px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
                         }}>
-                            <div style={{ fontSize: '20px', marginBottom: '6px' }}>📊</div>
-                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc', marginBottom: '2px' }}>Live Stock &amp; Dues</div>
+                            <div style={{ fontSize: '22px', marginBottom: '6px' }}>📊</div>
+                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#1e293b', marginBottom: '2px' }}>Live Stock &amp; Dues</div>
                             <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>Real-time inventory levels, low-stock alerts &amp; ledger</div>
                         </div>
 
                         <div style={{
-                            background: 'rgba(30, 41, 59, 0.6)',
-                            border: '1px solid rgba(255, 255, 255, 0.08)',
+                            background: '#ffffff',
+                            border: '1px solid #e2e8f0',
                             borderRadius: '14px',
-                            padding: '14px 16px'
+                            padding: '16px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
                         }}>
-                            <div style={{ fontSize: '20px', marginBottom: '6px' }}>🛡️</div>
-                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc', marginBottom: '2px' }}>Role-Based Access</div>
+                            <div style={{ fontSize: '22px', marginBottom: '6px' }}>🛡️</div>
+                            <div style={{ fontWeight: '800', fontSize: '13px', color: '#1e293b', marginBottom: '2px' }}>Role-Based Access</div>
                             <div style={{ fontSize: '11px', color: '#64748b', lineHeight: '1.4' }}>PIN-protected counters with owner master security</div>
                         </div>
                     </div>
 
-                    {/* Trust Badges */}
+                    {/* Trust Indicators (Location removed) */}
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '16px',
+                        gap: '14px',
                         fontSize: '12px',
                         color: '#64748b',
                         flexWrap: 'wrap'
@@ -238,7 +242,7 @@ function Login() {
                         <span>•</span>
                         <span>⚡ 100% Client Isolation</span>
                         <span>•</span>
-                        <span>📍 Valpoi, Goa</span>
+                        <span>🛡️ Role-Protected POS</span>
                     </div>
                 </div>
 
@@ -247,9 +251,9 @@ function Login() {
                     background: '#ffffff',
                     borderRadius: '24px',
                     padding: '36px 32px',
-                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.6)',
+                    boxShadow: '0 12px 36px -8px rgba(0, 0, 0, 0.08), 0 4px 12px rgba(0, 0, 0, 0.04)',
                     color: '#0f172a',
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                    border: '1px solid #e2e8f0'
                 }}>
                     <div style={{ textAlign: 'center', marginBottom: '24px' }}>
                         <div style={{
@@ -262,7 +266,7 @@ function Login() {
                             alignItems: 'center',
                             justifyContent: 'center',
                             fontSize: '26px',
-                            boxShadow: '0 10px 20px rgba(245, 158, 11, 0.25)'
+                            boxShadow: '0 8px 16px rgba(245, 158, 11, 0.25)'
                         }}>
                             🏪
                         </div>
@@ -390,7 +394,7 @@ function Login() {
                                     fontSize: '15px',
                                     fontWeight: '800',
                                     cursor: loading ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
+                                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)',
                                     transition: 'all 0.15s ease'
                                 }}
                             >
@@ -416,7 +420,7 @@ function Login() {
                                         width: '100%',
                                         padding: '11px 14px',
                                         borderRadius: '10px',
-                                        border: '1.5px solid #e2e8f0',
+                                        border: '1.5px solid #cbd5e1',
                                         fontSize: '14px',
                                         outline: 'none',
                                         boxSizing: 'border-box'
@@ -439,7 +443,7 @@ function Login() {
                                         width: '100%',
                                         padding: '11px 14px',
                                         borderRadius: '10px',
-                                        border: '1.5px solid #e2e8f0',
+                                        border: '1.5px solid #cbd5e1',
                                         fontSize: '14px',
                                         outline: 'none',
                                         boxSizing: 'border-box',
@@ -474,7 +478,7 @@ function Login() {
                                     fontSize: '15px',
                                     fontWeight: '800',
                                     cursor: loading ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.35)',
+                                    boxShadow: '0 4px 14px rgba(37, 99, 235, 0.3)',
                                     transition: 'all 0.15s ease'
                                 }}
                             >
@@ -501,7 +505,7 @@ function Login() {
                                             width: '100%',
                                             padding: '11px 40px 11px 14px',
                                             borderRadius: '10px',
-                                            border: '1.5px solid #e2e8f0',
+                                            border: '1.5px solid #cbd5e1',
                                             fontSize: '14px',
                                             outline: 'none',
                                             boxSizing: 'border-box'
@@ -553,7 +557,7 @@ function Login() {
                                     fontSize: '15px',
                                     fontWeight: '800',
                                     cursor: loading ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
+                                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)',
                                     transition: 'all 0.15s ease'
                                 }}
                             >

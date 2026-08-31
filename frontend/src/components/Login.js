@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { loginAsOwner, loginAsStaff, loginAsVisitor } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
 function Login() {
     const { login } = useAuth();
+    const navigate = useNavigate();
     const [authMode, setAuthMode] = useState('VISITOR'); // 'VISITOR', 'STAFF', 'OWNER'
     
     // Owner state
@@ -36,6 +38,7 @@ function Login() {
                     },
                     false
                 );
+                navigate('/', { replace: true });
             }
         } catch (err) {
             setErrorMsg(err.response?.data?.message || '⚠️ Could not connect to demo server. Please retry in a moment.');
@@ -66,9 +69,10 @@ function Login() {
                     },
                     rememberMe
                 );
+                navigate('/', { replace: true });
             }
         } catch (err) {
-            setErrorMsg(err.response?.data?.message || '❌ Invalid Staff PIN. Default is 1234');
+            setErrorMsg(err.response?.data?.message || '❌ Invalid Staff PIN.');
         } finally {
             setLoading(false);
         }
@@ -96,6 +100,7 @@ function Login() {
                     },
                     rememberMe
                 );
+                navigate('/', { replace: true });
             }
         } catch (err) {
             setErrorMsg(err.response?.data?.message || '❌ Invalid Owner Passcode. Default PIN is 1234');

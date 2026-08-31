@@ -41,7 +41,7 @@ const isSandboxMode = () => {
     return tenant === 'DEMO' || role === 'VISITOR';
 };
 
-// Initial Mock Sandbox Data with mixed stock levels (> 3, < 3, 0) and dual property aliases
+// Pristine initial demo dataset (Never mutates)
 const INITIAL_DEMO_PRODUCTS = [
     { id: 101, name: 'Samsung Crystal 4K 55" Smart TV', category: 'Television', price: 46990, unitPrice: 46990, quantity: 8, stockQuantity: 8, active: true },
     { id: 102, name: 'LG 260L Double Door Refrigerator', category: 'Refrigerator', price: 26500, unitPrice: 26500, quantity: 2, stockQuantity: 2, active: true },
@@ -94,22 +94,13 @@ const INITIAL_DEMO_INVOICES = [
     }
 ];
 
-const getSandboxProducts = () => {
-    const saved = localStorage.getItem('demo_sandbox_products');
-    if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
-    }
-    localStorage.setItem('demo_sandbox_products', JSON.stringify(INITIAL_DEMO_PRODUCTS));
-    return INITIAL_DEMO_PRODUCTS;
-};
+// Ephemeral In-Memory State for Visitors (Resets completely on page refresh!)
+let memoryDemoProducts = JSON.parse(JSON.stringify(INITIAL_DEMO_PRODUCTS));
+let memoryDemoInvoices = JSON.parse(JSON.stringify(INITIAL_DEMO_INVOICES));
 
-const getSandboxInvoices = () => {
-    const saved = localStorage.getItem('demo_sandbox_invoices');
-    if (saved) {
-        try { return JSON.parse(saved); } catch (e) {}
-    }
-    localStorage.setItem('demo_sandbox_invoices', JSON.stringify(INITIAL_DEMO_INVOICES));
-    return INITIAL_DEMO_INVOICES;
+export const resetDemoSandbox = () => {
+    memoryDemoProducts = JSON.parse(JSON.stringify(INITIAL_DEMO_PRODUCTS));
+    memoryDemoInvoices = JSON.parse(JSON.stringify(INITIAL_DEMO_INVOICES));
 };
 
 // 3-Tier Authentication
@@ -213,21 +204,32 @@ export const loginAsStaff = async (username, pin) => {
         });
     }
 };
-export const loginAsVisitor = () => api.post('/auth/visitor');
+
+export const loginAsVisitor = () => {
+    resetDemoSandbox(); // Always start demo session fresh
+    return api.post('/auth/visitor').catch(() => ({
+        data: {
+            token: 'demo_guest_token_' + Date.now(),
+            username: 'Portfolio Guest (Demo)',
+            role: 'VISITOR',
+            tenantType: 'DEMO',
+            shopName: 'Manisha Electronics (Demo Sandbox)'
+        }
+    }));
+};
+
 export const verifyAuthToken = () => api.get('/auth/verify');
 
-// Products
+// Products (100% In-Memory Interception for Demo Visitors: 0 DB calls)
 export const getProducts = () => {
     if (isSandboxMode()) {
-        const prods = getSandboxProducts();
-        return Promise.resolve({ data: prods });
+        return Promise.resolve({ data: [...memoryDemoProducts] });
     }
     return api.get('/products');
 };
 
 export const createProduct = (product) => {
     if (isSandboxMode()) {
-        const prods = getSandboxProducts();
         const price = Number(product.price || product.unitPrice || 0);
         const qty = Number(product.quantity || product.stockQuantity || 0);
         const newProd = {
@@ -239,8 +241,7 @@ export const createProduct = (product) => {
             stockQuantity: qty,
             active: true
         };
-        const updated = [newProd, ...prods];
-        localStorage.setItem('demo_sandbox_products', JSON.stringify(updated));
+        memoryDemoProducts = [newProd, ...memoryDemoProducts];
         return Promise.resolve({ data: newProd });
     }
     return api.post('/products', product);
@@ -248,10 +249,9 @@ export const createProduct = (product) => {
 
 export const updateProduct = (id, product) => {
     if (isSandboxMode()) {
-        const prods = getSandboxProducts();
         const price = Number(product.price || product.unitPrice || 0);
         const qty = Number(product.quantity || product.stockQuantity || 0);
-        const updated = prods.map(p => p.id === Number(id) ? {
+        memoryDemoProducts = memoryDemoProducts.map(p => p.id === Number(id) ? {
             ...p,
             ...product,
             price: price || p.price,
@@ -259,7 +259,6 @@ export const updateProduct = (id, product) => {
             quantity: qty !== undefined ? qty : p.quantity,
             stockQuantity: qty !== undefined ? qty : p.stockQuantity
         } : p);
-        localStorage.setItem('demo_sandbox_products', JSON.stringify(updated));
         return Promise.resolve({ data: product });
     }
     return api.put(`/products/${id}`, product);
@@ -267,35 +266,30 @@ export const updateProduct = (id, product) => {
 
 export const deleteProduct = (id) => {
     if (isSandboxMode()) {
-        const prods = getSandboxProducts();
-        const updated = prods.filter(p => p.id !== Number(id));
-        localStorage.setItem('demo_sandbox_products', JSON.stringify(updated));
+        memoryDemoProducts = memoryDemoProducts.filter(p => p.id !== Number(id));
         return Promise.resolve({ data: { success: true } });
     }
     return api.delete(`/products/${id}`);
 };
 
-// Invoices
+// Invoices (100% In-Memory Interception for Demo Visitors: 0 DB calls)
 export const getInvoices = () => {
     if (isSandboxMode()) {
-        const invs = getSandboxInvoices();
-        return Promise.resolve({ data: invs });
+        return Promise.resolve({ data: [...memoryDemoInvoices] });
     }
     return api.get('/invoices');
 };
 
 export const getInvoice = (id) => {
     if (isSandboxMode()) {
-        const invs = getSandboxInvoices();
-        const found = invs.find(i => String(i.id) === String(id) || String(i.invoiceNumber) === String(id));
-        return Promise.resolve({ data: found || invs[0] });
+        const found = memoryDemoInvoices.find(i => String(i.id) === String(id) || String(i.invoiceNumber) === String(id));
+        return Promise.resolve({ data: found || memoryDemoInvoices[0] });
     }
     return api.get(`/invoices/${id}`);
 };
 
 export const createInvoice = (invoice) => {
     if (isSandboxMode()) {
-        const invs = getSandboxInvoices();
         const due = Math.max(0, Number(invoice.totalAmount || 0) - Number(invoice.amountPaid || 0));
         const newInv = {
             ...invoice,
@@ -305,13 +299,11 @@ export const createInvoice = (invoice) => {
             amountDue: due,
             createdAt: new Date().toISOString()
         };
-        const updated = [newInv, ...invs];
-        localStorage.setItem('demo_sandbox_invoices', JSON.stringify(updated));
+        memoryDemoInvoices = [newInv, ...memoryDemoInvoices];
 
-        // Deduct demo product stock
+        // Deduct in-memory stock
         if (invoice.items && invoice.items.length > 0) {
-            const prods = getSandboxProducts();
-            const updatedProds = prods.map(p => {
+            memoryDemoProducts = memoryDemoProducts.map(p => {
                 const boughtItem = invoice.items.find(it => (it.product && it.product.id === p.id) || (it.productId === p.id));
                 if (boughtItem) {
                     const newQty = Math.max(0, (p.quantity || p.stockQuantity || 0) - (boughtItem.quantity || 1));
@@ -319,7 +311,6 @@ export const createInvoice = (invoice) => {
                 }
                 return p;
             });
-            localStorage.setItem('demo_sandbox_products', JSON.stringify(updatedProds));
         }
 
         return Promise.resolve({ data: newInv });
@@ -329,9 +320,7 @@ export const createInvoice = (invoice) => {
 
 export const updateInvoice = (id, invoice) => {
     if (isSandboxMode()) {
-        const invs = getSandboxInvoices();
-        const updated = invs.map(i => i.id === Number(id) ? { ...i, ...invoice } : i);
-        localStorage.setItem('demo_sandbox_invoices', JSON.stringify(updated));
+        memoryDemoInvoices = memoryDemoInvoices.map(i => i.id === Number(id) ? { ...i, ...invoice } : i);
         return Promise.resolve({ data: invoice });
     }
     return api.put(`/invoices/${id}`, invoice);
@@ -339,8 +328,7 @@ export const updateInvoice = (id, invoice) => {
 
 export const getDueInvoices = () => {
     if (isSandboxMode()) {
-        const invs = getSandboxInvoices();
-        const dues = invs.filter(i => Number(i.balanceDue || i.amountDue || 0) > 0);
+        const dues = memoryDemoInvoices.filter(i => Number(i.balanceDue || i.amountDue || 0) > 0);
         return Promise.resolve({ data: dues });
     }
     return api.get('/invoices/due');
@@ -348,8 +336,7 @@ export const getDueInvoices = () => {
 
 export const getPaidInvoices = () => {
     if (isSandboxMode()) {
-        const invs = getSandboxInvoices();
-        const paids = invs.filter(i => Number(i.balanceDue || i.amountDue || 0) === 0);
+        const paids = memoryDemoInvoices.filter(i => Number(i.balanceDue || i.amountDue || 0) === 0);
         return Promise.resolve({ data: paids });
     }
     return api.get('/invoices/paid');
@@ -357,21 +344,18 @@ export const getPaidInvoices = () => {
 
 export const getDashboard = () => {
     if (isSandboxMode()) {
-        const invs = getSandboxInvoices();
-        const prods = getSandboxProducts();
-        
         let totalSales = 0;
         let totalPaid = 0;
         let totalDue = 0;
         
-        invs.forEach(i => {
+        memoryDemoInvoices.forEach(i => {
             totalSales += Number(i.totalAmount || 0);
             totalPaid += Number(i.amountPaid || 0);
             totalDue += Number(i.balanceDue || i.amountDue || 0);
         });
 
         let inventoryValue = 0;
-        prods.forEach(p => {
+        memoryDemoProducts.forEach(p => {
             inventoryValue += ((p.price || p.unitPrice || 0) * (p.quantity || p.stockQuantity || 0));
         });
 
@@ -380,11 +364,11 @@ export const getDashboard = () => {
                 totalSales,
                 totalPaid,
                 totalDue,
-                totalInvoices: invs.length,
-                totalProducts: prods.length,
+                totalInvoices: memoryDemoInvoices.length,
+                totalProducts: memoryDemoProducts.length,
                 inventoryValue,
-                recentInvoices: invs.slice(0, 5),
-                lowStockProducts: prods.filter(p => (p.quantity !== undefined ? p.quantity : p.stockQuantity) <= 3)
+                recentInvoices: memoryDemoInvoices.slice(0, 5),
+                lowStockProducts: memoryDemoProducts.filter(p => (p.quantity !== undefined ? p.quantity : p.stockQuantity) <= 3)
             }
         });
     }
@@ -393,8 +377,7 @@ export const getDashboard = () => {
 
 export const searchInvoices = (customer) => {
     if (isSandboxMode()) {
-        const invs = getSandboxInvoices();
-        const filtered = invs.filter(i => (i.customerName || '').toLowerCase().includes(customer.toLowerCase()));
+        const filtered = memoryDemoInvoices.filter(i => (i.customerName || '').toLowerCase().includes(customer.toLowerCase()));
         return Promise.resolve({ data: filtered });
     }
     return api.get(`/invoices/search?customer=${customer}`);
@@ -402,8 +385,7 @@ export const searchInvoices = (customer) => {
 
 export const settleDueInvoice = (id, paymentData) => {
     if (isSandboxMode()) {
-        const invs = getSandboxInvoices();
-        const updated = invs.map(i => {
+        memoryDemoInvoices = memoryDemoInvoices.map(i => {
             if (i.id === Number(id)) {
                 const paidNow = Number(paymentData.amountPaid || paymentData.amount || 0);
                 const newPaid = Number(i.amountPaid || 0) + paidNow;
@@ -412,7 +394,6 @@ export const settleDueInvoice = (id, paymentData) => {
             }
             return i;
         });
-        localStorage.setItem('demo_sandbox_invoices', JSON.stringify(updated));
         return Promise.resolve({ data: { success: true } });
     }
     return api.post(`/invoices/${id}/settle`, paymentData);
@@ -422,9 +403,7 @@ export const recordPayment = (id, paymentData) => settleDueInvoice(id, paymentDa
 
 export const deleteInvoice = (id) => {
     if (isSandboxMode()) {
-        const invs = getSandboxInvoices();
-        const updated = invs.filter(i => i.id !== Number(id));
-        localStorage.setItem('demo_sandbox_invoices', JSON.stringify(updated));
+        memoryDemoInvoices = memoryDemoInvoices.filter(i => i.id !== Number(id));
         return Promise.resolve({ data: { success: true } });
     }
     return api.delete(`/invoices/${id}`);

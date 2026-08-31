@@ -41,31 +41,31 @@ function AppContent() {
     }
 
     return (
-        <Router>
-            <div>
-                <Navbar />
-                <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/products" element={<ProductList />} />
-                    <Route path="/create-invoice" element={<CreateInvoice />} />
-                    <Route path="/invoices" element={<InvoiceList />} />
-                    <Route path="/invoice/:id" element={<InvoiceDetail />} />
-                    <Route path="/edit-invoice/:id" element={<EditInvoice />} />
-                    <Route path="/due-invoices" element={<DueInvoices />} />
-                    <Route path="/staff-management" element={<StaffManagement />} />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
-                <FloatingButton />
-            </div>
-        </Router>
+        <div>
+            <Navbar />
+            <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/products" element={<ProductList />} />
+                <Route path="/create-invoice" element={<CreateInvoice />} />
+                <Route path="/invoices" element={<InvoiceList />} />
+                <Route path="/invoice/:id" element={<InvoiceDetail />} />
+                <Route path="/edit-invoice/:id" element={<EditInvoice />} />
+                <Route path="/due-invoices" element={<DueInvoices />} />
+                <Route path="/staff-management" element={<StaffManagement />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+            <FloatingButton />
+        </div>
     );
 }
 
 function App() {
     return (
-        <AuthProvider>
-            <AppContent />
-        </AuthProvider>
+        <Router>
+            <AuthProvider>
+                <AppContent />
+            </AuthProvider>
+        </Router>
     );
 }
 

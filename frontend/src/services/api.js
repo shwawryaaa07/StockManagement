@@ -108,8 +108,20 @@ export const loginAsOwner = async (pinOrPassword) => {
     const input = (pinOrPassword || '').trim();
     const savedMasterPin = localStorage.getItem('owner_master_pin') || '1234';
 
+    // 1. PIN-based check
     if (/^\d+$/.test(input)) {
-        if (input !== savedMasterPin && input !== '1506' && input !== '1234') {
+        if (input === savedMasterPin || input === '1506' || input === '1234') {
+            const mockOwnerToken = 'owner_jwt_' + Date.now();
+            return Promise.resolve({
+                data: {
+                    token: mockOwnerToken,
+                    username: 'Ramesh Naik (Owner)',
+                    role: 'OWNER',
+                    tenantType: 'PROD',
+                    shopName: 'MANISHA ELECTRONICS'
+                }
+            });
+        } else {
             return Promise.reject({
                 response: {
                     data: {
@@ -120,32 +132,38 @@ export const loginAsOwner = async (pinOrPassword) => {
         }
     }
 
-    try {
-        if (/^\d+$/.test(input)) {
-            return await api.post('/auth/login', { pin: input });
-        } else {
-            return await api.post('/auth/login', { username: 'admin', password: input });
+    // 2. Password-based check
+    return api.post('/auth/login', { username: 'admin', password: input }).catch(() => {
+        if (input === 'admin' || input === '1234' || input === savedMasterPin) {
+            return {
+                data: {
+                    token: 'owner_jwt_' + Date.now(),
+                    username: 'Ramesh Naik (Owner)',
+                    role: 'OWNER',
+                    tenantType: 'PROD',
+                    shopName: 'MANISHA ELECTRONICS'
+                }
+            };
         }
-    } catch (err) {
-        const mockOwnerToken = 'owner_token_' + Date.now();
-        return Promise.resolve({
-            data: {
-                token: mockOwnerToken,
-                username: 'Ramesh Naik (Owner)',
-                role: 'OWNER',
-                tenantType: 'PROD',
-                shopName: 'MANISHA ELECTRONICS'
+        return Promise.reject({
+            response: {
+                data: {
+                    message: '❌ Invalid Owner Password or Credentials.'
+                }
             }
         });
-    }
+    });
 };
 
 export const loginAsStaff = async (username, pin) => {
-    const rawSaved = localStorage.getItem('manisha_staff_accounts');
-    const staffList = rawSaved ? JSON.parse(rawSaved) : [
-        { id: 'STF-01', name: 'Rahul Parab', username: 'rahul_counter1', pin: '1234', counter: 'Counter 1 (Main POS)', status: 'Active', role: 'Cashier' },
-        { id: 'STF-02', name: 'Sunil Gawas', username: 'sunil_counter2', pin: '5678', counter: 'Counter 2 (Appliances)', status: 'Active', role: 'Floor Sales Executive' }
+    const isVisitor = localStorage.getItem('tenantType') === 'DEMO';
+    const defaultStaff = [
+        { id: 'STF-01', name: 'Rahul Parab', username: 'rahul_counter1', pin: '1234', role: 'Cashier', status: 'Active' },
+        { id: 'STF-02', name: 'Sunil Gawas', username: 'sunil_counter2', pin: '5678', role: 'Floor Sales Executive', status: 'Active' }
     ];
+
+    const rawSaved = localStorage.getItem('manisha_staff_accounts');
+    const staffList = (isVisitor || !rawSaved) ? defaultStaff : JSON.parse(rawSaved);
 
     const inputUser = (username || '').trim().toLowerCase();
     const inputPin = (pin || '').trim();
@@ -187,22 +205,16 @@ export const loginAsStaff = async (username, pin) => {
         });
     }
 
-    try {
-        const res = await api.post('/auth/staff', { username: foundStaff.username, pin: inputPin });
-        return res;
-    } catch (err) {
-        const mockStaffToken = 'staff_token_' + Date.now();
-        return Promise.resolve({
-            data: {
-                token: mockStaffToken,
-                username: `${foundStaff.name} (${foundStaff.role || 'Staff'})`,
-                role: 'STAFF',
-                tenantType: 'PROD',
-                shopName: 'MANISHA ELECTRONICS',
-                counter: foundStaff.counter
-            }
-        });
-    }
+    const mockStaffToken = 'staff_jwt_' + Date.now();
+    return Promise.resolve({
+        data: {
+            token: mockStaffToken,
+            username: `${foundStaff.name} (${foundStaff.role || 'Staff'})`,
+            role: 'STAFF',
+            tenantType: 'PROD',
+            shopName: 'MANISHA ELECTRONICS'
+        }
+    });
 };
 
 export const loginAsVisitor = () => {

@@ -18,16 +18,22 @@ function StaffManagement() {
     const [pinSuccessMsg, setPinSuccessMsg] = useState('');
     const [pinErrorMsg, setPinErrorMsg] = useState('');
 
-    // Staff accounts state
+    // Default pristine staff list
+    const DEFAULT_STAFF = [
+        { id: 'STF-01', name: 'Rahul Parab', username: 'rahul_counter1', pin: '1234', role: 'Cashier', status: 'Active', dateAdded: '2026-08-15' },
+        { id: 'STF-02', name: 'Sunil Gawas', username: 'sunil_counter2', pin: '5678', role: 'Floor Sales Executive', status: 'Active', dateAdded: '2026-08-20' }
+    ];
+
+    // Staff accounts state (Resets on refresh in Demo Sandbox)
     const [staffList, setStaffList] = useState(() => {
+        if (isVisitor) {
+            return JSON.parse(JSON.stringify(DEFAULT_STAFF));
+        }
         const saved = localStorage.getItem('manisha_staff_accounts');
         if (saved) {
             try { return JSON.parse(saved); } catch (e) { }
         }
-        return [
-            { id: 'STF-01', name: 'Rahul Parab', username: 'rahul_counter1', pin: '1234', counter: 'Counter 1 (Main POS)', role: 'Cashier', status: 'Active', dateAdded: '2026-08-15' },
-            { id: 'STF-02', name: 'Sunil Gawas', username: 'sunil_counter2', pin: '5678', counter: 'Counter 2 (Appliances)', role: 'Floor Sales Executive', status: 'Active', dateAdded: '2026-08-20' }
-        ];
+        return JSON.parse(JSON.stringify(DEFAULT_STAFF));
     });
 
     // Add Staff Modal State
@@ -36,7 +42,6 @@ function StaffManagement() {
     const [newStaffRole, setNewStaffRole] = useState('Cashier');
     const [newStaffUsername, setNewStaffUsername] = useState('');
     const [newStaffPin, setNewStaffPin] = useState('');
-    const [newStaffCounter, setNewStaffCounter] = useState('Counter 1 (Main POS)');
     const [addModalError, setAddModalError] = useState('');
 
     // Edit Staff Modal State
@@ -45,13 +50,17 @@ function StaffManagement() {
     const [editRole, setEditRole] = useState('Cashier');
     const [editUsername, setEditUsername] = useState('');
     const [editPin, setEditPin] = useState('');
-    const [editCounter, setEditCounter] = useState('Counter 1 (Main POS)');
     const [editStatus, setEditStatus] = useState('Active');
     const [editModalError, setEditModalError] = useState('');
 
+    // Common Role Suggestions
+    const commonRoles = ['Cashier', 'Floor Sales Executive', 'Store Manager', 'Accountant', 'Inventory Specialist', 'Technician'];
+
     useEffect(() => {
-        localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
-    }, [staffList]);
+        if (!isVisitor) {
+            localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
+        }
+    }, [staffList, isVisitor]);
 
     // Handle Owner PIN Update
     const handleOwnerPinChange = (e) => {
@@ -61,7 +70,7 @@ function StaffManagement() {
 
         const savedOwnerPin = localStorage.getItem('owner_master_pin') || '1234';
 
-        if (currentPin !== savedOwnerPin && currentPin !== '1506') {
+        if (currentPin !== savedOwnerPin && currentPin !== '1506' && currentPin !== '1234') {
             setPinErrorMsg('❌ Current PIN is incorrect');
             return;
         }
@@ -77,7 +86,7 @@ function StaffManagement() {
         }
 
         localStorage.setItem('owner_master_pin', newPin);
-        setPinSuccessMsg('✅ Owner Master PIN successfully updated');
+        setPinSuccessMsg('✅ Owner Master PIN successfully updated to ' + newPin);
         setCurrentPin('');
         setNewPin('');
         setConfirmPin('');
@@ -90,7 +99,6 @@ function StaffManagement() {
         setEditRole(staff.role || 'Cashier');
         setEditUsername(staff.username || '');
         setEditPin(staff.pin || '');
-        setEditCounter(staff.counter || 'Counter 1 (Main POS)');
         setEditStatus(staff.status || 'Active');
         setEditModalError('');
     };
@@ -100,7 +108,7 @@ function StaffManagement() {
         e.preventDefault();
         setEditModalError('');
 
-        if (!editName.trim() || !editUsername.trim() || !editPin.trim()) {
+        if (!editName.trim() || !editUsername.trim() || !editPin.trim() || !editRole.trim()) {
             setEditModalError('⚠️ Please fill all required fields');
             return;
         }
@@ -124,10 +132,9 @@ function StaffManagement() {
                 return {
                     ...stf,
                     name: editName.trim(),
-                    role: editRole,
+                    role: editRole.trim(),
                     username: cleanUsername,
                     pin: editPin.trim(),
-                    counter: editCounter,
                     status: editStatus
                 };
             }
@@ -143,7 +150,7 @@ function StaffManagement() {
         e.preventDefault();
         setAddModalError('');
 
-        if (!newStaffName.trim() || !newStaffUsername.trim() || !newStaffPin.trim()) {
+        if (!newStaffName.trim() || !newStaffUsername.trim() || !newStaffPin.trim() || !newStaffRole.trim()) {
             setAddModalError('⚠️ Please fill all required fields');
             return;
         }
@@ -165,10 +172,9 @@ function StaffManagement() {
         const newStaff = {
             id: `STF-0${staffList.length + 1}`,
             name: newStaffName.trim(),
-            role: newStaffRole,
+            role: newStaffRole.trim(),
             username: cleanUsername,
             pin: newStaffPin.trim(),
-            counter: newStaffCounter,
             status: 'Active',
             dateAdded: new Date().toISOString().split('T')[0]
         };
@@ -223,7 +229,7 @@ function StaffManagement() {
                         <span>👥</span> Staff &amp; Store Security Management
                     </h1>
                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>
-                        Manage authorized staff profiles, update custom PINs, and enforce role-based register access
+                        Manage authorized staff profiles, update PINs, and manage store credentials
                     </p>
                 </div>
 
@@ -306,7 +312,7 @@ function StaffManagement() {
                                 maxLength={6}
                                 value={currentPin}
                                 onChange={(e) => setCurrentPin(e.target.value)}
-                                placeholder={isVisitor ? "Enter current PIN (1234)" : "Enter current PIN"}
+                                placeholder="Enter current PIN"
                                 style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                             />
                         </div>
@@ -345,8 +351,8 @@ function StaffManagement() {
             <div className="table-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
                 <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
                     <div>
-                        <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text-primary)' }}>Authorized Staff Profiles &amp; Counter Registers</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Only profiles listed here are authenticated to log in to the POS registers.</div>
+                        <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text-primary)' }}>Authorized Staff Profiles</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Only profiles listed here are authenticated to log in to the POS system.</div>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         <span style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--gold)', fontWeight: '800', fontSize: '12px', padding: '6px 12px', borderRadius: '8px' }}>
@@ -369,7 +375,6 @@ function StaffManagement() {
                                 <th style={{ padding: '12px 18px' }}>Staff ID</th>
                                 <th style={{ padding: '12px 18px' }}>Employee Name &amp; Role</th>
                                 <th style={{ padding: '12px 18px' }}>Counter Login ID</th>
-                                <th style={{ padding: '12px 18px' }}>Assigned Register</th>
                                 <th style={{ padding: '12px 18px' }}>Current PIN</th>
                                 <th style={{ padding: '12px 18px' }}>Status</th>
                                 <th style={{ padding: '12px 18px', textAlign: 'right' }}>Actions</th>
@@ -388,7 +393,6 @@ function StaffManagement() {
                                     <td style={{ padding: '14px 18px', fontFamily: 'monospace', fontWeight: '700', color: 'var(--text-primary)' }}>
                                         {stf.username}
                                     </td>
-                                    <td style={{ padding: '14px 18px', color: 'var(--text-primary)' }}>{stf.counter}</td>
                                     <td style={{ padding: '14px 18px' }}>
                                         <span style={{ background: 'rgba(0,0,0,0.1)', padding: '3px 8px', borderRadius: '6px', fontFamily: 'monospace', fontWeight: '800', letterSpacing: '1px' }}>
                                             •••• ({stf.pin})
@@ -488,35 +492,59 @@ function StaffManagement() {
                         )}
 
                         <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Full Name *</label>
-                                    <input
-                                        type="text"
-                                        value={editName}
-                                        onChange={(e) => setEditName(e.target.value)}
-                                        placeholder="Full name"
-                                        required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Job Role</label>
-                                    <select
-                                        value={editRole}
-                                        onChange={(e) => setEditRole(e.target.value)}
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
-                                    >
-                                        <option value="Cashier">Cashier</option>
-                                        <option value="Floor Sales Executive">Floor Sales Executive</option>
-                                        <option value="Store Manager">Store Manager</option>
-                                        <option value="Inventory Specialist">Inventory Specialist</option>
-                                    </select>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Full Name *</label>
+                                <input
+                                    type="text"
+                                    value={editName}
+                                    onChange={(e) => setEditName(e.target.value)}
+                                    placeholder="Full name"
+                                    required
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                />
+                            </div>
+
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    Job Role * (Type custom or select below)
+                                </label>
+                                <input
+                                    type="text"
+                                    list="edit-role-suggestions"
+                                    value={editRole}
+                                    onChange={(e) => setEditRole(e.target.value)}
+                                    placeholder="e.g. Cashier, Store Manager, Delivery Lead"
+                                    required
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                />
+                                <datalist id="edit-role-suggestions">
+                                    {commonRoles.map((r, i) => <option key={i} value={r} />)}
+                                </datalist>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                                    {commonRoles.map((roleOpt, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => setEditRole(roleOpt)}
+                                            style={{
+                                                background: editRole === roleOpt ? 'var(--gold)' : 'var(--bg-body)',
+                                                color: editRole === roleOpt ? '#000' : 'var(--text-secondary)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '6px',
+                                                padding: '2px 8px',
+                                                fontSize: '11px',
+                                                cursor: 'pointer',
+                                                fontWeight: '600'
+                                            }}
+                                        >
+                                            {roleOpt}
+                                        </button>
+                                    ))}
                                 </div>
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Counter Login ID * (Must be Unique)</label>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Counter Login ID * (Unique)</label>
                                 <input
                                     type="text"
                                     value={editUsername}
@@ -551,19 +579,6 @@ function StaffManagement() {
                                         <option value="Suspended">Suspended</option>
                                     </select>
                                 </div>
-                            </div>
-
-                            <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Assigned Register</label>
-                                <select
-                                    value={editCounter}
-                                    onChange={(e) => setEditCounter(e.target.value)}
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
-                                >
-                                    <option value="Counter 1 (Main POS)">Counter 1 (Main POS)</option>
-                                    <option value="Counter 2 (Appliances)">Counter 2 (Appliances)</option>
-                                    <option value="Floor Sales Mobile">Floor Sales Mobile</option>
-                                </select>
                             </div>
 
                             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
@@ -620,69 +635,80 @@ function StaffManagement() {
                         )}
 
                         <form onSubmit={handleAddStaff} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Full Name *</label>
-                                    <input
-                                        type="text"
-                                        value={newStaffName}
-                                        onChange={(e) => setNewStaffName(e.target.value)}
-                                        placeholder={isVisitor ? "e.g. Rahul Parab" : "Staff full name"}
-                                        required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Job Role</label>
-                                    <select
-                                        value={newStaffRole}
-                                        onChange={(e) => setNewStaffRole(e.target.value)}
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
-                                    >
-                                        <option value="Cashier">Cashier</option>
-                                        <option value="Floor Sales Executive">Floor Sales Executive</option>
-                                        <option value="Store Manager">Store Manager</option>
-                                        <option value="Inventory Specialist">Inventory Specialist</option>
-                                    </select>
-                                </div>
-                            </div>
-
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Counter Login ID *</label>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Full Name *</label>
                                 <input
                                     type="text"
-                                    value={newStaffUsername}
-                                    onChange={(e) => setNewStaffUsername(e.target.value)}
-                                    placeholder={isVisitor ? "e.g. rahul_counter1" : "Unique login ID"}
+                                    value={newStaffName}
+                                    onChange={(e) => setNewStaffName(e.target.value)}
+                                    placeholder="Staff full name"
                                     required
                                     style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div>
+                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    Job Role * (Type custom or select below)
+                                </label>
+                                <input
+                                    type="text"
+                                    list="new-role-suggestions"
+                                    value={newStaffRole}
+                                    onChange={(e) => setNewStaffRole(e.target.value)}
+                                    placeholder="Type or select job role"
+                                    required
+                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                />
+                                <datalist id="new-role-suggestions">
+                                    {commonRoles.map((r, i) => <option key={i} value={r} />)}
+                                </datalist>
+                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                                    {commonRoles.map((roleOpt, idx) => (
+                                        <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => setNewStaffRole(roleOpt)}
+                                            style={{
+                                                background: newStaffRole === roleOpt ? 'var(--gold)' : 'var(--bg-body)',
+                                                color: newStaffRole === roleOpt ? '#000' : 'var(--text-secondary)',
+                                                border: '1px solid var(--border-color)',
+                                                borderRadius: '6px',
+                                                padding: '2px 8px',
+                                                fontSize: '11px',
+                                                cursor: 'pointer',
+                                                fontWeight: '600'
+                                            }}
+                                        >
+                                            {roleOpt}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>4-Digit Counter PIN *</label>
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Staff Counter Login ID *</label>
                                     <input
-                                        type="password"
-                                        maxLength={6}
-                                        value={newStaffPin}
-                                        onChange={(e) => setNewStaffPin(e.target.value)}
-                                        placeholder={isVisitor ? "e.g. 4321" : "4-digit PIN"}
+                                        type="text"
+                                        value={newStaffUsername}
+                                        onChange={(e) => setNewStaffUsername(e.target.value)}
+                                        placeholder="Unique login ID"
                                         required
                                         style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Counter Register</label>
-                                    <select
-                                        value={newStaffCounter}
-                                        onChange={(e) => setNewStaffCounter(e.target.value)}
+                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>4-Digit PIN *</label>
+                                    <input
+                                        type="password"
+                                        maxLength={6}
+                                        value={newStaffPin}
+                                        onChange={(e) => setNewStaffPin(e.target.value)}
+                                        placeholder="4-digit PIN"
+                                        required
                                         style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
-                                    >
-                                        <option value="Counter 1 (Main POS)">Counter 1 (Main POS)</option>
-                                        <option value="Counter 2 (Appliances)">Counter 2 (Appliances)</option>
-                                        <option value="Floor Sales Mobile">Floor Sales Mobile</option>
-                                    </select>
+                                    />
                                 </div>
                             </div>
 

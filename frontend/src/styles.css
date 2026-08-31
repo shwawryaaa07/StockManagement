@@ -471,16 +471,18 @@ body.dark-mode .badge-urgent {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 64px;
+    height: 58px;
     background: var(--bg-card);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
     border-top: 1px solid var(--border-color);
     z-index: 9999;
-    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.15);
-    justify-content: space-around;
+    box-shadow: 0 -2px 14px rgba(0, 0, 0, 0.25);
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
     align-items: center;
-    padding: 0 4px;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 .mobile-tab {
@@ -488,21 +490,22 @@ body.dark-mode .badge-urgent {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
+    gap: 2px;
     color: var(--text-secondary);
     text-decoration: none;
-    font-size: 10px;
-    font-weight: 700;
-    padding: 6px 8px;
-    border-radius: 10px;
+    padding: 6px 0;
     transition: all 0.15s ease;
-    flex: 1;
-    max-width: 68px;
 }
 
 .mobile-tab .tab-icon {
-    font-size: 18px;
+    font-size: 20px;
     line-height: 1;
+}
+
+.mobile-tab .tab-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: -0.2px;
 }
 
 .mobile-tab.active {
@@ -510,36 +513,7 @@ body.dark-mode .badge-urgent {
 }
 
 .mobile-tab.active .tab-icon {
-    transform: scale(1.15);
-}
-
-.mobile-tab-pos {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-decoration: none;
-    margin-top: -18px;
-    z-index: 10000;
-}
-
-.pos-btn-inner {
-    width: 52px;
-    height: 52px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
-    color: #0f172a;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.5);
-    border: 3px solid var(--bg-card);
-    transition: transform 0.15s ease;
-}
-
-.mobile-tab-pos:active .pos-btn-inner {
-    transform: scale(0.92);
+    transform: scale(1.12);
 }
 
 /* Mobile Media Queries */

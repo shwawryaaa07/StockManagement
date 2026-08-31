@@ -199,13 +199,14 @@ function Navbar() {
                 <div className="mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button
                         onClick={() => setDarkMode(!darkMode)}
+                        title="Toggle dark mode"
                         style={{
                             background: 'rgba(255,255,255,0.12)',
                             border: '1px solid rgba(255,255,255,0.2)',
                             color: '#fff',
                             padding: '6px 10px',
                             borderRadius: '8px',
-                            fontSize: '12px',
+                            fontSize: '13px',
                             cursor: 'pointer'
                         }}
                     >
@@ -215,6 +216,7 @@ function Navbar() {
                     <button
                         type="button"
                         onClick={logout}
+                        title="Lock / Sign Out"
                         style={{
                             background: 'rgba(239, 83, 80, 0.25)',
                             border: '1px solid rgba(239, 83, 80, 0.4)',
@@ -231,7 +233,7 @@ function Navbar() {
                 </div>
             </nav>
 
-            {/* MOBILE BOTTOM NAVIGATION BAR (Fixed at bottom for easy thumb access) */}
+            {/* CLEAN NATIVE MOBILE BOTTOM NAVIGATION BAR (Uniform 5-tab grid, zero text overlap) */}
             <div className="mobile-bottom-bar no-print">
                 <NavLink to="/" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`} end>
                     <span className="tab-icon">📊</span>
@@ -243,12 +245,9 @@ function Navbar() {
                     <span className="tab-label">Products</span>
                 </NavLink>
 
-                {/* Primary Center Action: New POS Bill */}
-                <NavLink to="/create-invoice" className="mobile-tab-pos">
-                    <div className="pos-btn-inner">
-                        <span style={{ fontSize: '18px' }}>🧾</span>
-                        <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.5px' }}>POS Bill</span>
-                    </div>
+                <NavLink to="/create-invoice" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                    <span className="tab-icon">🧾</span>
+                    <span className="tab-label">New Bill</span>
                 </NavLink>
 
                 <NavLink to="/invoices" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
@@ -264,7 +263,7 @@ function Navbar() {
                 ) : (
                     <NavLink to="/due-invoices" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
                         <span className="tab-icon">🟡</span>
-                        <span className="tab-label">Dues</span>
+                        <span className="tab-label">Due Bills</span>
                     </NavLink>
                 )}
             </div>

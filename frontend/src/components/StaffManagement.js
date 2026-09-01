@@ -3,11 +3,21 @@ import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { getStoreProfile, saveStoreProfile } from '../services/storeProfile';
 
+// Pure Isolated Demo Staff Accounts (Zero access to real store accounts or PINs)
+const DEMO_STAFF_ACCOUNTS = [
+    { id: 'DEMO-01', name: 'Demo Cashier 1', username: 'demo_counter1', pin: '1234', role: 'Cashier', status: 'Active', dateAdded: '2026-09-01' },
+    { id: 'DEMO-02', name: 'Demo Sales Specialist', username: 'demo_sales', pin: '5678', role: 'Floor Sales Executive', status: 'Active', dateAdded: '2026-09-01' }
+];
+
+const DEFAULT_PROD_STAFF = [
+    { id: 'STF-01', name: 'Tejas', username: 'tejas11', pin: '0987', role: 'Inventory Specialist', status: 'Active', dateAdded: '2026-08-31' }
+];
+
 function StaffManagement() {
     const { isVisitor } = useAuth();
     
     // Store profile state (Synced across components)
-    const [storeProfile, setStoreProfile] = useState(getStoreProfile);
+    const [storeProfile, setStoreProfile] = useState(() => getStoreProfile(isVisitor));
 
     // Profile Edit Modal State
     const [showProfileModal, setShowProfileModal] = useState(false);
@@ -31,23 +41,19 @@ function StaffManagement() {
     const [pinSuccessMsg, setPinSuccessMsg] = useState('');
     const [pinErrorMsg, setPinErrorMsg] = useState('');
 
-    // Default staff list (Only authorized staff registered by Owner)
-    const DEFAULT_STAFF = [
-        { id: 'STF-01', name: 'Tejas', username: 'tejas11', pin: '0987', role: 'Inventory Specialist', status: 'Active', dateAdded: '2026-08-31' }
-    ];
-
-    // Staff accounts state
+    // Staff accounts state (Strictly sandboxed for visitors)
     const [staffList, setStaffList] = useState(() => {
+        if (isVisitor) {
+            return JSON.parse(JSON.stringify(DEMO_STAFF_ACCOUNTS));
+        }
         const saved = localStorage.getItem('manisha_staff_accounts') || sessionStorage.getItem('manisha_staff_accounts');
         if (saved) {
             try { 
                 const parsed = JSON.parse(saved);
-                // Filter out any unwanted demo accounts if previously cached
-                const filtered = parsed.filter(s => s.username !== 'rahul_counter1' && s.username !== 'sunil_counter2');
-                if (filtered.length > 0) return filtered;
+                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
             } catch (e) { }
         }
-        return JSON.parse(JSON.stringify(DEFAULT_STAFF));
+        return JSON.parse(JSON.stringify(DEFAULT_PROD_STAFF));
     });
 
     // Add Staff Modal State
@@ -70,9 +76,15 @@ function StaffManagement() {
     // Common Role Suggestions
     const commonRoles = ['Cashier', 'Floor Sales Executive', 'Store Manager', 'Accountant', 'Inventory Specialist', 'Technician'];
 
-    // Load from cloud sync on mount
+    // Load staff and store profile on mount (Strict Sandbox Shield)
     useEffect(() => {
-        // 1. Fetch Staff List
+        if (isVisitor) {
+            setStaffList(JSON.parse(JSON.stringify(DEMO_STAFF_ACCOUNTS)));
+            setStoreProfile(getStoreProfile(true));
+            return;
+        }
+
+        // 1. Fetch Real Staff List from TiDB Backend
         api.get('/staff').then(res => {
             if (res.data && Array.isArray(res.data) && res.data.length > 0) {
                 setStaffList(res.data);
@@ -81,37 +93,42 @@ function StaffManagement() {
             }
         }).catch(() => { });
 
-        // 2. Fetch Store Profile
+        // 2. Fetch Store Profile from Backend
         api.get('/staff/store-profile').then(res => {
             if (res.data && res.data.shopName) {
-                const saved = saveStoreProfile(res.data);
+                const saved = saveStoreProfile(res.data, false);
                 setStoreProfile(saved);
             }
         }).catch(() => { });
-    }, []);
+    }, [isVisitor]);
 
+    // Keep production storage updated only for logged in owners/staff
     useEffect(() => {
-        localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
-        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
-    }, [staffList]);
+        if (!isVisitor) {
+            localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
+            sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
+        }
+    }, [staffList, isVisitor]);
 
     // Handle Store Profile Save (Instant Sync)
     const handleSaveStoreProfile = (e) => {
         if (e) e.preventDefault();
         const updated = {
-            shopName: (editShopName || '').trim() || 'MANISHA ELECTRONICS',
-            ownerName: (editOwnerName || '').trim() || 'Ramesh Naik (Owner)',
-            gstin: (editGstin || '').trim() || '30AMYPN1753F1ZY',
-            phone: (editPhone || '').trim() || '9309736172, 70205592347',
-            address: (editAddress || '').trim() || 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa'
+            shopName: (editShopName || '').trim() || (isVisitor ? 'MANISHA ELECTRONICS (Demo Sandbox)' : 'MANISHA ELECTRONICS'),
+            ownerName: (editOwnerName || '').trim() || (isVisitor ? 'Demo Administrator' : 'Ramesh Naik (Owner)'),
+            gstin: (editGstin || '').trim() || (isVisitor ? '30AAAAA0000A1Z5 (Demo)' : '30AMYPN1753F1ZY'),
+            phone: (editPhone || '').trim() || (isVisitor ? '+91 98000 00000' : '9309736172, 70205592347'),
+            address: (editAddress || '').trim() || (isVisitor ? 'Sample Tech Complex, Commercial Plaza, Panaji - Goa' : 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa')
         };
 
-        const saved = saveStoreProfile(updated);
+        const saved = saveStoreProfile(updated, isVisitor);
         setStoreProfile(saved);
         setShowProfileModal(false);
 
-        api.post('/staff/store-profile', updated).catch(() => { });
-        alert(`✅ Store Profile for "${updated.shopName}" updated and synced to all invoices!`);
+        if (!isVisitor) {
+            api.post('/staff/store-profile', updated).catch(() => { });
+        }
+        alert(`✅ Store Profile for "${updated.shopName}" updated!`);
     };
 
     // Handle Owner PIN Update
@@ -123,6 +140,26 @@ function StaffManagement() {
         const cur = currentPin.trim();
         const np = newPin.trim();
         const cp = confirmPin.trim();
+
+        if (isVisitor) {
+            if (cur !== '1234' && cur !== '2006' && cur !== '0000') {
+                setPinErrorMsg('❌ For demo mode, enter current PIN: 1234');
+                return;
+            }
+            if (np.length < 4 || !/^\d+$/.test(np)) {
+                setPinErrorMsg('⚠️ New PIN must be at least 4 numeric digits');
+                return;
+            }
+            if (np !== cp) {
+                setPinErrorMsg('⚠️ New PIN and Confirm PIN do not match');
+                return;
+            }
+            setPinSuccessMsg('✅ Demo Master PIN updated in-memory for this session!');
+            setCurrentPin('');
+            setNewPin('');
+            setConfirmPin('');
+            return;
+        }
 
         const savedOwnerPin = localStorage.getItem('owner_master_pin') || sessionStorage.getItem('owner_master_pin') || '2006';
 
@@ -186,7 +223,6 @@ function StaffManagement() {
             return;
         }
 
-        // Check if username is taken by another account
         const duplicate = staffList.some(stf => stf.id !== editingStaff.id && stf.username.toLowerCase() === cleanUsername);
         if (duplicate) {
             setEditModalError(`⚠️ Login ID "${cleanUsername}" is already in use by another staff profile.`);
@@ -208,20 +244,19 @@ function StaffManagement() {
         });
 
         setStaffList(updated);
-        localStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
-        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
 
-        // Sync to cloud backend
-        try {
-            await api.post('/staff', {
-                id: editingStaff.id,
-                name: cleanName,
-                role: cleanRole,
-                username: cleanUsername,
-                pin: cleanPin,
-                status: editStatus
-            });
-        } catch (err) { }
+        if (!isVisitor) {
+            try {
+                await api.post('/staff', {
+                    id: editingStaff.id,
+                    name: cleanName,
+                    role: cleanRole,
+                    username: cleanUsername,
+                    pin: cleanPin,
+                    status: editStatus
+                });
+            } catch (err) { }
+        }
 
         setEditingStaff(null);
         alert(`✅ Staff profile for ${cleanName} updated!`);
@@ -253,8 +288,9 @@ function StaffManagement() {
             return;
         }
 
+        const prefix = isVisitor ? 'DEMO-0' : 'STF-0';
         const newStaff = {
-            id: `STF-0${staffList.length + 1}`,
+            id: `${prefix}${staffList.length + 1}`,
             name: cleanName,
             role: cleanRole,
             username: cleanUsername,
@@ -265,13 +301,12 @@ function StaffManagement() {
 
         const updated = [...staffList, newStaff];
         setStaffList(updated);
-        localStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
-        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
 
-        // Sync to cloud backend
-        try {
-            await api.post('/staff', newStaff);
-        } catch (err) { }
+        if (!isVisitor) {
+            try {
+                await api.post('/staff', newStaff);
+            } catch (err) { }
+        }
 
         setShowAddModal(false);
         setNewStaffName('');
@@ -285,373 +320,447 @@ function StaffManagement() {
         const updated = staffList.map(stf => {
             if (stf.id === id) {
                 const toggled = { ...stf, status: stf.status === 'Active' ? 'Suspended' : 'Active' };
-                api.post('/staff', toggled).catch(() => {});
+                if (!isVisitor) {
+                    api.post('/staff', toggled).catch(() => {});
+                }
                 return toggled;
             }
             return stf;
         });
         setStaffList(updated);
-        localStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
-        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
     };
 
     const handleDeleteStaff = async (id, name) => {
         if (window.confirm(`Are you sure you want to remove staff account "${name}"? Only registered staff will be allowed access.`)) {
             const updated = staffList.filter(stf => stf.id !== id);
             setStaffList(updated);
-            localStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
-            sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(updated));
-            api.delete(`/staff/${id}`).catch(() => {});
+
+            if (!isVisitor) {
+                try {
+                    await api.delete(`/staff/${id}`);
+                } catch (err) { }
+            }
         }
     };
 
     return (
         <div className="page-container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
             {/* Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
-                <div>
-                    <h1 style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <span>👥</span> Staff &amp; Store Security Management
-                    </h1>
-                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
-                        Manage authorized staff profiles, update PINs, and manage store credentials
-                    </p>
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px' }}>
-                    <button
-                        onClick={() => setShowAddModal(true)}
-                        className="btn-primary"
-                        style={{ padding: '10px 18px', fontSize: '13px' }}
-                    >
-                        ➕ Add New Staff Profile
-                    </button>
+            <div className="page-header" style={{ marginBottom: '24px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{ fontSize: '28px' }}>👥</div>
+                    <div>
+                        <h1 style={{ fontSize: '22px', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
+                            Staff Profiles &amp; Access Control
+                        </h1>
+                        <p style={{ margin: '3px 0 0', fontSize: '13px', color: 'var(--text-secondary)' }}>
+                            Manage authorized staff profiles, update PINs, and manage store credentials
+                        </p>
+                    </div>
                 </div>
             </div>
 
-            {/* Top Row: Store Profile & Owner PIN Settings */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px', marginBottom: '28px' }}>
-                {/* Store Profile Card with Edit Button */}
-                <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)', position: 'relative' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                            <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'var(--gold-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                                👑
-                            </div>
+            {/* Sandbox Notice for Visitors */}
+            {isVisitor && (
+                <div style={{
+                    background: 'rgba(59, 130, 246, 0.1)',
+                    border: '1px solid rgba(59, 130, 246, 0.3)',
+                    borderRadius: '12px',
+                    padding: '12px 18px',
+                    marginBottom: '20px',
+                    fontSize: '13px',
+                    color: '#60a5fa',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '10px'
+                }}>
+                    <span>🛡️</span>
+                    <span><strong>100% Isolated Demo Sandbox:</strong> Real store accounts, employee records, and business numbers are masked and hidden. Any edits here are strictly ephemeral for this browser session.</span>
+                </div>
+            )}
+
+            {/* Top Cards: Store Overview & Change Master PIN */}
+            <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gap: '20px',
+                marginBottom: '28px'
+            }}>
+                {/* Store Profile Overview Card */}
+                <div className="card" style={{ padding: '24px', position: 'relative' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '18px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            <span style={{ fontSize: '24px' }}>👑</span>
                             <div>
-                                <div style={{ fontWeight: '800', fontSize: '15px', color: 'var(--text-primary)' }}>Store Profile Overview</div>
-                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Administrative &amp; Tax Information</div>
+                                <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>Store Profile Overview</h3>
+                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Administrative &amp; Tax Information</div>
                             </div>
                         </div>
-
-                        {!isVisitor && (
-                            <button
-                                onClick={() => {
-                                    setEditShopName(storeProfile.shopName);
-                                    setEditOwnerName(storeProfile.ownerName);
-                                    setEditGstin(storeProfile.gstin);
-                                    setEditPhone(storeProfile.phone);
-                                    setEditAddress(storeProfile.address);
-                                    setShowProfileModal(true);
-                                }}
-                                className="btn-cancel"
-                                style={{ padding: '6px 12px', fontSize: '11px', fontWeight: '700' }}
-                                title="Edit Store Details (Syncs to all Invoices)"
-                            >
-                                ✏️ Edit Profile
-                            </button>
-                        )}
+                        <button
+                            onClick={() => {
+                                setEditShopName(storeProfile.shopName);
+                                setEditOwnerName(storeProfile.ownerName);
+                                setEditGstin(storeProfile.gstin);
+                                setEditPhone(storeProfile.phone);
+                                setEditAddress(storeProfile.address);
+                                setShowProfileModal(true);
+                            }}
+                            className="btn-cancel"
+                            style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '8px' }}
+                        >
+                            ✏️ Edit Profile
+                        </button>
                     </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', fontSize: '13px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border-color)', paddingBottom: '8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Store Name:</span>
                             <strong style={{ color: 'var(--text-primary)' }}>{shopName}</strong>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border-color)', paddingBottom: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Primary Administrator:</span>
                             <strong style={{ color: 'var(--text-primary)' }}>{ownerUsername}</strong>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border-color)', paddingBottom: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Official GSTIN:</span>
-                            <span style={{ fontFamily: 'monospace', fontWeight: '800', color: 'var(--gold)' }}>{gstin}</span>
+                            <strong style={{ color: 'var(--gold)', letterSpacing: '0.5px' }}>{gstin}</strong>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed var(--border-color)', paddingBottom: '8px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Contact Numbers:</span>
-                            <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{phone}</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>{phone}</strong>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: 'var(--text-secondary)', flexShrink: 0, marginRight: '10px' }}>Store Location:</span>
-                            <span style={{ textAlign: 'right', color: 'var(--text-primary)', fontSize: '12px', fontWeight: '600' }}>{address}</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '2px' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Store Location:</span>
+                            <span style={{ color: 'var(--text-primary)', textAlign: 'right', maxWidth: '60%' }}>{address}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Change Owner Master PIN Card */}
-                <div style={{ background: 'var(--bg-card)', padding: '24px', borderRadius: '16px', border: '1px solid var(--border-color)', boxShadow: 'var(--shadow-sm)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '18px' }}>
-                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
-                            🔐
-                        </div>
+                {/* Change Master PIN Card */}
+                <div className="card" style={{ padding: '24px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '18px' }}>
+                        <span style={{ fontSize: '24px' }}>🔐</span>
                         <div>
-                            <div style={{ fontWeight: '800', fontSize: '15px', color: 'var(--text-primary)' }}>Change Master PIN</div>
-                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Update your 4-digit Owner passcode</div>
+                            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>Change Master PIN</h3>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Update your 4-digit Owner passcode</div>
                         </div>
                     </div>
 
-                    {pinSuccessMsg && (
-                        <div style={{ background: 'rgba(16, 185, 129, 0.15)', border: '1px solid #10b981', color: '#10b981', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', marginBottom: '14px' }}>
-                            {pinSuccessMsg}
-                        </div>
-                    )}
-                    {pinErrorMsg && (
-                        <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', marginBottom: '14px' }}>
-                            {pinErrorMsg}
-                        </div>
-                    )}
-
                     <form onSubmit={handleOwnerPinChange} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Current Master PIN</label>
+                            <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                Current Master PIN
+                            </label>
                             <input
                                 type="password"
-                                maxLength={6}
+                                maxLength="8"
+                                className="form-input"
                                 value={currentPin}
                                 onChange={(e) => setCurrentPin(e.target.value)}
                                 placeholder="Enter current PIN"
-                                style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                style={{ width: '100%', boxSizing: 'border-box' }}
+                                required
                             />
                         </div>
+
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>New PIN</label>
+                                <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                    New PIN
+                                </label>
                                 <input
                                     type="password"
-                                    maxLength={6}
+                                    maxLength="8"
+                                    className="form-input"
                                     value={newPin}
                                     onChange={(e) => setNewPin(e.target.value)}
                                     placeholder="Enter new PIN"
-                                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                    style={{ width: '100%', boxSizing: 'border-box' }}
+                                    required
                                 />
                             </div>
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>Confirm PIN</label>
+                                <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                    Confirm PIN
+                                </label>
                                 <input
                                     type="password"
-                                    maxLength={6}
+                                    maxLength="8"
+                                    className="form-input"
                                     value={confirmPin}
                                     onChange={(e) => setConfirmPin(e.target.value)}
                                     placeholder="Confirm PIN"
-                                    style={{ width: '100%', padding: '9px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                    style={{ width: '100%', boxSizing: 'border-box' }}
+                                    required
                                 />
                             </div>
                         </div>
-                        <button type="submit" className="btn-primary" style={{ marginTop: '6px', padding: '10px' }}>
+
+                        {pinErrorMsg && <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: '700' }}>{pinErrorMsg}</div>}
+                        {pinSuccessMsg && <div style={{ color: '#10b981', fontSize: '12px', fontWeight: '700' }}>{pinSuccessMsg}</div>}
+
+                        <button
+                            type="submit"
+                            className="btn-primary"
+                            style={{ width: '100%', marginTop: '4px', padding: '10px' }}
+                        >
                             Update Master Passcode
                         </button>
                     </form>
                 </div>
             </div>
 
-            {/* Staff Registers Table */}
-            <div className="table-card" style={{ background: 'var(--bg-card)', borderRadius: '16px', border: '1px solid var(--border-color)', overflow: 'hidden' }}>
-                <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
-                    <div>
-                        <div style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text-primary)' }}>Authorized Staff Profiles</div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Only profiles listed here are authenticated to log in to the POS system.</div>
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <span style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--gold)', fontWeight: '800', fontSize: '12px', padding: '6px 12px', borderRadius: '8px' }}>
-                            {staffList.length} Registered Accounts
-                        </span>
-                        <button
-                            onClick={() => setShowAddModal(true)}
-                            className="btn-primary"
-                            style={{ padding: '7px 14px', fontSize: '12px' }}
-                        >
-                            ➕ Add Profile
-                        </button>
-                    </div>
+            {/* Staff Profiles Table Header */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '16px',
+                flexWrap: 'wrap',
+                gap: '12px'
+            }}>
+                <div>
+                    <h2 style={{ fontSize: '18px', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
+                        Authorized Staff Profiles
+                    </h2>
+                    <p style={{ margin: '2px 0 0', fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        Only profiles listed here are authenticated to log in to the POS system.
+                    </p>
                 </div>
 
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13px' }}>
-                        <thead>
-                            <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                <th style={{ padding: '12px 18px' }}>Staff ID</th>
-                                <th style={{ padding: '12px 18px' }}>Employee Name &amp; Role</th>
-                                <th style={{ padding: '12px 18px' }}>Counter Login ID</th>
-                                <th style={{ padding: '12px 18px' }}>Current PIN</th>
-                                <th style={{ padding: '12px 18px' }}>Status</th>
-                                <th style={{ padding: '12px 18px', textAlign: 'right' }}>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {staffList.map((stf) => (
-                                <tr key={stf.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                                    <td style={{ padding: '14px 18px', fontWeight: '800', color: 'var(--gold)' }}>
-                                        {stf.id}
-                                    </td>
-                                    <td style={{ padding: '14px 18px' }}>
-                                        <div style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '13px' }}>
-                                            {stf.name}
-                                        </div>
-                                        <div style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '4px', marginTop: '3px' }}>
-                                            🏷️ {stf.role || 'Cashier'}
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '14px 18px', fontFamily: 'monospace', fontWeight: '700', color: 'var(--text-primary)' }}>
-                                        {stf.username}
-                                    </td>
-                                    {/* MASKED PIN: Private and Secure */}
-                                    <td style={{ padding: '14px 18px' }}>
-                                        <span style={{ background: 'rgba(0,0,0,0.1)', padding: '3px 8px', borderRadius: '6px', fontFamily: 'monospace', fontWeight: '800', letterSpacing: '2px', color: 'var(--text-secondary)' }}>
-                                            ••••
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '14px 18px' }}>
-                                        <span style={{
-                                            padding: '4px 10px',
-                                            borderRadius: '6px',
-                                            fontSize: '11px',
-                                            fontWeight: '800',
-                                            background: stf.status === 'Active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                                            color: stf.status === 'Active' ? '#10b981' : '#ef4444'
-                                        }}>
-                                            ● {stf.status}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '14px 18px', textAlign: 'right' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                            <button
-                                                onClick={() => handleOpenEdit(stf)}
-                                                className="btn-primary"
-                                                title="Edit staff details and custom PIN"
-                                                style={{ padding: '6px 12px', fontSize: '11px' }}
-                                            >
-                                                ✏️ Edit
-                                            </button>
-                                            <button
-                                                onClick={() => toggleStaffStatus(stf.id)}
-                                                className="btn-cancel"
-                                                title={stf.status === 'Active' ? 'Suspend Account' : 'Reactivate Account'}
-                                                style={{ padding: '6px 10px', fontSize: '11px', color: stf.status === 'Active' ? '#ef4444' : '#10b981' }}
-                                            >
-                                                {stf.status === 'Active' ? '⏹ Suspend' : '▶ Activate'}
-                                            </button>
-                                            <button
-                                                onClick={() => handleDeleteStaff(stf.id, stf.name)}
-                                                className="btn-cancel"
-                                                title="Remove profile"
-                                                style={{ padding: '6px 10px', fontSize: '11px', color: '#ef4444' }}
-                                            >
-                                                🗑️
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-secondary)', background: 'var(--bg-card)', padding: '6px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                        {staffList.length} Registered Accounts
+                    </span>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className="btn-primary"
+                        style={{ padding: '8px 18px', fontSize: '13px' }}
+                    >
+                        ＋ Add Profile
+                    </button>
                 </div>
             </div>
 
-            {/* EDIT STORE PROFILE MODAL */}
+            {/* Staff Accounts Table */}
+            <div className="table-card" style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
+                    <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border-color)', background: 'var(--bg-surface)' }}>
+                            <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-secondary)' }}>STAFF ID</th>
+                            <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-secondary)' }}>EMPLOYEE NAME &amp; ROLE</th>
+                            <th style={{ padding: '12px 16px', textAlign: 'left', color: 'var(--text-secondary)' }}>COUNTER LOGIN ID</th>
+                            <th style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>CURRENT PIN</th>
+                            <th style={{ padding: '12px 16px', textAlign: 'center', color: 'var(--text-secondary)' }}>STATUS</th>
+                            <th style={{ padding: '12px 16px', textAlign: 'right', color: 'var(--text-secondary)' }}>ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {staffList.map((stf) => (
+                            <tr key={stf.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                                <td style={{ padding: '14px 16px', fontWeight: '800', color: 'var(--gold)' }}>
+                                    {stf.id}
+                                </td>
+                                <td style={{ padding: '14px 16px' }}>
+                                    <div style={{ fontWeight: '800', color: 'var(--text-primary)' }}>{stf.name}</div>
+                                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}>
+                                        <span>🏷️</span> {stf.role || 'Cashier'}
+                                    </div>
+                                </td>
+                                <td style={{ padding: '14px 16px', fontFamily: 'monospace', fontWeight: '700', color: 'var(--text-primary)' }}>
+                                    {stf.username}
+                                </td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                                    <span style={{
+                                        background: 'var(--bg-surface)',
+                                        border: '1px solid var(--border-color)',
+                                        borderRadius: '6px',
+                                        padding: '4px 10px',
+                                        fontFamily: 'monospace',
+                                        letterSpacing: '2px',
+                                        fontSize: '12px',
+                                        color: 'var(--text-secondary)'
+                                    }}>
+                                        ••••
+                                    </span>
+                                </td>
+                                <td style={{ padding: '14px 16px', textAlign: 'center' }}>
+                                    <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '5px',
+                                        padding: '4px 10px',
+                                        borderRadius: '20px',
+                                        fontSize: '11px',
+                                        fontWeight: '700',
+                                        background: stf.status === 'Active' ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                                        color: stf.status === 'Active' ? '#10b981' : '#ef4444'
+                                    }}>
+                                        ● {stf.status || 'Active'}
+                                    </span>
+                                </td>
+                                <td style={{ padding: '14px 16px', textAlign: 'right' }}>
+                                    <div style={{ display: 'inline-flex', gap: '6px' }}>
+                                        <button
+                                            onClick={() => handleOpenEdit(stf)}
+                                            className="btn-cancel"
+                                            style={{ padding: '5px 10px', fontSize: '11px', borderRadius: '6px', background: 'var(--gold)', color: '#0f172a', border: 'none', fontWeight: '700' }}
+                                        >
+                                            ✏️ Edit
+                                        </button>
+                                        <button
+                                            onClick={() => toggleStaffStatus(stf.id)}
+                                            className="btn-cancel"
+                                            style={{ padding: '5px 10px', fontSize: '11px', borderRadius: '6px', color: stf.status === 'Active' ? '#ef4444' : '#10b981' }}
+                                        >
+                                            {stf.status === 'Active' ? '⏹ Suspend' : '▶ Activate'}
+                                        </button>
+                                        <button
+                                            onClick={() => handleDeleteStaff(stf.id, stf.name)}
+                                            className="btn-cancel"
+                                            style={{ padding: '5px 8px', fontSize: '11px', borderRadius: '6px', color: '#ef4444' }}
+                                            title="Delete Account"
+                                        >
+                                            🗑️
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Edit Store Profile Overview Modal */}
             {showProfileModal && (
                 <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, padding: '16px'
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(6px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 100000,
+                    padding: '20px'
                 }}>
-                    <div style={{
-                        background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px',
-                        padding: '28px', maxWidth: '520px', width: '100%', boxShadow: 'var(--shadow-xl)'
+                    <div className="card" style={{
+                        width: '100%',
+                        maxWidth: '520px',
+                        padding: '28px',
+                        borderRadius: '20px',
+                        background: 'var(--bg-card)',
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-                            <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>
-                                👑 Edit Store Profile &amp; Invoice Details
-                            </h3>
-                            <button onClick={() => setShowProfileModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ fontSize: '24px' }}>🏪</span>
+                                <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                                    Edit Store Profile Overview
+                                </h3>
+                            </div>
+                            <button
+                                onClick={() => setShowProfileModal(false)}
+                                style={{ background: 'none', border: 'none', fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                            >
+                                ✕
+                            </button>
                         </div>
 
                         <form onSubmit={handleSaveStoreProfile} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                    Store Name *
+                                <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                    Store Trade Name *
                                 </label>
                                 <input
                                     type="text"
+                                    className="form-input"
                                     value={editShopName}
                                     onChange={(e) => setEditShopName(e.target.value)}
-                                    placeholder="Enter store name"
+                                    placeholder="Enter shop name"
+                                    style={{ width: '100%', boxSizing: 'border-box' }}
                                     required
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '12px' }}>
+                            <div>
+                                <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                    Primary Administrator / Owner Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={editOwnerName}
+                                    onChange={(e) => setEditOwnerName(e.target.value)}
+                                    placeholder="Enter owner name"
+                                    style={{ width: '100%', boxSizing: 'border-box' }}
+                                    required
+                                />
+                            </div>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                        Primary Administrator *
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={editOwnerName}
-                                        onChange={(e) => setEditOwnerName(e.target.value)}
-                                        placeholder="Owner name"
-                                        required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
-                                    />
-                                </div>
-                                <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
                                         Official GSTIN *
                                     </label>
                                     <input
                                         type="text"
+                                        className="form-input"
                                         value={editGstin}
-                                        onChange={(e) => setEditGstin(e.target.value)}
-                                        placeholder="GSTIN number"
+                                        onChange={(e) => setEditGstin(e.target.value.toUpperCase())}
+                                        placeholder="15-digit GSTIN"
+                                        style={{ width: '100%', boxSizing: 'border-box', textTransform: 'uppercase' }}
                                         required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px', fontFamily: 'monospace' }}
+                                    />
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                        Contact Phone *
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="form-input"
+                                        value={editPhone}
+                                        onChange={(e) => setEditPhone(e.target.value)}
+                                        placeholder="Phone number"
+                                        style={{ width: '100%', boxSizing: 'border-box' }}
+                                        required
                                     />
                                 </div>
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                    Contact Numbers (Separated by comma) *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editPhone}
-                                    onChange={(e) => setEditPhone(e.target.value)}
-                                    placeholder="Phone numbers"
-                                    required
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
-                                />
-                            </div>
-
-                            <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                    Store Location &amp; Address *
+                                <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                    Physical Store Address *
                                 </label>
                                 <textarea
+                                    className="form-input"
                                     value={editAddress}
                                     onChange={(e) => setEditAddress(e.target.value)}
-                                    placeholder="Store physical address"
+                                    placeholder="Enter complete store address"
+                                    style={{ width: '100%', minHeight: '60px', boxSizing: 'border-box', resize: 'vertical' }}
                                     required
-                                    rows={2}
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px', resize: 'vertical' }}
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '8px' }}>
-                                <button type="button" onClick={() => setShowProfileModal(false)} className="btn-cancel" style={{ padding: '9px 16px', fontSize: '13px' }}>
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowProfileModal(false)}
+                                    className="btn-cancel"
+                                    style={{ flex: 1, padding: '11px' }}
+                                >
                                     Cancel
                                 </button>
-                                <button type="button" onClick={handleSaveStoreProfile} className="btn-primary" style={{ padding: '9px 20px', fontSize: '13px' }}>
-                                    💾 Save Store Profile
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    style={{ flex: 1.5, padding: '11px' }}
+                                >
+                                    💾 Save &amp; Sync Profile
                                 </button>
                             </div>
                         </form>
@@ -659,116 +768,122 @@ function StaffManagement() {
                 </div>
             )}
 
-            {/* ADD STAFF MODAL */}
+            {/* Add Staff Modal */}
             {showAddModal && (
                 <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, padding: '16px'
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(6px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 100000,
+                    padding: '20px'
                 }}>
-                    <div style={{
-                        background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px',
-                        padding: '28px', maxWidth: '480px', width: '100%', boxShadow: 'var(--shadow-xl)'
+                    <div className="card" style={{
+                        width: '100%',
+                        maxWidth: '460px',
+                        padding: '28px',
+                        borderRadius: '20px',
+                        background: 'var(--bg-card)'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-                            <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>
-                                👤 Add Authorized Staff Profile
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                                👤 Add New Staff Profile
                             </h3>
-                            <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+                            <button
+                                onClick={() => setShowAddModal(false)}
+                                style={{ background: 'none', border: 'none', fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                            >
+                                ✕
+                            </button>
                         </div>
-
-                        {addModalError && (
-                            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', marginBottom: '14px' }}>
-                                {addModalError}
-                            </div>
-                        )}
 
                         <form onSubmit={handleAddStaff} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                    Full Employee Name *
+                                <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                    Staff Full Name *
                                 </label>
                                 <input
                                     type="text"
+                                    className="form-input"
                                     value={newStaffName}
                                     onChange={(e) => setNewStaffName(e.target.value)}
-                                    placeholder="Enter full name"
+                                    placeholder="Enter employee name"
+                                    style={{ width: '100%', boxSizing: 'border-box' }}
                                     required
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                    Job Role / Designation *
+                                <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                    Assigned Store Role *
                                 </label>
-                                <input
-                                    type="text"
+                                <select
+                                    className="form-input"
                                     value={newStaffRole}
                                     onChange={(e) => setNewStaffRole(e.target.value)}
-                                    placeholder="Type or select role below"
-                                    required
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px', marginBottom: '6px' }}
-                                />
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                    {commonRoles.map(role => (
-                                        <button
-                                            key={role}
-                                            type="button"
-                                            onClick={() => setNewStaffRole(role)}
-                                            style={{
-                                                fontSize: '10px',
-                                                fontWeight: '700',
-                                                padding: '3px 8px',
-                                                borderRadius: '6px',
-                                                border: '1px solid var(--border-color)',
-                                                background: newStaffRole === role ? 'var(--gold-light)' : 'rgba(255,255,255,0.06)',
-                                                color: newStaffRole === role ? '#92400e' : 'var(--text-secondary)',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            {role}
-                                        </button>
+                                    style={{ width: '100%', boxSizing: 'border-box' }}
+                                >
+                                    {commonRoles.map(r => (
+                                        <option key={r} value={r}>{r}</option>
                                     ))}
-                                </div>
+                                </select>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
                                         Login ID *
                                     </label>
                                     <input
                                         type="text"
+                                        className="form-input"
                                         value={newStaffUsername}
                                         onChange={(e) => setNewStaffUsername(e.target.value)}
-                                        placeholder="Enter unique ID"
+                                        placeholder="Enter login ID"
+                                        style={{ width: '100%', boxSizing: 'border-box' }}
                                         required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
                                         4-Digit PIN *
                                     </label>
                                     <input
                                         type="password"
-                                        maxLength={6}
+                                        maxLength="4"
+                                        className="form-input"
                                         value={newStaffPin}
                                         onChange={(e) => setNewStaffPin(e.target.value)}
-                                        placeholder="••••"
+                                        placeholder="4-digit PIN"
+                                        style={{ width: '100%', boxSizing: 'border-box' }}
                                         required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px', letterSpacing: '2px' }}
                                     />
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                                <button type="button" onClick={() => setShowAddModal(false)} className="btn-cancel" style={{ padding: '9px 16px', fontSize: '13px' }}>
+                            {addModalError && <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: '700' }}>{addModalError}</div>}
+
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowAddModal(false)}
+                                    className="btn-cancel"
+                                    style={{ flex: 1, padding: '10px' }}
+                                >
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn-primary" style={{ padding: '9px 18px', fontSize: '13px' }}>
-                                    💾 Save Staff Profile
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    style={{ flex: 1.5, padding: '10px' }}
+                                >
+                                    Create Profile
                                 </button>
                             </div>
                         </form>
@@ -776,126 +891,138 @@ function StaffManagement() {
                 </div>
             )}
 
-            {/* EDIT STAFF MODAL */}
+            {/* Edit Staff Modal */}
             {editingStaff && (
                 <div style={{
-                    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(6px)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 99999, padding: '16px'
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(6px)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 100000,
+                    padding: '20px'
                 }}>
-                    <div style={{
-                        background: 'var(--bg-card)', border: '1px solid var(--border-color)', borderRadius: '20px',
-                        padding: '28px', maxWidth: '480px', width: '100%', boxShadow: 'var(--shadow-xl)'
+                    <div className="card" style={{
+                        width: '100%',
+                        maxWidth: '460px',
+                        padding: '28px',
+                        borderRadius: '20px',
+                        background: 'var(--bg-card)'
                     }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
-                            <h3 style={{ fontSize: '18px', fontWeight: '900', color: 'var(--text-primary)', margin: 0 }}>
-                                ✏️ Edit Staff: {editingStaff.name}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                            <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
+                                ✏️ Edit Staff Profile ({editingStaff.name})
                             </h3>
-                            <button onClick={() => setEditingStaff(null)} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '18px', cursor: 'pointer' }}>✕</button>
+                            <button
+                                onClick={() => setEditingStaff(null)}
+                                style={{ background: 'none', border: 'none', fontSize: '20px', color: 'var(--text-secondary)', cursor: 'pointer' }}
+                            >
+                                ✕
+                            </button>
                         </div>
-
-                        {editModalError && (
-                            <div style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid #ef4444', color: '#ef4444', padding: '10px', borderRadius: '8px', fontSize: '12px', fontWeight: '700', marginBottom: '14px' }}>
-                                {editModalError}
-                            </div>
-                        )}
 
                         <form onSubmit={handleSaveEdit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                    Employee Name *
+                                <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                    Staff Full Name *
                                 </label>
                                 <input
                                     type="text"
+                                    className="form-input"
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
+                                    placeholder="Enter employee name"
+                                    style={{ width: '100%', boxSizing: 'border-box' }}
                                     required
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
                             </div>
 
-                            <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                    Job Role *
-                                </label>
-                                <input
-                                    type="text"
-                                    value={editRole}
-                                    onChange={(e) => setEditRole(e.target.value)}
-                                    required
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px', marginBottom: '6px' }}
-                                />
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                                    {commonRoles.map(role => (
-                                        <button
-                                            key={role}
-                                            type="button"
-                                            onClick={() => setEditRole(role)}
-                                            style={{
-                                                fontSize: '10px',
-                                                fontWeight: '700',
-                                                padding: '3px 8px',
-                                                borderRadius: '6px',
-                                                border: '1px solid var(--border-color)',
-                                                background: editRole === role ? 'var(--gold-light)' : 'rgba(255,255,255,0.06)',
-                                                color: editRole === role ? '#92400e' : 'var(--text-secondary)',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            {role}
-                                        </button>
-                                    ))}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                                <div>
+                                    <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                        Assigned Role *
+                                    </label>
+                                    <select
+                                        className="form-input"
+                                        value={editRole}
+                                        onChange={(e) => setEditRole(e.target.value)}
+                                        style={{ width: '100%', boxSizing: 'border-box' }}
+                                    >
+                                        {commonRoles.map(r => (
+                                            <option key={r} value={r}>{r}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
+                                        Account Status *
+                                    </label>
+                                    <select
+                                        className="form-input"
+                                        value={editStatus}
+                                        onChange={(e) => setEditStatus(e.target.value)}
+                                        style={{ width: '100%', boxSizing: 'border-box' }}
+                                    >
+                                        <option value="Active">Active</option>
+                                        <option value="Suspended">Suspended</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '10px' }}>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
                                         Login ID *
                                     </label>
                                     <input
                                         type="text"
+                                        className="form-input"
                                         value={editUsername}
                                         onChange={(e) => setEditUsername(e.target.value)}
+                                        placeholder="Enter login ID"
+                                        style={{ width: '100%', boxSizing: 'border-box' }}
                                         required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                     />
                                 </div>
                                 <div>
-                                    <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                    <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '4px' }}>
                                         4-Digit PIN *
                                     </label>
                                     <input
                                         type="password"
-                                        maxLength={6}
+                                        maxLength="4"
+                                        className="form-input"
                                         value={editPin}
                                         onChange={(e) => setEditPin(e.target.value)}
+                                        placeholder="4-digit PIN"
+                                        style={{ width: '100%', boxSizing: 'border-box' }}
                                         required
-                                        style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px', letterSpacing: '2px' }}
                                     />
                                 </div>
                             </div>
 
-                            <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
-                                    Account Status
-                                </label>
-                                <select
-                                    value={editStatus}
-                                    onChange={(e) => setEditStatus(e.target.value)}
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
-                                >
-                                    <option value="Active">Active (Can Login to POS)</option>
-                                    <option value="Suspended">Suspended (Access Blocked)</option>
-                                </select>
-                            </div>
+                            {editModalError && <div style={{ color: '#ef4444', fontSize: '12px', fontWeight: '700' }}>{editModalError}</div>}
 
-                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
-                                <button type="button" onClick={() => setEditingStaff(null)} className="btn-cancel" style={{ padding: '9px 16px', fontSize: '13px' }}>
+                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setEditingStaff(null)}
+                                    className="btn-cancel"
+                                    style={{ flex: 1, padding: '10px' }}
+                                >
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn-primary" style={{ padding: '9px 18px', fontSize: '13px' }}>
-                                    💾 Update Profile
+                                <button
+                                    type="submit"
+                                    className="btn-primary"
+                                    style={{ flex: 1.5, padding: '10px' }}
+                                >
+                                    Save Changes
                                 </button>
                             </div>
                         </form>

@@ -20,11 +20,11 @@ function Login() {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [showVisitorRestrictedModal, setShowVisitorRestrictedModal] = useState(false);
 
-    // Owner state - Clean, no pre-filled text
+    // Owner state
     const [ownerPasscode, setOwnerPasscode] = useState('');
     const [showOwnerPass, setShowOwnerPass] = useState(false);
     
-    // Staff state - Clean, no pre-filled text
+    // Staff state
     const [staffUsername, setStaffUsername] = useState('');
     const [staffPin, setStaffPin] = useState('');
     
@@ -34,7 +34,6 @@ function Login() {
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
-        // Listen for native install prompt (Chrome / Edge / Android)
         const handleBeforeInstall = (e) => {
             e.preventDefault();
             setDeferredPrompt(e);
@@ -158,17 +157,18 @@ function Login() {
             justifyContent: 'center',
             backgroundColor: '#090d16',
             backgroundImage: `
-                radial-gradient(circle at 15% 25%, rgba(245, 158, 11, 0.12) 0%, transparent 45%),
-                radial-gradient(circle at 85% 75%, rgba(217, 119, 6, 0.08) 0%, transparent 45%)
+                radial-gradient(circle at 10% 20%, rgba(245, 158, 11, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(217, 119, 6, 0.08) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 0.6) 0%, transparent 100%)
             `,
-            padding: '24px 16px',
+            padding: '32px 20px',
             fontFamily: 'Inter, system-ui, -apple-system, sans-serif',
             boxSizing: 'border-box',
             position: 'relative'
         }}>
             {/* Top Right Desktop/Mobile App Install Button */}
             {!isStoreMode && (
-                <div style={{ position: 'absolute', top: '12px', right: '16px', zIndex: 10 }}>
+                <div style={{ position: 'absolute', top: '16px', right: '20px', zIndex: 10 }}>
                     <button
                         onClick={handleInstallApp}
                         style={{
@@ -176,13 +176,13 @@ function Login() {
                             border: '1px solid rgba(245, 158, 11, 0.35)',
                             color: '#fbbf24',
                             borderRadius: '20px',
-                            padding: '5px 12px',
-                            fontSize: '11px',
+                            padding: '6px 14px',
+                            fontSize: '12px',
                             fontWeight: '700',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            gap: '5px',
+                            gap: '6px',
                             backdropFilter: 'blur(8px)',
                             transition: 'all 0.15s ease'
                         }}
@@ -193,41 +193,42 @@ function Login() {
                 </div>
             )}
 
+            {/* MAIN TWO-COLUMN CONTAINER */}
             <div style={{
                 width: '100%',
-                maxWidth: '1040px',
-                display: 'flex',
-                flexWrap: 'wrap-reverse', // Mobile: Form on top
-                justifyContent: 'center',
+                maxWidth: '1080px',
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
                 alignItems: 'center',
-                gap: '32px',
-                marginTop: '10px'
+                gap: '48px',
+                margin: 'auto 0'
             }}>
-                {/* BRAND SHOWCASE COLUMN */}
-                <div style={{ flex: '1 1 340px', maxWidth: '500px', padding: '4px', color: '#ffffff' }}>
+                {/* LEFT COLUMN: BRANDING & 2x2 BALANCED FEATURE GRID */}
+                <div style={{ padding: '8px', color: '#ffffff' }}>
                     {/* Header Badge */}
                     <div style={{
                         display: 'inline-flex',
                         alignItems: 'center',
                         gap: '6px',
-                        background: isStoreMode ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.10)',
-                        border: isStoreMode ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(245, 158, 11, 0.30)',
+                        background: isStoreMode ? 'rgba(16, 185, 129, 0.12)' : 'rgba(245, 158, 11, 0.12)',
+                        border: isStoreMode ? '1px solid rgba(16, 185, 129, 0.35)' : '1px solid rgba(245, 158, 11, 0.35)',
                         borderRadius: '30px',
-                        padding: '4px 12px',
+                        padding: '5px 14px',
                         fontSize: '11px',
-                        fontWeight: '700',
+                        fontWeight: '800',
                         color: isStoreMode ? '#34d399' : '#fbbf24',
-                        marginBottom: '12px'
+                        marginBottom: '16px',
+                        letterSpacing: '0.5px'
                     }}>
-                        <span>{isStoreMode ? '🏪' : '✨'}</span> {isStoreMode ? 'STORE TERMINAL - PRODUCTION POS' : 'Retail POS & Inventory System'}
+                        <span>{isStoreMode ? '🏪' : '✨'}</span> {isStoreMode ? 'STORE TERMINAL - PRODUCTION POS' : 'RETAIL POS & INVENTORY MANAGEMENT'}
                     </div>
 
                     <h1 style={{
-                        fontSize: '34px',
+                        fontSize: '36px',
                         fontWeight: '900',
                         lineHeight: '1.15',
-                        margin: '0 0 6px 0',
-                        letterSpacing: '-0.5px'
+                        margin: '0 0 8px 0',
+                        letterSpacing: '-0.8px'
                     }}>
                         MANISHA <span style={{
                             background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%)',
@@ -237,119 +238,84 @@ function Login() {
                     </h1>
 
                     <p style={{
-                        fontSize: '14px',
+                        fontSize: '15px',
                         color: '#94a3b8',
-                        margin: '0 0 20px 0',
-                        fontWeight: '500'
+                        margin: '0 0 24px 0',
+                        fontWeight: '500',
+                        lineHeight: '1.5'
                     }}>
                         Fast POS Billing, Stock Control &amp; Credit Ledger
                     </p>
 
-                    {/* 4 Clean Dark & Gold Feature Cards */}
+                    {/* Perfectly Balanced 2x2 Feature Grid */}
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-                        gap: '10px',
-                        marginBottom: '20px'
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '12px',
+                        marginBottom: '24px'
                     }}>
                         <div style={{
-                            background: 'rgba(15, 23, 42, 0.8)',
+                            background: 'rgba(15, 23, 42, 0.75)',
                             border: '1px solid rgba(245, 158, 11, 0.20)',
-                            borderRadius: '12px',
-                            padding: '12px'
+                            borderRadius: '14px',
+                            padding: '14px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
                         }}>
-                            <div style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '7px',
-                                background: 'rgba(245, 158, 11, 0.15)',
-                                border: '1px solid rgba(245, 158, 11, 0.3)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '14px',
-                                color: '#fbbf24',
-                                marginBottom: '6px'
-                            }}>
-                                ⚡
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                                <span style={{ fontSize: '18px' }}>⚡</span>
+                                <span style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc' }}>Instant POS</span>
                             </div>
-                            <div style={{ fontWeight: '700', fontSize: '12px', color: '#f8fafc' }}>Instant POS</div>
-                            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>GST billing &amp; thermal print</div>
+                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>GST billing &amp; thermal print</div>
                         </div>
 
                         <div style={{
-                            background: 'rgba(15, 23, 42, 0.8)',
+                            background: 'rgba(15, 23, 42, 0.75)',
                             border: '1px solid rgba(245, 158, 11, 0.20)',
-                            borderRadius: '12px',
-                            padding: '12px'
+                            borderRadius: '14px',
+                            padding: '14px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
                         }}>
-                            <div style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '7px',
-                                background: 'rgba(245, 158, 11, 0.15)',
-                                border: '1px solid rgba(245, 158, 11, 0.3)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '14px',
-                                color: '#fbbf24',
-                                marginBottom: '6px'
-                            }}>
-                                📲
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                                <span style={{ fontSize: '18px' }}>📲</span>
+                                <span style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc' }}>WhatsApp Invoices</span>
                             </div>
-                            <div style={{ fontWeight: '700', fontSize: '12px', color: '#f8fafc' }}>WhatsApp Invoices</div>
-                            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>Direct digital receipts</div>
+                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>Direct digital receipts</div>
                         </div>
 
                         <div style={{
-                            background: 'rgba(15, 23, 42, 0.8)',
+                            background: 'rgba(15, 23, 42, 0.75)',
                             border: '1px solid rgba(245, 158, 11, 0.20)',
-                            borderRadius: '12px',
-                            padding: '12px'
+                            borderRadius: '14px',
+                            padding: '14px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
                         }}>
-                            <div style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '7px',
-                                background: 'rgba(245, 158, 11, 0.15)',
-                                border: '1px solid rgba(245, 158, 11, 0.3)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '14px',
-                                color: '#fbbf24',
-                                marginBottom: '6px'
-                            }}>
-                                📊
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                                <span style={{ fontSize: '18px' }}>📊</span>
+                                <span style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc' }}>Live Stock &amp; Dues</span>
                             </div>
-                            <div style={{ fontWeight: '700', fontSize: '12px', color: '#f8fafc' }}>Live Stock &amp; Dues</div>
-                            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>Inventory alerts &amp; ledger</div>
+                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>Inventory alerts &amp; ledger</div>
                         </div>
 
                         <div style={{
-                            background: 'rgba(15, 23, 42, 0.8)',
+                            background: 'rgba(15, 23, 42, 0.75)',
                             border: '1px solid rgba(245, 158, 11, 0.20)',
-                            borderRadius: '12px',
-                            padding: '12px'
+                            borderRadius: '14px',
+                            padding: '14px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '4px'
                         }}>
-                            <div style={{
-                                width: '28px',
-                                height: '28px',
-                                borderRadius: '7px',
-                                background: 'rgba(245, 158, 11, 0.15)',
-                                border: '1px solid rgba(245, 158, 11, 0.3)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: '14px',
-                                color: '#fbbf24',
-                                marginBottom: '6px'
-                            }}>
-                                🛡️
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+                                <span style={{ fontSize: '18px' }}>🛡️</span>
+                                <span style={{ fontWeight: '800', fontSize: '13px', color: '#f8fafc' }}>Role Security</span>
                             </div>
-                            <div style={{ fontWeight: '700', fontSize: '12px', color: '#f8fafc' }}>Role Security</div>
-                            <div style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>PIN-protected access</div>
+                            <div style={{ fontSize: '11px', color: '#94a3b8' }}>PIN-protected access</div>
                         </div>
                     </div>
 
@@ -357,50 +323,53 @@ function Login() {
                     <div style={{
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '10px',
-                        fontSize: '11px',
+                        gap: '12px',
+                        fontSize: '12px',
                         color: '#64748b',
                         fontWeight: '500'
                     }}>
                         <span>🔒 256-Bit SSL Encrypted</span>
                         <span>•</span>
                         <span>⚡ 100% Client Isolation</span>
+                        <span>•</span>
+                        <span>📍 Valpoi, Goa</span>
                     </div>
                 </div>
 
-                {/* ACCESS PORTAL AUTH CARD */}
+                {/* RIGHT COLUMN: ACCESS PORTAL AUTH CARD */}
                 <div style={{
-                    flex: '1 1 340px',
-                    maxWidth: '460px',
                     width: '100%',
-                    background: 'rgba(15, 23, 42, 0.94)',
-                    backdropFilter: 'blur(16px)',
-                    borderRadius: '22px',
-                    padding: '28px 24px',
-                    boxShadow: '0 20px 50px -10px rgba(0, 0, 0, 0.7)',
+                    maxWidth: '440px',
+                    margin: '0 auto',
+                    background: 'rgba(15, 23, 42, 0.95)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    borderRadius: '24px',
+                    padding: '32px 28px',
+                    boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(245, 158, 11, 0.08)',
                     color: '#f8fafc',
-                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    border: '1px solid rgba(245, 158, 11, 0.28)',
                     boxSizing: 'border-box'
                 }}>
-                    <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                    <div style={{ textAlign: 'center', marginBottom: '22px' }}>
                         <div style={{
-                            width: '48px',
-                            height: '48px',
-                            margin: '0 auto 10px',
+                            width: '52px',
+                            height: '52px',
+                            margin: '0 auto 12px',
                             background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
-                            borderRadius: '12px',
+                            borderRadius: '14px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            fontSize: '24px',
-                            boxShadow: '0 6px 16px rgba(245, 158, 11, 0.25)'
+                            fontSize: '26px',
+                            boxShadow: '0 8px 20px rgba(245, 158, 11, 0.3)'
                         }}>
                             🏪
                         </div>
-                        <h2 style={{ fontSize: '19px', fontWeight: '800', margin: '0 0 4px 0', color: '#ffffff' }}>
+                        <h2 style={{ fontSize: '20px', fontWeight: '800', margin: '0 0 4px 0', color: '#ffffff', letterSpacing: '-0.3px' }}>
                             {isStoreMode ? 'Counter Terminal Login' : 'Access Portal'}
                         </h2>
-                        <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
+                        <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0 }}>
                             {isStoreMode ? 'Enter register credentials to unlock terminal' : 'Select role to authenticate'}
                         </p>
                     </div>
@@ -409,11 +378,11 @@ function Login() {
                     <div style={{
                         display: 'grid',
                         gridTemplateColumns: isStoreMode ? '1fr 1fr' : '1fr 1fr 1fr',
-                        background: 'rgba(2, 6, 23, 0.7)',
+                        background: 'rgba(2, 6, 23, 0.75)',
                         border: '1px solid rgba(255, 255, 255, 0.08)',
                         padding: '4px',
                         borderRadius: '12px',
-                        marginBottom: '20px',
+                        marginBottom: '22px',
                         gap: '4px'
                     }}>
                         {!isStoreMode && (
@@ -477,11 +446,11 @@ function Login() {
                             background: 'rgba(239, 68, 68, 0.15)',
                             border: '1px solid rgba(239, 68, 68, 0.4)',
                             color: '#fca5a5',
-                            padding: '10px 12px',
+                            padding: '11px 14px',
                             borderRadius: '10px',
                             fontSize: '12px',
                             fontWeight: '600',
-                            marginBottom: '16px',
+                            marginBottom: '18px',
                             lineHeight: '1.4'
                         }}>
                             {errorMsg}
@@ -495,8 +464,8 @@ function Login() {
                                 background: 'rgba(245, 158, 11, 0.10)',
                                 border: '1px solid rgba(245, 158, 11, 0.25)',
                                 borderRadius: '12px',
-                                padding: '14px',
-                                marginBottom: '18px',
+                                padding: '16px',
+                                marginBottom: '20px',
                                 textAlign: 'left'
                             }}>
                                 <div style={{ fontWeight: '800', fontSize: '13px', color: '#fbbf24', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -513,7 +482,7 @@ function Login() {
                                 disabled={loading}
                                 style={{
                                     width: '100%',
-                                    padding: '12px',
+                                    padding: '13px',
                                     background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
                                     color: '#0f172a',
                                     border: 'none',
@@ -521,7 +490,7 @@ function Login() {
                                     fontSize: '14px',
                                     fontWeight: '800',
                                     cursor: loading ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)',
+                                    boxShadow: '0 6px 18px rgba(245, 158, 11, 0.35)',
                                     transition: 'all 0.15s ease'
                                 }}
                             >
@@ -530,10 +499,10 @@ function Login() {
                         </div>
                     )}
 
-                    {/* TAB 2: STAFF LOGIN (Zero PIN hints, clean inputs) */}
+                    {/* TAB 2: STAFF LOGIN */}
                     {authMode === 'STAFF' && (
                         <form onSubmit={handleStaffLogin}>
-                            <div style={{ marginBottom: '14px', textAlign: 'left' }}>
+                            <div style={{ marginBottom: '16px', textAlign: 'left' }}>
                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
                                     Staff Counter Login ID
                                 </label>
@@ -545,7 +514,7 @@ function Login() {
                                     required
                                     style={{
                                         width: '100%',
-                                        padding: '11px 12px',
+                                        padding: '12px 14px',
                                         borderRadius: '10px',
                                         border: '1px solid #334155',
                                         fontSize: '13px',
@@ -557,7 +526,7 @@ function Login() {
                                 />
                             </div>
 
-                            <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+                            <div style={{ marginBottom: '18px', textAlign: 'left' }}>
                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
                                     4-Digit Counter PIN
                                 </label>
@@ -570,7 +539,7 @@ function Login() {
                                     required
                                     style={{
                                         width: '100%',
-                                        padding: '11px 12px',
+                                        padding: '12px 14px',
                                         borderRadius: '10px',
                                         border: '1px solid #334155',
                                         fontSize: '13px',
@@ -583,7 +552,7 @@ function Login() {
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', textAlign: 'left' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', textAlign: 'left' }}>
                                 <input
                                     type="checkbox"
                                     id="rememberStaff"
@@ -601,7 +570,7 @@ function Login() {
                                 disabled={loading}
                                 style={{
                                     width: '100%',
-                                    padding: '12px',
+                                    padding: '13px',
                                     background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
                                     color: '#0f172a',
                                     border: 'none',
@@ -609,7 +578,7 @@ function Login() {
                                     fontSize: '14px',
                                     fontWeight: '800',
                                     cursor: loading ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)',
+                                    boxShadow: '0 6px 18px rgba(245, 158, 11, 0.35)',
                                     transition: 'all 0.15s ease'
                                 }}
                             >
@@ -618,10 +587,10 @@ function Login() {
                         </form>
                     )}
 
-                    {/* TAB 3: OWNER LOGIN (Zero PIN hints, clean inputs) */}
+                    {/* TAB 3: OWNER LOGIN */}
                     {authMode === 'OWNER' && (
                         <form onSubmit={handleOwnerLogin}>
-                            <div style={{ marginBottom: '16px', textAlign: 'left' }}>
+                            <div style={{ marginBottom: '18px', textAlign: 'left' }}>
                                 <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: '#cbd5e1', marginBottom: '6px' }}>
                                     Owner Master PIN or Password
                                 </label>
@@ -634,7 +603,7 @@ function Login() {
                                         required
                                         style={{
                                             width: '100%',
-                                            padding: '11px 38px 11px 12px',
+                                            padding: '12px 42px 12px 14px',
                                             borderRadius: '10px',
                                             border: '1px solid #334155',
                                             fontSize: '13px',
@@ -649,13 +618,13 @@ function Login() {
                                         onClick={() => setShowOwnerPass(!showOwnerPass)}
                                         style={{
                                             position: 'absolute',
-                                            right: '10px',
+                                            right: '12px',
                                             top: '50%',
                                             transform: 'translateY(-50%)',
                                             background: 'none',
                                             border: 'none',
                                             cursor: 'pointer',
-                                            fontSize: '14px',
+                                            fontSize: '15px',
                                             color: '#94a3b8'
                                         }}
                                     >
@@ -664,7 +633,7 @@ function Login() {
                                 </div>
                             </div>
 
-                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '18px', textAlign: 'left' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '20px', textAlign: 'left' }}>
                                 <input
                                     type="checkbox"
                                     id="rememberOwner"
@@ -682,7 +651,7 @@ function Login() {
                                 disabled={loading}
                                 style={{
                                     width: '100%',
-                                    padding: '12px',
+                                    padding: '13px',
                                     background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
                                     color: '#0f172a',
                                     border: 'none',
@@ -690,7 +659,7 @@ function Login() {
                                     fontSize: '14px',
                                     fontWeight: '800',
                                     cursor: loading ? 'not-allowed' : 'pointer',
-                                    boxShadow: '0 4px 14px rgba(245, 158, 11, 0.3)',
+                                    boxShadow: '0 6px 18px rgba(245, 158, 11, 0.35)',
                                     transition: 'all 0.15s ease'
                                 }}
                             >
@@ -709,8 +678,8 @@ function Login() {
                     left: 0,
                     right: 0,
                     bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                    backdropFilter: 'blur(6px)',
+                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(8px)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

@@ -606,6 +606,14 @@ body.dark-mode .badge-urgent {
         box-shadow: none !important;
     }
 
+    .invoice-preview-stage {
+        background: transparent !important;
+        border: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+    }
+
     .invoice-paper {
         box-shadow: none !important;
         border: none !important;

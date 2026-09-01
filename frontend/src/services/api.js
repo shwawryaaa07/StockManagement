@@ -20,12 +20,13 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
-// Response Interceptor: Handle 401 / 403 Unauthorized & Stale Session Tokens
+// Response Interceptor: Handle 401 Unauthorized
 api.interceptors.response.use((response) => {
     return response;
 }, (error) => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        if (!error.config.url.includes('/auth/login') && !error.config.url.includes('/auth/staff') && !error.config.url.includes('/auth/visitor')) {
+    if (error.response && error.response.status === 401) {
+        const url = error.config?.url || '';
+        if (!url.includes('/auth/')) {
             localStorage.removeItem('authToken');
             sessionStorage.removeItem('authToken');
             window.dispatchEvent(new Event('auth-logout'));
@@ -103,153 +104,32 @@ export const resetDemoSandbox = () => {
     memoryDemoInvoices = JSON.parse(JSON.stringify(INITIAL_DEMO_INVOICES));
 };
 
-// 3-Tier Authentication
+// 3-Tier Authentication (Real Cryptographic JWT Session)
 export const loginAsOwner = async (pinOrPassword) => {
     const input = (pinOrPassword || '').trim();
-    const savedMasterPin = localStorage.getItem('owner_master_pin') || sessionStorage.getItem('owner_master_pin') || '2006';
-
-    // 1. PIN-based check (Supports 2006, 1234, 1506, savedMasterPin, or any valid 4-digit PIN)
-    if (/^\d{4,8}$/.test(input)) {
-        // Save dynamically as owner PIN if not yet saved on this device
-        localStorage.setItem('owner_master_pin', input);
-        sessionStorage.setItem('owner_master_pin', input);
-
-        const mockOwnerToken = 'owner_jwt_' + Date.now();
-        return Promise.resolve({
-            data: {
-                token: mockOwnerToken,
-                username: 'Ramesh Naik (Owner)',
-                role: 'OWNER',
-                tenantType: 'PROD',
-                shopName: 'MANISHA ELECTRONICS'
-            }
-        });
+    if (!input) {
+        return Promise.reject({ response: { data: { message: '⚠️ Please enter Owner PIN or Password' } } });
     }
-
-    // 2. Password-based check
-    return api.post('/auth/login', { username: 'admin', password: input }).catch(() => {
-        if (input.toLowerCase() === 'admin' || input === '1234' || input === '2006' || input === savedMasterPin) {
-            return {
-                data: {
-                    token: 'owner_jwt_' + Date.now(),
-                    username: 'Ramesh Naik (Owner)',
-                    role: 'OWNER',
-                    tenantType: 'PROD',
-                    shopName: 'MANISHA ELECTRONICS'
-                }
-            };
-        }
-        return Promise.reject({
-            response: {
-                data: {
-                    message: '❌ Invalid Owner PIN or Password. Default PIN is 2006 or 1234.'
-                }
-            }
-        });
-    });
+    return api.post('/auth/login', { passcode: input, pin: input, username: 'admin', password: input });
 };
 
 export const loginAsStaff = async (username, pin) => {
-    const defaultStaff = [
-        { id: 'STF-01', name: 'Rahul Parab', username: 'rahul_counter1', pin: '1234', role: 'Cashier', status: 'Active' },
-        { id: 'STF-02', name: 'Sunil Gawas', username: 'sunil_counter2', pin: '5678', role: 'Floor Sales Executive', status: 'Active' },
-        { id: 'STF-03', name: 'Tejas', username: 'Tejas', pin: '2006', role: 'Store Executive', status: 'Active' }
-    ];
-
-    const rawSaved = localStorage.getItem('manisha_staff_accounts') || sessionStorage.getItem('manisha_staff_accounts');
-    let staffList = rawSaved ? JSON.parse(rawSaved) : defaultStaff;
-
     const inputUser = (username || '').trim();
     const inputPin = (pin || '').trim();
 
     if (!inputUser) {
-        return Promise.reject({
-            response: {
-                data: {
-                    message: '⚠️ Please enter your Staff Login ID'
-                }
-            }
-        });
+        return Promise.reject({ response: { data: { message: '⚠️ Please enter your Staff Login ID' } } });
     }
-
     if (!inputPin) {
-        return Promise.reject({
-            response: {
-                data: {
-                    message: '⚠️ Please enter your 4-digit Counter PIN'
-                }
-            }
-        });
+        return Promise.reject({ response: { data: { message: '⚠️ Please enter your 4-digit Counter PIN' } } });
     }
 
-    // Match by username, employee name, or staff ID (case-insensitive)
-    let foundStaff = staffList.find(stf => 
-        (stf.username && stf.username.toLowerCase() === inputUser.toLowerCase()) ||
-        (stf.name && stf.name.toLowerCase() === inputUser.toLowerCase()) ||
-        (stf.id && stf.id.toLowerCase() === inputUser.toLowerCase())
-    );
-
-    // If staff is not yet registered on this specific device, auto-register them seamlessly!
-    if (!foundStaff) {
-        foundStaff = {
-            id: 'STF-' + (staffList.length + 1).toString().padStart(2, '0'),
-            name: inputUser,
-            username: inputUser,
-            pin: inputPin,
-            role: 'Counter Staff',
-            status: 'Active',
-            dateAdded: new Date().toISOString().split('T')[0]
-        };
-        staffList.push(foundStaff);
-        localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
-        sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
-    }
-
-    if (foundStaff.status === 'Suspended') {
-        return Promise.reject({
-            response: {
-                data: {
-                    message: `⛔ Account Suspended: Staff account for "${foundStaff.name}" is inactive.`
-                }
-            }
-        });
-    }
-
-    // PIN check
-    if (foundStaff.pin && foundStaff.pin !== inputPin && inputPin !== '2006' && inputPin !== '1234') {
-        return Promise.reject({
-            response: {
-                data: {
-                    message: `❌ Incorrect PIN for ${foundStaff.name}. Please enter your valid 4-digit register PIN.`
-                }
-            }
-        });
-    }
-
-    const mockStaffToken = 'staff_jwt_' + Date.now();
-    return Promise.resolve({
-        data: {
-            token: mockStaffToken,
-            username: `${foundStaff.name} (${foundStaff.role || 'Staff'})`,
-            role: 'STAFF',
-            tenantType: 'PROD',
-            shopName: 'MANISHA ELECTRONICS'
-        }
-    });
+    return api.post('/auth/staff', { username: inputUser, pin: inputPin });
 };
 
-export const loginAsVisitor = () => {
+export const loginAsVisitor = async () => {
     resetDemoSandbox(); // Always start demo session fresh
-    const mockVisitorToken = 'visitor_jwt_' + Date.now();
-    return Promise.resolve({
-        data: {
-            token: mockVisitorToken,
-            username: 'Portfolio Guest (Demo)',
-            role: 'VISITOR',
-            tenantType: 'DEMO',
-            shopName: 'Manisha Electronics (Demo Sandbox)'
-        }
-    });
+    return api.post('/auth/visitor');
 };
 
 export const verifyAuthToken = async (token) => {

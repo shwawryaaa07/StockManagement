@@ -20,11 +20,11 @@ api.interceptors.request.use((config) => {
     return Promise.reject(error);
 });
 
-// Response Interceptor: Handle 401 Unauthorized
+// Response Interceptor: Handle 401 / 403 Unauthorized & Stale Session Tokens
 api.interceptors.response.use((response) => {
     return response;
 }, (error) => {
-    if (error.response && error.response.status === 401) {
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
         if (!error.config.url.includes('/auth/login') && !error.config.url.includes('/auth/staff') && !error.config.url.includes('/auth/visitor')) {
             localStorage.removeItem('authToken');
             sessionStorage.removeItem('authToken');

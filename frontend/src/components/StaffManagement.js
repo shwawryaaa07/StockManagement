@@ -46,13 +46,6 @@ function StaffManagement() {
         if (isVisitor) {
             return JSON.parse(JSON.stringify(DEMO_STAFF_ACCOUNTS));
         }
-        const saved = localStorage.getItem('manisha_staff_accounts') || sessionStorage.getItem('manisha_staff_accounts');
-        if (saved) {
-            try { 
-                const parsed = JSON.parse(saved);
-                if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-            } catch (e) { }
-        }
         return JSON.parse(JSON.stringify(DEFAULT_PROD_STAFF));
     });
 
@@ -76,7 +69,7 @@ function StaffManagement() {
     // Common Role Suggestions
     const commonRoles = ['Cashier', 'Floor Sales Executive', 'Store Manager', 'Accountant', 'Inventory Specialist', 'Technician'];
 
-    // Load staff and store profile on mount (Strict Sandbox Shield)
+    // Load staff and store profile on mount
     useEffect(() => {
         if (isVisitor) {
             setStaffList(JSON.parse(JSON.stringify(DEMO_STAFF_ACCOUNTS)));
@@ -84,12 +77,14 @@ function StaffManagement() {
             return;
         }
 
-        // 1. Fetch Real Staff List from TiDB Backend
+        // Clean up legacy localStorage item if present
+        localStorage.removeItem('manisha_staff_accounts');
+        sessionStorage.removeItem('manisha_staff_accounts');
+
+        // 1. Fetch Real Staff List from Backend
         api.get('/staff').then(res => {
             if (res.data && Array.isArray(res.data) && res.data.length > 0) {
                 setStaffList(res.data);
-                localStorage.setItem('manisha_staff_accounts', JSON.stringify(res.data));
-                sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(res.data));
             }
         }).catch(() => { });
 
@@ -101,14 +96,6 @@ function StaffManagement() {
             }
         }).catch(() => { });
     }, [isVisitor]);
-
-    // Keep production storage updated only for logged in owners/staff
-    useEffect(() => {
-        if (!isVisitor) {
-            localStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
-            sessionStorage.setItem('manisha_staff_accounts', JSON.stringify(staffList));
-        }
-    }, [staffList, isVisitor]);
 
     // Handle Store Profile Save (Instant Sync)
     const handleSaveStoreProfile = (e) => {

@@ -3,9 +3,11 @@ package com.manishaelectronics.controller;
 import com.manishaelectronics.model.StaffAccount;
 import com.manishaelectronics.repository.StaffAccountRepository;
 import com.manishaelectronics.security.JwtUtil;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -18,6 +20,7 @@ public class AuthController {
 
     private final JwtUtil jwtUtil;
     private final StaffAccountRepository staffAccountRepository;
+    private final PasswordEncoder passwordEncoder;
     private final String adminUsername;
     private final String adminPassword;
     private final String adminPin;
@@ -31,6 +34,7 @@ public class AuthController {
     public AuthController(
             JwtUtil jwtUtil,
             StaffAccountRepository staffAccountRepository,
+            PasswordEncoder passwordEncoder,
             @Value("${auth.admin.username:Ramesh Naik}") String adminUsername,
             @Value("${auth.admin.password:15aug2006}") String adminPassword,
             @Value("${auth.admin.pin:1506}") String adminPin,
@@ -38,16 +42,25 @@ public class AuthController {
     ) {
         this.jwtUtil = jwtUtil;
         this.staffAccountRepository = staffAccountRepository;
+        this.passwordEncoder = passwordEncoder;
         this.adminUsername = adminUsername;
         this.adminPassword = adminPassword;
         this.adminPin = adminPin;
         this.shopName = shopName;
     }
 
+    private String getClientIp(HttpServletRequest request) {
+        String xf = request.getHeader("X-Forwarded-For");
+        if (xf != null && !xf.isBlank()) {
+            return xf.split(",")[0].trim();
+        }
+        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "127.0.0.1";
+    }
+
     // 1. Owner / Admin Login (Master PIN or Password)
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Map<String, String> request) {
-        String clientKey = "auth_owner";
+    public ResponseEntity<?> login(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
+        String clientKey = "owner_" + getClientIp(httpRequest);
 
         long now = System.currentTimeMillis();
         long[] attemptData = attemptCache.computeIfAbsent(clientKey, k -> new long[]{0, 0});
@@ -69,11 +82,12 @@ public class AuthController {
         boolean isAuthenticated = false;
 
         if (input != null && !input.isBlank()) {
-            if (input.equals(adminPin) || input.equals("2006") || input.equals("1506") || input.equals("1234") || input.equals("15aug2006") || input.equals(adminPassword)) {
+            if (input.equals(adminPin) || input.equals(adminPassword) || passwordEncoder.matches(input, adminPassword) || passwordEncoder.matches(input, adminPin)) {
                 isAuthenticated = true;
             }
         } else if (username != null && password != null) {
-            if (adminUsername.equalsIgnoreCase(username.trim()) && (adminPassword.equals(password) || "15aug2006".equals(password) || "admin123".equals(password))) {
+            if (adminUsername.equalsIgnoreCase(username.trim()) &&
+                    (adminPassword.equals(password.trim()) || passwordEncoder.matches(password.trim(), adminPassword))) {
                 isAuthenticated = true;
             }
         }
@@ -132,7 +146,20 @@ public class AuthController {
                         "message", "⛔ Staff account for \"" + staff.getName() + "\" is suspended."
                 ));
             }
-            if (staff.getPin() != null && (staff.getPin().equals(inputPin) || "0987".equals(inputPin) || "1234".equals(inputPin) || "2006".equals(inputPin))) {
+
+            boolean pinMatches = false;
+            if (staff.getPin() != null) {
+                if (passwordEncoder.matches(inputPin, staff.getPin())) {
+                    pinMatches = true;
+                } else if (staff.getPin().equals(inputPin)) {
+                    // Transparent auto-upgrade plaintext PIN to BCrypt
+                    pinMatches = true;
+                    staff.setPin(passwordEncoder.encode(inputPin));
+                    staffAccountRepository.save(staff);
+                }
+            }
+
+            if (pinMatches) {
                 String token = jwtUtil.generateToken(staff.getName(), "ROLE_STAFF", "PROD");
                 return ResponseEntity.ok(Map.of(
                         "success", true,
@@ -143,20 +170,6 @@ public class AuthController {
                         "shopName", shopName
                 ));
             }
-        }
-
-        // 2. Fallback for Tejas (STF-01) or default counter credentials
-        if (inputPin.equals("0987") || inputPin.equals("1234") || inputPin.equals("2006") || inputPin.equals(adminPin)) {
-            String displayName = inputUser.equalsIgnoreCase("tejas11") || inputUser.equalsIgnoreCase("tejas") ? "Tejas (Inventory Specialist)" : inputUser + " (Counter Staff)";
-            String token = jwtUtil.generateToken(displayName, "ROLE_STAFF", "PROD");
-            return ResponseEntity.ok(Map.of(
-                    "success", true,
-                    "token", token,
-                    "username", displayName,
-                    "role", "STAFF",
-                    "tenantType", "PROD",
-                    "shopName", shopName
-            ));
         }
 
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(

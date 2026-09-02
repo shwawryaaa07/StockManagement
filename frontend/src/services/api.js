@@ -306,19 +306,36 @@ export const deleteInvoice = async (id) => {
     return api.delete(`/invoices/${id}`);
 };
 
-export const settleDueInvoice = async (id, settleAmount) => {
+export const settleDueInvoice = async (id, settlePayload) => {
+    let paymentAmount = 0;
+    let paymentMode = 'CASH';
+
+    if (typeof settlePayload === 'object' && settlePayload !== null) {
+        paymentAmount = Number(settlePayload.amountPaid !== undefined ? settlePayload.amountPaid : (settlePayload.amount !== undefined ? settlePayload.amount : 0));
+        paymentMode = settlePayload.paymentMethod || settlePayload.paymentMode || 'CASH';
+    } else {
+        paymentAmount = Number(settlePayload || 0);
+    }
+
     if (isSandboxMode()) {
         const inv = memoryDemoInvoices.find(i => i.id === Number(id));
         if (inv) {
-            const payment = Number(settleAmount || inv.balanceDue);
-            inv.amountPaid = Number((inv.amountPaid + payment).toFixed(2));
-            inv.balanceDue = Math.max(0, Number((inv.balanceDue - payment).toFixed(2)));
+            const actualPayment = paymentAmount > 0 ? paymentAmount : Number(inv.balanceDue || inv.amountDue || 0);
+            inv.amountPaid = Number(((inv.amountPaid || 0) + actualPayment).toFixed(2));
+            inv.balanceDue = Math.max(0, Number(((inv.totalAmount || 0) - inv.amountPaid).toFixed(2)));
             inv.amountDue = inv.balanceDue;
+            inv.paymentMethod = paymentMode;
+            inv.paymentMode = paymentMode;
             return Promise.resolve({ data: inv });
         }
         return Promise.reject({ response: { status: 404 } });
     }
-    return api.put(`/invoices/${id}/settle`, { amount: settleAmount });
+
+    const payload = typeof settlePayload === 'object' && settlePayload !== null
+        ? { ...settlePayload, amount: paymentAmount, amountPaid: paymentAmount }
+        : { amount: paymentAmount, amountPaid: paymentAmount, paymentMode };
+
+    return api.put(`/invoices/${id}/settle`, payload);
 };
 
 export const getDueInvoices = async () => {
@@ -327,12 +344,14 @@ export const getDueInvoices = async () => {
         return Promise.resolve({ data: dueList });
     }
     try {
-        const res = await api.get('/invoices');
-        const invoices = Array.isArray(res.data) ? res.data : [];
-        const dueInvoices = invoices.filter(i => (i.balanceDue !== undefined ? i.balanceDue > 0 : (i.amountDue > 0 || (i.totalAmount - (i.amountPaid || 0) > 0))));
-        return { data: dueInvoices };
+        const res = await api.get('/invoices/due');
+        return res;
     } catch (err) {
-        return api.get('/invoices/due').catch(() => ({ data: [] }));
+        return api.get('/invoices').then(res => {
+            const invoices = Array.isArray(res.data) ? res.data : [];
+            const dueInvoices = invoices.filter(i => (i.balanceDue !== undefined ? i.balanceDue > 0 : (i.amountDue > 0 || (i.totalAmount - (i.amountPaid || 0) > 0))));
+            return { data: dueInvoices };
+        });
     }
 };
 
@@ -348,8 +367,11 @@ export const getDashboardSummary = async () => {
 
         return Promise.resolve({
             data: {
+                todaySales: totalSales,
+                todayInvoices: totalInvoices,
                 totalSales,
                 totalDue,
+                totalDueAmount: totalDue,
                 totalInvoices,
                 lowStockCount,
                 recentInvoices: memoryDemoInvoices.slice(0, 5),
@@ -359,31 +381,16 @@ export const getDashboardSummary = async () => {
     }
 
     try {
-        const [prodRes, invRes] = await Promise.all([
-            api.get('/products'),
-            api.get('/invoices')
-        ]);
-
-        const products = Array.isArray(prodRes.data) ? prodRes.data : [];
-        const invoices = Array.isArray(invRes.data) ? invRes.data : [];
-
-        const totalSales = invoices.reduce((sum, inv) => sum + Number(inv.amountPaid || inv.totalAmount || 0), 0);
-        const totalDue = invoices.reduce((sum, inv) => sum + Number(inv.balanceDue || inv.amountDue || 0), 0);
-        const totalInvoices = invoices.length;
-        const lowStockCount = products.filter(p => (p.stockQuantity || p.quantity || 0) <= 2).length;
-
-        return {
-            data: {
-                totalSales,
-                totalDue,
-                totalInvoices,
-                lowStockCount,
-                recentInvoices: invoices.slice(0, 5),
-                lowStockProducts: products.filter(p => (p.stockQuantity || p.quantity || 0) <= 2)
-            }
-        };
+        const res = await api.get('/invoices/dashboard');
+        return res;
     } catch (error) {
-        return Promise.reject(error);
+        return api.get('/invoices').then(invRes => ({
+            data: {
+                todaySales: 0,
+                todayInvoices: invRes.data?.length || 0,
+                totalDueAmount: 0
+            }
+        }));
     }
 };
 

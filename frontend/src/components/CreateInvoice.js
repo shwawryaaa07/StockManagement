@@ -44,11 +44,12 @@ function CreateInvoice() {
         }
     };
 
-    // Calculate Tax & Grand Totals
+    // Calculate Tax & Grand Totals (Taxable Amount = Subtotal - Discount)
     const subtotal = items.reduce((sum, item) => sum + (Number(item.quantity) * Number(item.unitPrice)), 0);
-    const gstAmount = Number(((subtotal * gstRate) / 100).toFixed(2));
-    const grossTotal = subtotal + gstAmount;
-    const grandTotal = Math.max(0, Number((grossTotal - Number(discountAmount || 0)).toFixed(2)));
+    const discount = Number(discountAmount || 0);
+    const taxableAmount = Math.max(0, subtotal - discount);
+    const gstAmount = Number(((taxableAmount * Number(gstRate || 0)) / 100).toFixed(2));
+    const grandTotal = Number((taxableAmount + gstAmount).toFixed(2));
     
     // Effective amount paid
     const actualPaid = amountPaid === '' ? grandTotal : Number(amountPaid);
@@ -113,8 +114,10 @@ function CreateInvoice() {
             customerContact: customerContact.trim() || 'N/A',
             deliveryAddress: deliveryAddress.trim() || 'N/A',
             gstRate: Number(gstRate),
-            discountAmount: Number(discountAmount || 0),
-            paymentMethod,
+            discount: discount,
+            discountAmount: discount,
+            paymentMode: paymentMethod,
+            paymentMethod: paymentMethod,
             amountPaid: actualPaid,
             notes: notes.trim(),
             items: items.map(item => ({

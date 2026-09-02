@@ -1,6 +1,7 @@
 package com.manishaelectronics.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -111,8 +112,33 @@ public class Invoice {
     public BigDecimal getDiscount() { return discount; }
     public void setDiscount(BigDecimal discount) { this.discount = discount; }
 
+    @JsonProperty("discountAmount")
+    public BigDecimal getDiscountAmount() { return discount; }
+    @JsonProperty("discountAmount")
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        if (discountAmount != null) {
+            this.discount = discountAmount;
+        }
+    }
+
     public PaymentMode getPaymentMode() { return paymentMode; }
     public void setPaymentMode(PaymentMode paymentMode) { this.paymentMode = paymentMode; }
+
+    @JsonProperty("paymentMethod")
+    public String getPaymentMethod() {
+        return this.paymentMode != null ? this.paymentMode.name() : "CASH";
+    }
+
+    @JsonProperty("paymentMethod")
+    public void setPaymentMethod(String paymentMethod) {
+        if (paymentMethod != null && !paymentMethod.isBlank()) {
+            try {
+                this.paymentMode = PaymentMode.valueOf(paymentMethod.trim().toUpperCase());
+            } catch (Exception ignored) {
+                this.paymentMode = PaymentMode.CASH;
+            }
+        }
+    }
 
     public PaymentStatus getPaymentStatus() { return paymentStatus; }
     public void setPaymentStatus(PaymentStatus paymentStatus) { this.paymentStatus = paymentStatus; }
@@ -122,6 +148,15 @@ public class Invoice {
 
     public BigDecimal getAmountDue() { return amountDue; }
     public void setAmountDue(BigDecimal amountDue) { this.amountDue = amountDue; }
+
+    @JsonProperty("balanceDue")
+    public BigDecimal getBalanceDue() { return amountDue; }
+    @JsonProperty("balanceDue")
+    public void setBalanceDue(BigDecimal balanceDue) {
+        if (balanceDue != null) {
+            this.amountDue = balanceDue;
+        }
+    }
 
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

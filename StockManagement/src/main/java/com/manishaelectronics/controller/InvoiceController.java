@@ -1,18 +1,17 @@
 package com.manishaelectronics.controller;
 
-import com.manishaelectronics.config.ShopConfig;  // ✅ NEW IMPORT
-import com.manishaelectronics.model.Invoice;
-import com.manishaelectronics.model.InvoiceItem;
-import com.manishaelectronics.model.PaymentStatus;
-import com.manishaelectronics.model.Product;
+import com.manishaelectronics.config.ShopConfig;
+import com.manishaelectronics.model.*;
 import com.manishaelectronics.repository.InvoiceRepository;
 import com.manishaelectronics.repository.ProductRepository;
+import com.manishaelectronics.repository.StoreProfileRepository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,15 +24,19 @@ public class InvoiceController {
 
     private final InvoiceRepository invoiceRepository;
     private final ProductRepository productRepository;
-    private final ShopConfig shopConfig;  // ✅ NEW
+    private final ShopConfig shopConfig;
+    private final StoreProfileRepository storeProfileRepository;
 
-    // ✅ Constructor Injection
-    public InvoiceController(InvoiceRepository invoiceRepository,
-                             ProductRepository productRepository,
-                             ShopConfig shopConfig) {
+    public InvoiceController(
+            InvoiceRepository invoiceRepository,
+            ProductRepository productRepository,
+            ShopConfig shopConfig,
+            StoreProfileRepository storeProfileRepository
+    ) {
         this.invoiceRepository = invoiceRepository;
         this.productRepository = productRepository;
         this.shopConfig = shopConfig;
+        this.storeProfileRepository = storeProfileRepository;
     }
 
     // ===========================================================
@@ -79,11 +82,19 @@ public class InvoiceController {
             totalDue = totalDue.add(inv.getAmountDue());
         }
 
+        List<Product> products = productRepository.findByActiveTrue();
+        long lowStockCount = products.stream().filter(p -> (p.getQuantity() != null ? p.getQuantity() : 0) <= 2).count();
+        long totalInvoices = invoiceRepository.count();
+
         Map<String, Object> dashboard = new HashMap<>();
         dashboard.put("todayInvoices", todayInvoices.size());
         dashboard.put("todaySales", todaySales);
+        dashboard.put("totalSales", todaySales);
         dashboard.put("totalDueAmount", totalDue);
+        dashboard.put("totalDue", totalDue);
         dashboard.put("dueInvoicesCount", dueInvoices.size());
+        dashboard.put("totalInvoices", totalInvoices);
+        dashboard.put("lowStockCount", lowStockCount);
         dashboard.put("date", LocalDateTime.now().toLocalDate().toString());
 
         return dashboard;
@@ -134,14 +145,23 @@ public class InvoiceController {
     public Invoice createInvoice(@RequestBody Invoice invoice) {
         invoice.setCreatedAt(LocalDateTime.now());
 
-        // Business info from server config
-        invoice.setBusinessName(shopConfig.getName());
-        invoice.setBusinessAddress(shopConfig.getAddress());
-        invoice.setBusinessPhone(shopConfig.getPhone());
-        invoice.setBusinessGstin(shopConfig.getGstin());
+        // Business info from persistent DB profile or server config
+        StoreProfile profile = storeProfileRepository.findFirstByOrderByIdAsc().orElse(null);
+        if (profile != null) {
+            invoice.setBusinessName(profile.getShopName());
+            invoice.setBusinessAddress(profile.getAddress());
+            invoice.setBusinessPhone(profile.getPhone());
+            invoice.setBusinessGstin(profile.getGstin());
+        } else {
+            invoice.setBusinessName(shopConfig.getName());
+            invoice.setBusinessAddress(shopConfig.getAddress());
+            invoice.setBusinessPhone(shopConfig.getPhone());
+            invoice.setBusinessGstin(shopConfig.getGstin());
+        }
 
-        // Generate invoice number (UUID-based, no duplicates)
-        String invoiceNumber = "INV-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        // Generate collision-proof invoice number with date prefix
+        String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String invoiceNumber = "INV-" + dateStr + "-" + UUID.randomUUID().toString().substring(0, 4).toUpperCase();
         invoice.setInvoiceNumber(invoiceNumber);
 
         if (invoice.getItems() == null || invoice.getItems().isEmpty()) {
@@ -195,17 +215,22 @@ public class InvoiceController {
         }
         invoice.setSubtotal(subtotal);
 
-        // GST calculation with proper rounding
+        // GST calculation on taxable amount (subtotal - discount)
+        BigDecimal discount = invoice.getDiscount() != null ? invoice.getDiscount() : BigDecimal.ZERO;
+        invoice.setDiscount(discount);
+
+        BigDecimal taxableAmount = subtotal.subtract(discount);
+        if (taxableAmount.compareTo(BigDecimal.ZERO) < 0) {
+            taxableAmount = BigDecimal.ZERO;
+        }
+
         BigDecimal gstRate = invoice.getGstRate() != null ? invoice.getGstRate() : new BigDecimal("18");
         invoice.setGstRate(gstRate);
-        BigDecimal gstAmount = subtotal.multiply(gstRate)
+        BigDecimal gstAmount = taxableAmount.multiply(gstRate)
                 .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         invoice.setGstAmount(gstAmount);
 
-        BigDecimal total = subtotal.add(gstAmount);
-        if (invoice.getDiscount() != null && invoice.getDiscount().compareTo(BigDecimal.ZERO) > 0) {
-            total = total.subtract(invoice.getDiscount());
-        }
+        BigDecimal total = taxableAmount.add(gstAmount);
         invoice.setTotalAmount(total);
 
         // Payment status
@@ -299,7 +324,9 @@ public class InvoiceController {
         existingInvoice.setCustomerName(updatedInvoice.getCustomerName());
         existingInvoice.setCustomerContact(updatedInvoice.getCustomerContact());
         existingInvoice.setDeliveryAddress(updatedInvoice.getDeliveryAddress());
-        existingInvoice.setPaymentMode(updatedInvoice.getPaymentMode());
+        if (updatedInvoice.getPaymentMode() != null) {
+            existingInvoice.setPaymentMode(updatedInvoice.getPaymentMode());
+        }
 
         BigDecimal amountPaid = updatedInvoice.getAmountPaid() != null ? updatedInvoice.getAmountPaid() : BigDecimal.ZERO;
         existingInvoice.setAmountPaid(amountPaid);
@@ -336,14 +363,16 @@ public class InvoiceController {
         }
         existingInvoice.setSubtotal(subtotal);
 
-        BigDecimal gstAmount = subtotal.multiply(gstRate)
+        BigDecimal taxableAmount = subtotal.subtract(discount);
+        if (taxableAmount.compareTo(BigDecimal.ZERO) < 0) {
+            taxableAmount = BigDecimal.ZERO;
+        }
+
+        BigDecimal gstAmount = taxableAmount.multiply(gstRate)
                 .divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
         existingInvoice.setGstAmount(gstAmount);
 
-        BigDecimal total = subtotal.add(gstAmount);
-        if (discount.compareTo(BigDecimal.ZERO) > 0) {
-            total = total.subtract(discount);
-        }
+        BigDecimal total = taxableAmount.add(gstAmount);
         existingInvoice.setTotalAmount(total);
 
         // 7. Recalculate payment status
@@ -361,22 +390,50 @@ public class InvoiceController {
         return invoiceRepository.save(existingInvoice);
     }
 
-    @PutMapping("/{id}/pay")
-    public Invoice recordPayment(@PathVariable Long id, @RequestParam BigDecimal amount) {
-        // ✅ FIX: Validate payment amount
-        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+    @PutMapping(value = {"/{id}/pay", "/{id}/settle"})
+    public Invoice recordPayment(
+            @PathVariable Long id,
+            @RequestParam(required = false) BigDecimal amount,
+            @RequestBody(required = false) Map<String, Object> body
+    ) {
+        BigDecimal paymentAmount = amount;
+        PaymentMode paymentMode = null;
+
+        if (body != null) {
+            if (body.get("amount") != null) {
+                paymentAmount = new BigDecimal(body.get("amount").toString());
+            } else if (body.get("amountPaid") != null) {
+                paymentAmount = new BigDecimal(body.get("amountPaid").toString());
+            }
+            if (body.get("paymentMethod") != null) {
+                try {
+                    paymentMode = PaymentMode.valueOf(body.get("paymentMethod").toString().trim().toUpperCase());
+                } catch (Exception ignored) {}
+            } else if (body.get("paymentMode") != null) {
+                try {
+                    paymentMode = PaymentMode.valueOf(body.get("paymentMode").toString().trim().toUpperCase());
+                } catch (Exception ignored) {}
+            }
+        }
+
+        if (paymentAmount == null || paymentAmount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new IllegalArgumentException("Payment amount must be greater than zero");
         }
 
         Invoice invoice = invoiceRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Invoice not found"));
+                .orElseThrow(() -> new RuntimeException("Invoice not found with id: " + id));
 
-        if (amount.compareTo(invoice.getAmountDue()) > 0) {
+        if (paymentAmount.compareTo(invoice.getAmountDue()) > 0) {
             throw new IllegalArgumentException("Payment cannot exceed due amount: ₹" + invoice.getAmountDue());
         }
 
-        BigDecimal newPaid = invoice.getAmountPaid().add(amount);
+        BigDecimal currentPaid = invoice.getAmountPaid() != null ? invoice.getAmountPaid() : BigDecimal.ZERO;
+        BigDecimal newPaid = currentPaid.add(paymentAmount);
         invoice.setAmountPaid(newPaid);
+
+        if (paymentMode != null) {
+            invoice.setPaymentMode(paymentMode);
+        }
 
         if (newPaid.compareTo(invoice.getTotalAmount()) >= 0) {
             invoice.setPaymentStatus(PaymentStatus.FULLY_PAID);
@@ -399,12 +456,15 @@ public class InvoiceController {
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Invoice not found with id: " + id));
 
-        // Restore stock before deleting
+        // Restore stock safely before deleting
         for (InvoiceItem item : invoice.getItems()) {
-            Product product = productRepository.findById(item.getProduct().getId())
-                    .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProduct().getId()));
-            product.setQuantity(product.getQuantity() + item.getQuantity());
-            productRepository.save(product);
+            if (item.getProduct() != null && item.getProduct().getId() != null) {
+                Product product = productRepository.findById(item.getProduct().getId()).orElse(null);
+                if (product != null) {
+                    product.setQuantity(product.getQuantity() + item.getQuantity());
+                    productRepository.save(product);
+                }
+            }
         }
 
         invoiceRepository.deleteById(id);

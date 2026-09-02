@@ -15,6 +15,7 @@ function EditInvoice() {
     const [customerContact, setCustomerContact] = useState('');
     const [deliveryAddress, setDeliveryAddress] = useState('');
     const [paymentMode, setPaymentMode] = useState('CASH');
+    const [discountAmount, setDiscountAmount] = useState(0);
     const [amountPaid, setAmountPaid] = useState('');
     const [gstRate, setGstRate] = useState(18);
     const [items, setItems] = useState([]);
@@ -58,7 +59,8 @@ function EditInvoice() {
                 setCustomerName(inv.customerName || '');
                 setCustomerContact(inv.customerContact === 'N/A' ? '' : (inv.customerContact || ''));
                 setDeliveryAddress(inv.deliveryAddress === 'N/A' ? '' : (inv.deliveryAddress || ''));
-                setPaymentMode(inv.paymentMode || 'CASH');
+                setPaymentMode(inv.paymentMode || inv.paymentMethod || 'CASH');
+                setDiscountAmount(inv.discount !== undefined ? inv.discount : (inv.discountAmount !== undefined ? inv.discountAmount : 0));
                 setAmountPaid(String(inv.amountPaid !== undefined ? inv.amountPaid : ''));
                 setGstRate(inv.gstRate !== undefined ? inv.gstRate : 0);
 
@@ -103,16 +105,21 @@ function EditInvoice() {
     // Add product to bill and collapse suggestions
     const addProductToBill = (product) => {
         const existingIndex = items.findIndex(i => (i.product?.id || i.product) === product.id);
+
         if (existingIndex > -1) {
             const currentQty = items[existingIndex].quantity;
-            if (product.quantity && currentQty + 1 > product.quantity) {
-                alert(`⚠️ Only ${product.quantity} items available in stock!`);
+            if (product.quantity && currentQty >= product.quantity) {
+                alert(`⚠️ Only ${product.quantity} units available in stock!`);
                 return;
             }
             const updated = [...items];
             updated[existingIndex].quantity += 1;
             setItems(updated);
         } else {
+            if (product.quantity && product.quantity < 1) {
+                alert(`⚠️ "${product.name}" is currently OUT OF STOCK!`);
+                return;
+            }
             const serialsList = (product.serialNumbers || '')
                 .split(',')
                 .map(s => s.trim())
@@ -121,9 +128,9 @@ function EditInvoice() {
             setItems([
                 ...items,
                 {
-                    product: product,
+                    product,
                     quantity: 1,
-                    unitPrice: Number(product.price || 0),
+                    unitPrice: product.price,
                     modelNumber: product.modelNumber || '',
                     serialNumber: '',
                     availableSerials: serialsList
@@ -141,7 +148,7 @@ function EditInvoice() {
         const item = items[index];
         const newQty = item.quantity + delta;
 
-        if (newQty <= 0) {
+        if (newQty < 1) {
             removeItem(index);
             return;
         }
@@ -177,13 +184,15 @@ function EditInvoice() {
         setItems(items.filter((_, i) => i !== index));
     };
 
-    // Billing calculations
+    // Billing calculations (Taxable = Subtotal - Discount)
     const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-    const gstAmount = Math.round(subtotal * (gstRate / 100));
-    const grandTotal = Math.round(subtotal + gstAmount);
+    const discount = Math.min(subtotal, Math.max(0, parseFloat(discountAmount) || 0));
+    const taxableAmount = Math.max(0, subtotal - discount);
+    const gstAmount = Number(((taxableAmount * (parseFloat(gstRate) || 0)) / 100).toFixed(2));
+    const grandTotal = Number((taxableAmount + gstAmount).toFixed(2));
 
     const paidNum = parseFloat(amountPaid) || 0;
-    const balanceDue = Math.max(0, grandTotal - paidNum);
+    const balanceDue = Math.max(0, Number((grandTotal - paidNum).toFixed(2)));
 
     // Save changes
     const handleSubmit = async (e) => {
@@ -212,6 +221,9 @@ function EditInvoice() {
             customerContact: cleanedContact || 'N/A',
             deliveryAddress: deliveryAddress.trim() || 'N/A',
             paymentMode,
+            paymentMethod: paymentMode,
+            discount: discount,
+            discountAmount: discount,
             amountPaid: parseFloat(amountPaid) || 0,
             gstRate: parseFloat(gstRate) || 0,
             items: items.map(i => ({
@@ -723,11 +735,41 @@ function EditInvoice() {
                     {/* Breakdown */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px' }}>
-                            <span style={{ color: 'var(--text-muted)' }}>Subtotal (Taxable):</span>
+                            <span style={{ color: 'var(--text-muted)' }}>Items Subtotal:</span>
                             <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>
                                 ₹{subtotal.toLocaleString('en-IN')}
                             </span>
                         </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>Discount (₹):</span>
+                            <input
+                                type="number"
+                                min="0"
+                                max={subtotal}
+                                step="1"
+                                value={discountAmount}
+                                onChange={(e) => setDiscountAmount(e.target.value)}
+                                style={{
+                                    width: '100px',
+                                    padding: '5px 8px',
+                                    borderRadius: '6px',
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-body)',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '13px',
+                                    fontWeight: '700',
+                                    textAlign: 'right'
+                                }}
+                            />
+                        </div>
+
+                        {discount > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#10b981' }}>
+                                <span>Taxable Amount:</span>
+                                <span style={{ fontWeight: '700' }}>₹{taxableAmount.toLocaleString('en-IN')}</span>
+                            </div>
+                        )}
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ color: 'var(--text-muted)', fontSize: '13px' }}>GST Rate:</span>

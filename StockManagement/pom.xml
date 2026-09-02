@@ -95,12 +95,7 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Google API Client for OAuth ID Token Verification -->
-		<dependency>
-			<groupId>com.google.api-client</groupId>
-			<artifactId>google-api-client</artifactId>
-			<version>2.7.0</version>
-		</dependency>
+
 
 		<!-- ⭐ TESTING - THIS IS THE IMPORTANT ONE ⭐ -->
 		<dependency>

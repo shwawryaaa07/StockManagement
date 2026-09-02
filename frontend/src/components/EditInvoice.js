@@ -333,7 +333,7 @@ function EditInvoice() {
                                     type="text"
                                     value={customerName}
                                     onChange={(e) => setCustomerName(e.target.value)}
-                                    placeholder="Enter full name"
+                                    placeholder="Enter customer name"
                                     required
                                     style={{
                                         width: '100%',
@@ -359,7 +359,7 @@ function EditInvoice() {
                                         const clean = e.target.value.replace(/\D/g, '').slice(0, 10);
                                         setCustomerContact(clean);
                                     }}
-                                    placeholder="Enter 10-digit mobile no"
+                                    placeholder="Enter 10-digit mobile number"
                                     maxLength="10"
                                     style={{
                                         width: '100%',
@@ -383,7 +383,7 @@ function EditInvoice() {
                                 type="text"
                                 value={deliveryAddress}
                                 onChange={(e) => setDeliveryAddress(e.target.value)}
-                                placeholder="Delivery / Billing Address"
+                                placeholder="Enter delivery address"
                                 style={{
                                     width: '100%',
                                     padding: '10px 12px',
@@ -420,7 +420,7 @@ function EditInvoice() {
                                     setSearchQuery(e.target.value);
                                     setShowSuggestions(true);
                                 }}
-                                placeholder="🔍 Click or type to search products by name or category..."
+                                placeholder="🔍 Search product name, model, or category..."
                                 style={{
                                     width: '100%',
                                     padding: '12px 16px',
@@ -574,7 +574,7 @@ function EditInvoice() {
                                                             <div style={{ flex: 1, minWidth: '130px' }}>
                                                                 <input
                                                                     type="text"
-                                                                    placeholder="Model number (optional)"
+                                                                    placeholder="Enter model number (optional)"
                                                                     value={item.modelNumber || ''}
                                                                     onChange={(e) => {
                                                                         const updated = [...items];
@@ -619,7 +619,7 @@ function EditInvoice() {
                                                                         </select>
                                                                         <input
                                                                             type="text"
-                                                                            placeholder="Or type custom S/N"
+                                                                            placeholder="Enter serial number"
                                                                             value={item.serialNumber || ''}
                                                                             onChange={(e) => {
                                                                                 const updated = [...items];
@@ -640,7 +640,7 @@ function EditInvoice() {
                                                                 ) : (
                                                                     <input
                                                                         type="text"
-                                                                        placeholder="Serial number / S/N (optional)"
+                                                                        placeholder="Enter serial number (optional)"
                                                                         value={item.serialNumber || ''}
                                                                         onChange={(e) => {
                                                                             const updated = [...items];
@@ -893,7 +893,7 @@ function EditInvoice() {
                             type="number"
                             value={amountPaid}
                             onChange={(e) => setAmountPaid(e.target.value)}
-                            placeholder="0.00"
+                            placeholder="Enter amount collected (₹)"
                             min="0"
                             step="0.01"
                             style={{

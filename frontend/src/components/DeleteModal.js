@@ -24,10 +24,11 @@ function DeleteModal({ isOpen, onClose, onConfirm, invoiceNumber, title, itemTyp
         }}>
             <div style={{
                 backgroundColor: 'var(--bg-card, #ffffff)',
-                padding: '32px 36px',
+                padding: '28px 24px',
                 borderRadius: '20px',
                 maxWidth: '440px',
                 width: '100%',
+                boxSizing: 'border-box',
                 textAlign: 'center',
                 boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
                 border: '1px solid var(--border-color, #e2e8f0)',

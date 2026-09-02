@@ -28,13 +28,15 @@ function StaffManagement() {
     const [editGstin, setEditGstin] = useState(storeProfile.gstin);
     const [editPhone, setEditPhone] = useState(storeProfile.phone);
     const [editAddress, setEditAddress] = useState(storeProfile.address);
+    const [editUpiId, setEditUpiId] = useState(storeProfile.upiId || '9309736172@upi');
 
     // Dynamic Display values
-    const shopName = isVisitor ? 'MANISHA ELECTRONICS (Demo Sandbox)' : storeProfile.shopName;
-    const ownerUsername = isVisitor ? 'Demo Administrator (Portfolio View)' : storeProfile.ownerName;
-    const gstin = isVisitor ? '30AAAAA0000A1Z5 (Demo)' : storeProfile.gstin;
+    const shopName = isVisitor ? 'DEMO STORE' : storeProfile.shopName;
+    const ownerUsername = isVisitor ? 'Demo Store Administrator' : storeProfile.ownerName;
+    const gstin = isVisitor ? '30AAAAA0000A1Z5' : storeProfile.gstin;
     const phone = isVisitor ? '+91 98000 00000' : storeProfile.phone;
-    const address = isVisitor ? 'Sample Tech Complex, Commercial Plaza, Panaji - Goa' : storeProfile.address;
+    const address = isVisitor ? 'Sample Commercial Complex, Panaji - Goa' : storeProfile.address;
+    const upiId = isVisitor ? 'demostore@upi' : (storeProfile.upiId || '9309736172@upi');
 
     // Owner PIN change state
     const [currentPin, setCurrentPin] = useState('');
@@ -102,12 +104,18 @@ function StaffManagement() {
     // Handle Store Profile Save (Instant Sync)
     const handleSaveStoreProfile = (e) => {
         if (e) e.preventDefault();
+        let formattedUpi = (editUpiId || '').trim();
+        if (formattedUpi && !formattedUpi.includes('@') && /^\d{10}$/.test(formattedUpi)) {
+            formattedUpi = `${formattedUpi}@upi`;
+        }
+
         const updated = {
-            shopName: (editShopName || '').trim() || (isVisitor ? 'MANISHA ELECTRONICS (Demo Sandbox)' : 'MANISHA ELECTRONICS'),
+            shopName: (editShopName || '').trim() || (isVisitor ? 'DEMO STORE' : 'MANISHA ELECTRONICS'),
             ownerName: (editOwnerName || '').trim() || (isVisitor ? 'Demo Administrator' : 'Ramesh Naik (Owner)'),
-            gstin: (editGstin || '').trim() || (isVisitor ? '30AAAAA0000A1Z5 (Demo)' : '30AMYPN1753F1ZY'),
+            gstin: (editGstin || '').trim() || (isVisitor ? '30AAAAA0000A1Z5' : '30AMYPN1753F1ZY'),
             phone: (editPhone || '').trim() || (isVisitor ? '+91 98000 00000' : '9309736172, 70205592347'),
-            address: (editAddress || '').trim() || (isVisitor ? 'Sample Tech Complex, Commercial Plaza, Panaji - Goa' : 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa')
+            address: (editAddress || '').trim() || (isVisitor ? 'Sample Commercial Plaza, Panaji - Goa' : 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa'),
+            upiId: formattedUpi || '9309736172@upi'
         };
 
         const saved = saveStoreProfile(updated, isVisitor);
@@ -373,7 +381,7 @@ function StaffManagement() {
             {/* Top Cards: Store Overview & Change Master PIN */}
             <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
                 gap: '20px',
                 marginBottom: '28px'
             }}>
@@ -384,7 +392,7 @@ function StaffManagement() {
                             <span style={{ fontSize: '24px' }}>👑</span>
                             <div>
                                 <h3 style={{ margin: 0, fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>Store Profile Overview</h3>
-                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Administrative &amp; Tax Information</div>
+                                <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Administrative, Tax &amp; UPI Banking Information</div>
                             </div>
                         </div>
                         <button
@@ -394,6 +402,7 @@ function StaffManagement() {
                                 setEditGstin(storeProfile.gstin);
                                 setEditPhone(storeProfile.phone);
                                 setEditAddress(storeProfile.address);
+                                setEditUpiId(storeProfile.upiId || '9309736172@upi');
                                 setShowProfileModal(true);
                             }}
                             className="btn-cancel"
@@ -419,6 +428,10 @@ function StaffManagement() {
                         <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Contact Numbers:</span>
                             <strong style={{ color: 'var(--text-primary)' }}>{phone}</strong>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
+                            <span style={{ color: 'var(--text-secondary)' }}>Receiving UPI ID / Mobile:</span>
+                            <strong style={{ color: '#059669', fontFamily: 'monospace', fontSize: '13.5px' }}>📱 {upiId}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '2px' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Store Location:</span>
@@ -480,7 +493,7 @@ function StaffManagement() {
                                     className="form-input"
                                     value={confirmPin}
                                     onChange={(e) => setConfirmPin(e.target.value)}
-                                    placeholder="Confirm PIN"
+                                    placeholder="Re-enter new PIN"
                                     style={{ width: '100%', boxSizing: 'border-box' }}
                                     required
                                 />
@@ -493,9 +506,9 @@ function StaffManagement() {
                         <button
                             type="submit"
                             className="btn-primary"
-                            style={{ width: '100%', marginTop: '4px', padding: '10px' }}
+                            style={{ marginTop: '6px', padding: '10px' }}
                         >
-                            Update Master Passcode
+                            Update Master PIN
                         </button>
                     </form>
                 </div>
@@ -640,17 +653,20 @@ function StaffManagement() {
                 }}>
                     <div className="card" style={{
                         width: '100%',
-                        maxWidth: '520px',
-                        padding: '28px',
+                        maxWidth: '540px',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        padding: '24px 20px',
                         borderRadius: '20px',
                         background: 'var(--bg-card)',
-                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+                        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                        boxSizing: 'border-box'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                 <span style={{ fontSize: '24px' }}>🏪</span>
                                 <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                                    Edit Store Profile Overview
+                                    Edit Store Profile &amp; UPI Banking
                                 </h3>
                             </div>
                             <button
@@ -702,7 +718,7 @@ function StaffManagement() {
                                         className="form-input"
                                         value={editGstin}
                                         onChange={(e) => setEditGstin(e.target.value.toUpperCase())}
-                                        placeholder="15-digit GSTIN"
+                                        placeholder="Enter 15-digit GSTIN"
                                         style={{ width: '100%', boxSizing: 'border-box', textTransform: 'uppercase' }}
                                         required
                                     />
@@ -716,10 +732,31 @@ function StaffManagement() {
                                         className="form-input"
                                         value={editPhone}
                                         onChange={(e) => setEditPhone(e.target.value)}
-                                        placeholder="Phone number"
+                                        placeholder="Enter contact phone number"
                                         style={{ width: '100%', boxSizing: 'border-box' }}
                                         required
                                     />
+                                </div>
+                            </div>
+
+                            {/* Receiving UPI ID / Mobile Number */}
+                            <div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                                    <label style={{ fontSize: '12px', fontWeight: '700', color: '#059669' }}>
+                                        📱 Receiving UPI ID / Mobile Number (For Customer QR Payments) *
+                                    </label>
+                                </div>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={editUpiId}
+                                    onChange={(e) => setEditUpiId(e.target.value)}
+                                    placeholder="Enter UPI ID (phone@upi / name@bank)"
+                                    style={{ width: '100%', boxSizing: 'border-box', fontWeight: '700' }}
+                                    required
+                                />
+                                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '4px' }}>
+                                    🔒 Safe Direct Settlement: Enter your UPI ID or 10-digit phone number. Customers scanning bills pay directly into your linked bank account.
                                 </div>
                             </div>
 
@@ -778,9 +815,12 @@ function StaffManagement() {
                     <div className="card" style={{
                         width: '100%',
                         maxWidth: '460px',
-                        padding: '28px',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        padding: '24px 20px',
                         borderRadius: '20px',
-                        background: 'var(--bg-card)'
+                        background: 'var(--bg-card)',
+                        boxSizing: 'border-box'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
@@ -804,7 +844,7 @@ function StaffManagement() {
                                     className="form-input"
                                     value={newStaffName}
                                     onChange={(e) => setNewStaffName(e.target.value)}
-                                    placeholder="Enter employee name"
+                                    placeholder="Enter staff full name"
                                     style={{ width: '100%', boxSizing: 'border-box' }}
                                     required
                                 />
@@ -836,7 +876,7 @@ function StaffManagement() {
                                         className="form-input"
                                         value={newStaffUsername}
                                         onChange={(e) => setNewStaffUsername(e.target.value)}
-                                        placeholder="Enter login ID"
+                                        placeholder="Enter staff login username"
                                         style={{ width: '100%', boxSizing: 'border-box' }}
                                         required
                                     />
@@ -851,7 +891,7 @@ function StaffManagement() {
                                         className="form-input"
                                         value={newStaffPin}
                                         onChange={(e) => setNewStaffPin(e.target.value)}
-                                        placeholder="4-digit PIN"
+                                        placeholder="Enter 4-digit PIN"
                                         style={{ width: '100%', boxSizing: 'border-box' }}
                                         required
                                     />
@@ -901,9 +941,12 @@ function StaffManagement() {
                     <div className="card" style={{
                         width: '100%',
                         maxWidth: '460px',
-                        padding: '28px',
+                        maxHeight: '90vh',
+                        overflowY: 'auto',
+                        padding: '24px 20px',
                         borderRadius: '20px',
-                        background: 'var(--bg-card)'
+                        background: 'var(--bg-card)',
+                        boxSizing: 'border-box'
                     }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                             <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)' }}>
@@ -927,7 +970,7 @@ function StaffManagement() {
                                     className="form-input"
                                     value={editName}
                                     onChange={(e) => setEditName(e.target.value)}
-                                    placeholder="Enter employee name"
+                                    placeholder="Enter staff full name"
                                     style={{ width: '100%', boxSizing: 'border-box' }}
                                     required
                                 />
@@ -975,7 +1018,7 @@ function StaffManagement() {
                                         className="form-input"
                                         value={editUsername}
                                         onChange={(e) => setEditUsername(e.target.value)}
-                                        placeholder="Enter login ID"
+                                        placeholder="Enter staff login username"
                                         style={{ width: '100%', boxSizing: 'border-box' }}
                                         required
                                     />
@@ -990,7 +1033,7 @@ function StaffManagement() {
                                         className="form-input"
                                         value={editPin}
                                         onChange={(e) => setEditPin(e.target.value)}
-                                        placeholder="4-digit PIN"
+                                        placeholder="Enter 4-digit PIN"
                                         style={{ width: '100%', boxSizing: 'border-box' }}
                                         required
                                     />

@@ -271,7 +271,7 @@ function CreateInvoice() {
     };
 
     return (
-        <div style={{ maxWidth: '1180px', margin: '0 auto', padding: '24px 20px', boxSizing: 'border-box' }}>
+        <div className="page-container" style={{ maxWidth: '1180px', margin: '0 auto', boxSizing: 'border-box' }}>
             {/* Top Action Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
                 <div>
@@ -283,12 +283,12 @@ function CreateInvoice() {
                     </p>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px' }}>
+                <div style={{ display: 'flex', gap: '10px', width: '100%', maxWidth: '360px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                     <button
                         type="button"
                         onClick={() => navigate('/')}
                         className="btn-cancel"
-                        style={{ padding: '10px 18px', fontSize: '13px' }}
+                        style={{ padding: '10px 18px', fontSize: '13px', flex: 1 }}
                     >
                         Cancel
                     </button>
@@ -297,9 +297,9 @@ function CreateInvoice() {
                         onClick={handleSubmit}
                         disabled={submitting || items.length === 0}
                         className="btn-primary"
-                        style={{ padding: '10px 24px', fontSize: '14px', fontWeight: '800' }}
+                        style={{ padding: '10px 20px', fontSize: '13.5px', fontWeight: '800', flex: 1.5 }}
                     >
-                        {submitting ? 'Creating Bill...' : `🖨️ Create & Print Invoice (${items.length} Items)`}
+                        {submitting ? 'Creating Bill...' : `🖨️ Create (${items.length} Items)`}
                     </button>
                 </div>
             </div>
@@ -326,7 +326,7 @@ function CreateInvoice() {
                             type="text"
                             value={customerName}
                             onChange={(e) => setCustomerName(e.target.value)}
-                            placeholder="e.g. Rajesh Sharma"
+                            placeholder="Enter customer name"
                             required
                             style={{
                                 width: '100%',
@@ -349,7 +349,7 @@ function CreateInvoice() {
                             type="tel"
                             value={customerContact}
                             onChange={(e) => setCustomerContact(e.target.value)}
-                            placeholder="10-digit mobile number"
+                            placeholder="Enter 10-digit mobile number"
                             style={{
                                 width: '100%',
                                 padding: '10px 14px',
@@ -371,7 +371,7 @@ function CreateInvoice() {
                             type="text"
                             value={deliveryAddress}
                             onChange={(e) => setDeliveryAddress(e.target.value)}
-                            placeholder="e.g. Near SBI Bank, Valpoi, Goa"
+                            placeholder="Enter delivery address (optional)"
                             style={{
                                 width: '100%',
                                 padding: '10px 14px',
@@ -680,9 +680,9 @@ function CreateInvoice() {
                 border: '1px solid var(--border-color)',
                 boxShadow: 'var(--shadow-md)'
             }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '28px', alignItems: 'flex-start' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', alignItems: 'flex-start' }}>
                     {/* Left: Live Breakdown */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', borderRight: '1px solid var(--border-color)', paddingRight: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <h4 style={{ fontSize: '15px', fontWeight: '800', margin: '0 0 6px 0', color: 'var(--text-primary)' }}>
                             📊 Tax &amp; Totals Breakdown
                         </h4>
@@ -833,7 +833,7 @@ function CreateInvoice() {
                                 type="number"
                                 value={amountPaid}
                                 onChange={(e) => setAmountPaid(e.target.value)}
-                                placeholder={`Exact ₹${grandTotal.toLocaleString('en-IN')}`}
+                                placeholder="Enter amount collected (₹)"
                                 min="0"
                                 step="0.01"
                                 style={{
@@ -862,7 +862,7 @@ function CreateInvoice() {
                                 type="text"
                                 value={notes}
                                 onChange={(e) => setNotes(e.target.value)}
-                                placeholder="📝 Bill notes / warranty remarks (optional)"
+                                placeholder="Enter bill remarks or warranty notes (optional)"
                                 style={{
                                     width: '100%',
                                     padding: '8px 12px',

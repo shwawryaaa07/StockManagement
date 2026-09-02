@@ -127,7 +127,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="Product name or brand"
+                                placeholder="Enter product name"
                                 required
                                 style={{
                                     width: '100%',
@@ -149,7 +149,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                                 type="text"
                                 value={modelNumber}
                                 onChange={(e) => setModelNumber(e.target.value)}
-                                placeholder="Model number (optional)"
+                                placeholder="Enter model number (optional)"
                                 style={{
                                     width: '100%',
                                     padding: '10px 12px',
@@ -172,7 +172,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                                 type="number"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
-                                placeholder="0.00"
+                                placeholder="Enter unit price"
                                 min="0"
                                 step="0.01"
                                 required
@@ -196,7 +196,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                                 type="number"
                                 value={quantity}
                                 onChange={(e) => setQuantity(e.target.value)}
-                                placeholder="Stock quantity"
+                                placeholder="Enter stock quantity"
                                 min="0"
                                 required
                                 style={{
@@ -245,7 +245,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                                 type="text"
                                 value={customCategory}
                                 onChange={(e) => setCustomCategory(e.target.value)}
-                                placeholder="Enter custom category name"
+                                placeholder="Enter category name"
                                 style={{
                                     width: '100%',
                                     padding: '10px 12px',
@@ -270,7 +270,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                             type="text"
                             value={serialNumbers}
                             onChange={(e) => setSerialNumbers(e.target.value)}
-                            placeholder="Enter serial numbers separated by comma"
+                            placeholder="Enter serial numbers separated by commas (optional)"
                             style={{
                                 width: '100%',
                                 padding: '10px 12px',

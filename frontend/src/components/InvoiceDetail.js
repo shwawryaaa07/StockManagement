@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getInvoice } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { getStoreProfile } from '../services/storeProfile';
+import { getStoreProfile, saveStoreProfile, getUpiPaymentUri } from '../services/storeProfile';
 import { InvoiceDetailSkeleton } from './SkeletonLoader';
 
 function InvoiceDetail() {
@@ -13,9 +13,11 @@ function InvoiceDetail() {
     const toast = useToast();
     const [invoice, setInvoice] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [storeProfile, setStoreProfile] = useState(getStoreProfile);
+    const [storeProfile, setStoreProfile] = useState(() => getStoreProfile(isVisitor));
     const [printMode, setPrintMode] = useState('A4'); // 'A4' or 'THERMAL'
     const [showUpiModal, setShowUpiModal] = useState(false);
+    const [editingUpiInModal, setEditingUpiInModal] = useState(false);
+    const [tempUpiInput, setTempUpiInput] = useState('');
 
     useEffect(() => {
         const handleProfileUpdate = (e) => {
@@ -120,12 +122,28 @@ ${displayShopFooter}`;
 
     const dueAmount = Number(invoice.balanceDue !== undefined ? invoice.balanceDue : (invoice.amountDue || 0));
     const upiPayableAmount = dueAmount > 0 ? dueAmount : Number(invoice.totalAmount || 0);
-    const upiString = `upi://pay?pa=9309736172@upi&pn=${encodeURIComponent(storeProfile.shopName || 'MANISHA ELECTRONICS')}&am=${upiPayableAmount.toFixed(2)}&tn=INV-${invoice.invoiceNumber}&cu=INR`;
+    const upiString = getUpiPaymentUri(storeProfile, upiPayableAmount, invoice.invoiceNumber);
     const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
+
+    const handleSaveQuickUpi = (e) => {
+        e.preventDefault();
+        let clean = tempUpiInput.trim();
+        if (!clean) {
+            toast.warning('Please enter a valid UPI ID or mobile number.');
+            return;
+        }
+        if (!clean.includes('@') && /^\d{10}$/.test(clean)) {
+            clean = `${clean}@upi`;
+        }
+        const updated = saveStoreProfile({ upiId: clean }, isVisitor);
+        setStoreProfile(updated);
+        setEditingUpiInModal(false);
+        toast.success(`UPI Receiver ID updated to: ${clean}`);
+    };
 
     // Dynamic Shop Info based on Role (hides confidential store info in Demo Sandbox)
     const displayShopAddress = isVisitor
-        ? "Sample Tech Complex, Commercial Hub, Panaji - Goa (Demo Sandbox)"
+        ? "Sample Commercial Hub, Panaji - Goa"
         : storeProfile.address;
 
     const displayShopPhone = isVisitor
@@ -133,11 +151,11 @@ ${displayShopFooter}`;
         : "📞 " + storeProfile.phone;
 
     const displayGSTIN = isVisitor
-        ? "30AAAAA0000A1Z5 (Demo)"
+        ? "30AAAAA0000A1Z5"
         : storeProfile.gstin;
 
     const displayShopName = isVisitor
-        ? "MANISHA ELECTRONICS"
+        ? "DEMO STORE"
         : storeProfile.shopName;
 
     return (
@@ -253,7 +271,10 @@ ${displayShopFooter}`;
                         justifyContent: 'center',
                         padding: '16px'
                     }}
-                    onClick={() => setShowUpiModal(false)}
+                    onClick={() => {
+                        setShowUpiModal(false);
+                        setEditingUpiInModal(false);
+                    }}
                 >
                     <div
                         className="upi-qr-card"
@@ -262,7 +283,10 @@ ${displayShopFooter}`;
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                             <div style={{ fontWeight: '800', fontSize: '16px' }}>📱 Scan &amp; Pay via UPI</div>
                             <button
-                                onClick={() => setShowUpiModal(false)}
+                                onClick={() => {
+                                    setShowUpiModal(false);
+                                    setEditingUpiInModal(false);
+                                }}
                                 style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}
                             >
                                 &times;
@@ -281,8 +305,53 @@ ${displayShopFooter}`;
                             ₹{upiPayableAmount.toLocaleString('en-IN')}
                         </div>
                         <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>
-                            Invoice #{invoice.invoiceNumber} &bull; {storeProfile.shopName}
+                            Pay to: <strong>{storeProfile.shopName}</strong> &bull; UPI: <strong>{storeProfile.upiId || 'Not Configured'}</strong>
                         </div>
+
+                        {/* Inline UPI ID Configuration */}
+                        {!editingUpiInModal ? (
+                            <div style={{ marginTop: '10px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setTempUpiInput(storeProfile.upiId || '');
+                                        setEditingUpiInModal(true);
+                                    }}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#2563eb',
+                                        fontSize: '11px',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                        textDecoration: 'underline'
+                                    }}
+                                >
+                                    ⚙️ Change Receiving UPI ID / Mobile Number
+                                </button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSaveQuickUpi} style={{ marginTop: '12px', background: '#f1f5f9', padding: '10px', borderRadius: '8px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#334155', marginBottom: '4px' }}>
+                                    Enter Receiving UPI ID or 10-Digit Mobile:
+                                </label>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                    <input
+                                        type="text"
+                                        value={tempUpiInput}
+                                        onChange={(e) => setTempUpiInput(e.target.value)}
+                                        placeholder="Enter UPI ID or mobile number"
+                                        style={{ flex: 1, padding: '6px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                    />
+                                    <button type="submit" style={{ padding: '6px 10px', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>
+                                        Save
+                                    </button>
+                                    <button type="button" onClick={() => setEditingUpiInModal(false)} style={{ padding: '6px 8px', background: '#e2e8f0', color: '#334155', border: 'none', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' }}>
+                                        ✕
+                                    </button>
+                                </div>
+                            </form>
+                        )}
 
                         <div className="upi-badge-row">
                             <span className="upi-badge">Google Pay</span>

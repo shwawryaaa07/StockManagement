@@ -510,7 +510,7 @@ function Login() {
                                     type="text"
                                     value={staffUsername}
                                     onChange={(e) => setStaffUsername(e.target.value)}
-                                    placeholder="Enter Staff ID"
+                                    placeholder="Enter staff login ID"
                                     required
                                     style={{
                                         width: '100%',
@@ -535,7 +535,7 @@ function Login() {
                                     maxLength={6}
                                     value={staffPin}
                                     onChange={(e) => setStaffPin(e.target.value)}
-                                    placeholder="••••"
+                                    placeholder="Enter 4-digit PIN"
                                     required
                                     style={{
                                         width: '100%',
@@ -599,7 +599,7 @@ function Login() {
                                         type={showOwnerPass ? 'text' : 'password'}
                                         value={ownerPasscode}
                                         onChange={(e) => setOwnerPasscode(e.target.value)}
-                                        placeholder="Enter PIN or Password"
+                                        placeholder="Enter owner master PIN or password"
                                         required
                                         style={{
                                             width: '100%',

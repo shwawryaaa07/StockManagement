@@ -116,7 +116,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                placeholder="Product name"
+                                placeholder="Enter product name"
                                 required
                                 style={{
                                     width: '100%',
@@ -138,7 +138,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                                 type="text"
                                 value={modelNumber}
                                 onChange={(e) => setModelNumber(e.target.value)}
-                                placeholder="Model number (optional)"
+                                placeholder="Enter model number (optional)"
                                 style={{
                                     width: '100%',
                                     padding: '10px 12px',
@@ -161,7 +161,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                                 type="number"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
-                                placeholder="0.00"
+                                placeholder="Enter unit price"
                                 min="0"
                                 step="0.01"
                                 required
@@ -185,7 +185,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                                 type="number"
                                 value={quantity}
                                 onChange={(e) => setQuantity(e.target.value)}
-                                placeholder="Stock quantity"
+                                placeholder="Enter stock quantity"
                                 min="0"
                                 required
                                 style={{
@@ -236,7 +236,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                             type="text"
                             value={serialNumbers}
                             onChange={(e) => setSerialNumbers(e.target.value)}
-                            placeholder="Enter serial numbers separated by comma"
+                            placeholder="Enter serial numbers separated by commas (optional)"
                             style={{
                                 width: '100%',
                                 padding: '10px 12px',

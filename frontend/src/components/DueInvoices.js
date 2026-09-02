@@ -2,23 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDueInvoices, settleDueInvoice } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { getStoreProfile, saveStoreProfile, getUpiPaymentUri } from '../services/storeProfile';
+import { useAuth } from '../context/AuthContext';
 import { TableSkeleton } from './SkeletonLoader';
 
 function DueInvoices() {
+    const { isVisitor } = useAuth();
     const [invoices, setInvoices] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedInvoice, setSelectedInvoice] = useState(null);
     const [settleAmount, setSettleAmount] = useState('');
-    const [settleMethod, setSettleMethod] = useState('CASH');
+    const [settleMethod, setSettleMethod] = useState('UPI');
     const [settleNotes, setSettleNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
     const [qrModalInv, setQrModalInv] = useState(null);
+    const [storeProfile, setStoreProfile] = useState(() => getStoreProfile(isVisitor));
+    const [editingUpiInModal, setEditingUpiInModal] = useState(false);
+    const [tempUpiInput, setTempUpiInput] = useState('');
+
     const navigate = useNavigate();
     const toast = useToast();
 
     useEffect(() => {
         loadDueInvoices().catch(console.error);
+        const handleProfileUpdate = (e) => {
+            if (e.detail) setStoreProfile(e.detail);
+        };
+        window.addEventListener('store-profile-updated', handleProfileUpdate);
+        return () => window.removeEventListener('store-profile-updated', handleProfileUpdate);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -34,6 +46,28 @@ function DueInvoices() {
         }
     };
 
+    const getDueAmount = (inv) => {
+        if (inv.balanceDue !== undefined && inv.balanceDue !== null) return Number(inv.balanceDue);
+        if (inv.amountDue !== undefined && inv.amountDue !== null) return Number(inv.amountDue);
+        return 0;
+    };
+
+    const handleSaveQuickUpi = (e) => {
+        e.preventDefault();
+        let clean = tempUpiInput.trim();
+        if (!clean) {
+            toast.warning('Please enter a valid UPI ID or mobile number.');
+            return;
+        }
+        if (!clean.includes('@') && /^\d{10}$/.test(clean)) {
+            clean = `${clean}@upi`;
+        }
+        const updated = saveStoreProfile({ upiId: clean }, isVisitor);
+        setStoreProfile(updated);
+        setEditingUpiInModal(false);
+        toast.success(`UPI Receiver ID updated to: ${clean}`);
+    };
+
     if (loading) {
         return (
             <div className="page-container" style={{ maxWidth: '1280px', margin: '0 auto' }}>
@@ -42,12 +76,6 @@ function DueInvoices() {
             </div>
         );
     }
-
-    const getDueAmount = (inv) => {
-        if (inv.balanceDue !== undefined && inv.balanceDue !== null) return Number(inv.balanceDue);
-        if (inv.amountDue !== undefined && inv.amountDue !== null) return Number(inv.amountDue);
-        return Math.max(0, Number(inv.totalAmount || 0) - Number(inv.amountPaid || 0));
-    };
 
     const totalDueReceivables = invoices.reduce((acc, inv) => acc + getDueAmount(inv), 0);
 
@@ -282,18 +310,21 @@ function DueInvoices() {
                         justifyContent: 'center',
                         padding: '16px'
                     }}
-                    onClick={() => setQrModalInv(null)}
+                    onClick={() => {
+                        setQrModalInv(null);
+                        setEditingUpiInModal(false);
+                    }}
                 >
                     <div className="upi-qr-card" onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                             <div style={{ fontWeight: '800', fontSize: '16px' }}>📱 Customer UPI Payment</div>
-                            <button onClick={() => setQrModalInv(null)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}>
+                            <button onClick={() => { setQrModalInv(null); setEditingUpiInModal(false); }} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}>
                                 &times;
                             </button>
                         </div>
                         <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', display: 'inline-block', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
                             <img
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=9309736172@upi&pn=MANISHA+ELECTRONICS&am=${getDueAmount(qrModalInv).toFixed(2)}&tn=DUE-${qrModalInv.invoiceNumber}&cu=INR`)}`}
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(getUpiPaymentUri(storeProfile, getDueAmount(qrModalInv), qrModalInv.invoiceNumber))}`}
                                 alt="UPI Payment QR Code"
                                 style={{ width: '210px', height: '210px', display: 'block' }}
                             />
@@ -302,8 +333,54 @@ function DueInvoices() {
                             ₹{getDueAmount(qrModalInv).toLocaleString('en-IN')}
                         </div>
                         <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>
-                            Customer: {qrModalInv.customerName} &bull; #{qrModalInv.invoiceNumber}
+                            Pay to: <strong>{storeProfile.shopName}</strong> &bull; UPI: <strong>{storeProfile.upiId || 'Not Configured'}</strong>
                         </div>
+
+                        {/* Inline UPI ID Configuration */}
+                        {!editingUpiInModal ? (
+                            <div style={{ marginTop: '10px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setTempUpiInput(storeProfile.upiId || '');
+                                        setEditingUpiInModal(true);
+                                    }}
+                                    style={{
+                                        background: 'none',
+                                        border: 'none',
+                                        color: '#2563eb',
+                                        fontSize: '11px',
+                                        fontWeight: '700',
+                                        cursor: 'pointer',
+                                        textDecoration: 'underline'
+                                    }}
+                                >
+                                    ⚙️ Change Receiving UPI ID / Mobile Number
+                                </button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSaveQuickUpi} style={{ marginTop: '12px', background: '#f1f5f9', padding: '10px', borderRadius: '8px' }}>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#334155', marginBottom: '4px' }}>
+                                    Enter Receiving UPI ID or 10-Digit Mobile:
+                                </label>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                    <input
+                                        type="text"
+                                        value={tempUpiInput}
+                                        onChange={(e) => setTempUpiInput(e.target.value)}
+                                        placeholder="Enter UPI ID or mobile number"
+                                        style={{ flex: 1, padding: '6px 8px', fontSize: '12px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                                    />
+                                    <button type="submit" style={{ padding: '6px 10px', background: '#059669', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '11px', fontWeight: '700', cursor: 'pointer' }}>
+                                        Save
+                                    </button>
+                                    <button type="button" onClick={() => setEditingUpiInModal(false)} style={{ padding: '6px 8px', background: '#e2e8f0', color: '#334155', border: 'none', borderRadius: '6px', fontSize: '11px', cursor: 'pointer' }}>
+                                        ✕
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
                         <div className="upi-badge-row">
                             <span className="upi-badge">Google Pay</span>
                             <span className="upi-badge">PhonePe</span>
@@ -374,7 +451,7 @@ function DueInvoices() {
                                     step="0.01"
                                     value={settleAmount}
                                     onChange={(e) => setSettleAmount(e.target.value)}
-                                    placeholder="Enter amount"
+                                    placeholder="Enter settlement amount"
                                     required
                                     style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '15px', fontWeight: '700' }}
                                 />
@@ -389,10 +466,9 @@ function DueInvoices() {
                                     onChange={(e) => setSettleMethod(e.target.value)}
                                     style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 >
+                                    <option value="UPI">📱 UPI / QR</option>
                                     <option value="CASH">💵 Cash</option>
-                                    <option value="UPI">📱 UPI / GPay</option>
                                     <option value="CARD">💳 Card</option>
-                                    <option value="BANK_TRANSFER">🏦 Bank Transfer</option>
                                 </select>
                             </div>
 
@@ -404,7 +480,7 @@ function DueInvoices() {
                                     type="text"
                                     value={settleNotes}
                                     onChange={(e) => setSettleNotes(e.target.value)}
-                                    placeholder="Settlement notes or transaction ref"
+                                    placeholder="Enter settlement remarks or transaction reference"
                                     style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
                             </div>

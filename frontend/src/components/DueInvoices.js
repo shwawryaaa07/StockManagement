@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDueInvoices, settleDueInvoice } from '../services/api';
+import { useToast } from '../context/ToastContext';
+import { TableSkeleton } from './SkeletonLoader';
 
 function DueInvoices() {
     const [invoices, setInvoices] = useState([]);
@@ -11,22 +13,35 @@ function DueInvoices() {
     const [settleMethod, setSettleMethod] = useState('CASH');
     const [settleNotes, setSettleNotes] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [qrModalInv, setQrModalInv] = useState(null);
     const navigate = useNavigate();
+    const toast = useToast();
 
     useEffect(() => {
         loadDueInvoices().catch(console.error);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadDueInvoices = async () => {
         try {
             const response = await getDueInvoices();
             setInvoices(response.data || []);
-            setLoading(false);
         } catch (error) {
             console.error('Error loading due invoices:', error);
+            toast.error('Failed to load due invoices.');
+        } finally {
             setLoading(false);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="page-container" style={{ maxWidth: '1280px', margin: '0 auto' }}>
+                <div style={{ height: '40px', width: '300px' }} className="skeleton skeleton-title" />
+                <TableSkeleton rows={6} cols={5} />
+            </div>
+        );
+    }
 
     const getDueAmount = (inv) => {
         if (inv.balanceDue !== undefined && inv.balanceDue !== null) return Number(inv.balanceDue);
@@ -64,12 +79,12 @@ function DueInvoices() {
         const currentDue = getDueAmount(selectedInvoice);
 
         if (isNaN(amount) || amount <= 0) {
-            alert('⚠️ Please enter a valid payment amount');
+            toast.warning('Please enter a valid settlement amount');
             return;
         }
 
         if (amount > currentDue) {
-            alert(`⚠️ Settlement amount cannot exceed outstanding due of ₹${currentDue.toLocaleString('en-IN')}`);
+            toast.error(`Settlement cannot exceed outstanding due of ₹${currentDue.toLocaleString('en-IN')}`);
             return;
         }
 
@@ -81,24 +96,15 @@ function DueInvoices() {
                 notes: settleNotes
             });
             handleCloseSettleModal();
+            toast.success(`Settled ₹${amount.toLocaleString('en-IN')} for ${selectedInvoice.customerName}!`);
             await loadDueInvoices();
-            alert('✅ Payment settled successfully!');
         } catch (error) {
             console.error('Error settling invoice:', error);
-            alert('❌ Failed to record payment settlement.');
+            toast.error('Failed to record payment settlement.');
         } finally {
             setSubmitting(false);
         }
     };
-
-    if (loading) {
-        return (
-            <div className="page-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
-                <div style={{ fontSize: '32px', marginBottom: '12px' }}>🟡</div>
-                <div style={{ fontWeight: '700', fontSize: '16px', color: 'var(--text-primary)' }}>Loading Due Invoices Ledger...</div>
-            </div>
-        );
-    }
 
     return (
         <div className="page-container">
@@ -203,6 +209,22 @@ function DueInvoices() {
                                             <td style={{ padding: '14px 18px', textAlign: 'center' }}>
                                                 <div style={{ display: 'inline-flex', gap: '8px' }}>
                                                     <button
+                                                        onClick={() => setQrModalInv(inv)}
+                                                        style={{
+                                                            padding: '8px 12px',
+                                                            borderRadius: '8px',
+                                                            border: '1px solid #bfdbfe',
+                                                            background: '#eff6ff',
+                                                            color: '#1d4ed8',
+                                                            fontSize: '12px',
+                                                            fontWeight: '700',
+                                                            cursor: 'pointer'
+                                                        }}
+                                                        title="Show UPI QR Code to Customer"
+                                                    >
+                                                        📱 QR
+                                                    </button>
+                                                    <button
                                                         onClick={() => handleOpenSettleModal(inv)}
                                                         style={{
                                                             padding: '8px 16px',
@@ -246,6 +268,51 @@ function DueInvoices() {
                     </table>
                 </div>
             </div>
+
+            {/* UPI QR Modal for on-the-spot due collection */}
+            {qrModalInv && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                        zIndex: 9999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '16px'
+                    }}
+                    onClick={() => setQrModalInv(null)}
+                >
+                    <div className="upi-qr-card" onClick={(e) => e.stopPropagation()}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                            <div style={{ fontWeight: '800', fontSize: '16px' }}>📱 Customer UPI Payment</div>
+                            <button onClick={() => setQrModalInv(null)} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}>
+                                &times;
+                            </button>
+                        </div>
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', display: 'inline-block', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
+                            <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(`upi://pay?pa=9309736172@upi&pn=MANISHA+ELECTRONICS&am=${getDueAmount(qrModalInv).toFixed(2)}&tn=DUE-${qrModalInv.invoiceNumber}&cu=INR`)}`}
+                                alt="UPI Payment QR Code"
+                                style={{ width: '210px', height: '210px', display: 'block' }}
+                            />
+                        </div>
+                        <div style={{ fontSize: '22px', fontWeight: '900', color: '#ef4444', marginBottom: '4px' }}>
+                            ₹{getDueAmount(qrModalInv).toLocaleString('en-IN')}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>
+                            Customer: {qrModalInv.customerName} &bull; #{qrModalInv.invoiceNumber}
+                        </div>
+                        <div className="upi-badge-row">
+                            <span className="upi-badge">Google Pay</span>
+                            <span className="upi-badge">PhonePe</span>
+                            <span className="upi-badge">Paytm</span>
+                            <span className="upi-badge">BHIM UPI</span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Quick Settle Modal */}
             {selectedInvoice && (

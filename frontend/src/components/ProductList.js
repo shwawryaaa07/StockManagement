@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getProducts, deleteProduct } from '../services/api';
+import { useToast } from '../context/ToastContext';
+import { TableSkeleton } from './SkeletonLoader';
 import AddProduct from './AddProduct';
 import EditProduct from './EditProduct';
 import DeleteModal from './DeleteModal';
@@ -14,18 +16,21 @@ function ProductList() {
 
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('ALL');
+    const toast = useToast();
 
     useEffect(() => {
         loadProducts().catch(console.error);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadProducts = async () => {
         try {
             const response = await getProducts();
             setProducts(response.data || []);
-            setLoading(false);
         } catch (error) {
             console.error('Error loading products:', error);
+            toast.error('Failed to load product catalog.');
+        } finally {
             setLoading(false);
         }
     };
@@ -40,13 +45,14 @@ function ProductList() {
             try {
                 await deleteProduct(selectedProduct.id);
                 setShowDeleteModal(false);
+                toast.success(`Product "${selectedProduct.name}" deleted.`);
                 setSelectedProduct(null);
                 await loadProducts();
             } catch (error) {
                 const apiErr = typeof error.response?.data === 'string'
                     ? error.response.data
                     : (error.response?.data?.message || error.message);
-                alert('❌ Error deleting product: ' + apiErr);
+                toast.error('Error deleting product: ' + apiErr);
             }
         }
     };
@@ -66,8 +72,8 @@ function ProductList() {
 
     if (loading) {
         return (
-            <div style={{ padding: '40px 20px', maxWidth: '1350px', margin: '0 auto' }}>
-                <h2 style={{ color: 'var(--text-primary)' }}>Loading products catalog...</h2>
+            <div style={{ maxWidth: '1350px', margin: '0 auto', padding: '24px 20px' }}>
+                <TableSkeleton rows={7} cols={6} />
             </div>
         );
     }

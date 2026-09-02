@@ -12,6 +12,7 @@ import StaffManagement from './components/StaffManagement';
 import FloatingButton from './components/FloatingButton';
 import Login from './components/Login';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
 
 function AppContent() {
     const { isAuthenticated, loading } = useAuth();
@@ -62,9 +63,11 @@ function AppContent() {
 function App() {
     return (
         <Router>
-            <AuthProvider>
-                <AppContent />
-            </AuthProvider>
+            <ToastProvider>
+                <AuthProvider>
+                    <AppContent />
+                </AuthProvider>
+            </ToastProvider>
         </Router>
     );
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { updateProduct } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 function EditProduct({ product, onClose, onRefresh }) {
     const [name, setName] = useState(product?.name !== undefined ? String(product.name) : '');
@@ -11,6 +12,7 @@ function EditProduct({ product, onClose, onRefresh }) {
 
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const toast = useToast();
 
     const commonCategories = ['TV', 'AC', 'Washing Machine', 'Refrigerator', 'Microwave', 'Mobile', 'Audio', 'Home Appliance', 'Other'];
 
@@ -18,7 +20,7 @@ function EditProduct({ product, onClose, onRefresh }) {
         e.preventDefault();
 
         if (!name.trim() || !price || !quantity) {
-            setMessage('⚠️ Please fill in product name, price, and stock quantity.');
+            toast.warning('Please fill in product name, price, and stock quantity.');
             return;
         }
 
@@ -36,6 +38,7 @@ function EditProduct({ product, onClose, onRefresh }) {
 
         try {
             await updateProduct(product.id, productData);
+            toast.success(`Updated "${productData.name}" successfully!`);
             if (typeof onRefresh === 'function') {
                 onRefresh();
             }
@@ -43,7 +46,9 @@ function EditProduct({ product, onClose, onRefresh }) {
         } catch (error) {
             const apiMessage = error?.response?.data?.message;
             const fallbackMessage = error instanceof Error ? error.message : String(error);
-            setMessage('❌ Error updating product: ' + (apiMessage || fallbackMessage));
+            const err = apiMessage || fallbackMessage;
+            setMessage('❌ Error updating product: ' + err);
+            toast.error('Failed to update product: ' + err);
         }
 
         setLoading(false);

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDashboard, getInvoices, getProducts } from '../services/api';
+import { CardSkeleton, TableSkeleton } from './SkeletonLoader';
 
 function Dashboard() {
     const navigate = useNavigate();
@@ -63,6 +64,19 @@ function Dashboard() {
         if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
         return name.slice(0, 2).toUpperCase();
     };
+
+    if (loading) {
+        return (
+            <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div style={{ height: '40px' }} className="skeleton skeleton-title" />
+                <CardSkeleton count={4} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <TableSkeleton rows={5} cols={3} />
+                    <TableSkeleton rows={5} cols={3} />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="page-container">

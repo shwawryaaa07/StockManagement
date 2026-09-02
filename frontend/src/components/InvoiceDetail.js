@@ -2,16 +2,20 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getInvoice } from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { getStoreProfile } from '../services/storeProfile';
+import { InvoiceDetailSkeleton } from './SkeletonLoader';
 
 function InvoiceDetail() {
     const { id } = useParams();
     const navigate = useNavigate();
     const { isVisitor } = useAuth();
+    const toast = useToast();
     const [invoice, setInvoice] = useState(null);
     const [loading, setLoading] = useState(true);
     const [storeProfile, setStoreProfile] = useState(getStoreProfile);
     const [printMode, setPrintMode] = useState('A4'); // 'A4' or 'THERMAL'
+    const [showUpiModal, setShowUpiModal] = useState(false);
 
     useEffect(() => {
         const handleProfileUpdate = (e) => {
@@ -32,6 +36,7 @@ function InvoiceDetail() {
             setInvoice(response.data);
         } catch (error) {
             console.error('Error loading invoice:', error);
+            toast.error('Failed to load invoice details.');
         } finally {
             setLoading(false);
         }
@@ -90,13 +95,13 @@ ${displayShopFooter}`;
         const encoded = encodeURIComponent(message);
         const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
         window.open(url, '_blank');
+        toast.success('Opening WhatsApp to share bill...');
     };
 
     if (loading) {
         return (
-            <div className="page-container" style={{ textAlign: 'center', padding: '60px 20px' }}>
-                <div style={{ fontSize: '32px', marginBottom: '12px' }}>🧾</div>
-                <div style={{ fontWeight: '700', fontSize: '16px', color: 'var(--text-primary)' }}>Loading Tax Invoice...</div>
+            <div className="page-container" style={{ maxWidth: '1080px', margin: '0 auto' }}>
+                <InvoiceDetailSkeleton />
             </div>
         );
     }
@@ -112,6 +117,11 @@ ${displayShopFooter}`;
             </div>
         );
     }
+
+    const dueAmount = Number(invoice.balanceDue !== undefined ? invoice.balanceDue : (invoice.amountDue || 0));
+    const upiPayableAmount = dueAmount > 0 ? dueAmount : Number(invoice.totalAmount || 0);
+    const upiString = `upi://pay?pa=9309736172@upi&pn=${encodeURIComponent(storeProfile.shopName || 'MANISHA ELECTRONICS')}&am=${upiPayableAmount.toFixed(2)}&tn=INV-${invoice.invoiceNumber}&cu=INR`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
 
     // Dynamic Shop Info based on Role (hides confidential store info in Demo Sandbox)
     const displayShopAddress = isVisitor
@@ -194,12 +204,31 @@ ${displayShopFooter}`;
                     </div>
 
                     <button
+                        onClick={() => setShowUpiModal(true)}
+                        style={{
+                            background: '#eff6ff',
+                            color: '#1d4ed8',
+                            border: '1px solid #bfdbfe',
+                            padding: '9px 16px',
+                            borderRadius: 'var(--radius-sm)',
+                            fontSize: '13px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px'
+                        }}
+                    >
+                        📱 Show UPI QR
+                    </button>
+
+                    <button
                         onClick={handleWhatsAppShare}
                         className="btn-whatsapp"
                         style={{ padding: '9px 16px', fontSize: '13px' }}
                         title="Share tax invoice receipt on WhatsApp"
                     >
-                        📲 Share on WhatsApp
+                        📲 Share WhatsApp
                     </button>
                     <button
                         onClick={handlePrint}
@@ -210,6 +239,60 @@ ${displayShopFooter}`;
                     </button>
                 </div>
             </div>
+
+            {/* UPI QR CODE MODAL */}
+            {showUpiModal && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        inset: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                        zIndex: 9999,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '16px'
+                    }}
+                    onClick={() => setShowUpiModal(false)}
+                >
+                    <div
+                        className="upi-qr-card"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                            <div style={{ fontWeight: '800', fontSize: '16px' }}>📱 Scan &amp; Pay via UPI</div>
+                            <button
+                                onClick={() => setShowUpiModal(false)}
+                                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}
+                            >
+                                &times;
+                            </button>
+                        </div>
+
+                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', display: 'inline-block', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
+                            <img
+                                src={qrUrl}
+                                alt="UPI Payment QR Code"
+                                style={{ width: '210px', height: '210px', display: 'block' }}
+                            />
+                        </div>
+
+                        <div style={{ fontSize: '20px', fontWeight: '900', color: '#0f172a', marginBottom: '4px' }}>
+                            ₹{upiPayableAmount.toLocaleString('en-IN')}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#64748b', fontWeight: '600' }}>
+                            Invoice #{invoice.invoiceNumber} &bull; {storeProfile.shopName}
+                        </div>
+
+                        <div className="upi-badge-row">
+                            <span className="upi-badge">Google Pay</span>
+                            <span className="upi-badge">PhonePe</span>
+                            <span className="upi-badge">Paytm</span>
+                            <span className="upi-badge">BHIM UPI</span>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* HIGH-CONTRAST DOCUMENT CANVAS PREVIEW STAGE */}
             <div className="invoice-preview-stage" style={{

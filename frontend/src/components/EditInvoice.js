@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getInvoice, getProducts, updateInvoice } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 function EditInvoice() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const toast = useToast();
 
     // Data lists
     const [products, setProducts] = useState([]);
@@ -86,7 +88,7 @@ function EditInvoice() {
             setLoading(false);
         } catch (error) {
             console.error('Error loading invoice data:', error);
-            alert('❌ Error loading invoice details: ' + (error.response?.data?.message || error.message));
+            toast.error('Error loading invoice details: ' + (error.response?.data?.message || error.message));
             setLoading(false);
         }
     };
@@ -109,7 +111,7 @@ function EditInvoice() {
         if (existingIndex > -1) {
             const currentQty = items[existingIndex].quantity;
             if (product.quantity && currentQty >= product.quantity) {
-                alert(`⚠️ Only ${product.quantity} units available in stock!`);
+                toast.warning(`Only ${product.quantity} units available in stock!`);
                 return;
             }
             const updated = [...items];
@@ -117,7 +119,7 @@ function EditInvoice() {
             setItems(updated);
         } else {
             if (product.quantity && product.quantity < 1) {
-                alert(`⚠️ "${product.name}" is currently OUT OF STOCK!`);
+                toast.error(`"${product.name}" is currently OUT OF STOCK!`);
                 return;
             }
             const serialsList = (product.serialNumbers || '')
@@ -154,7 +156,7 @@ function EditInvoice() {
         }
 
         if (item.product?.quantity && newQty > item.product.quantity) {
-            alert(`⚠️ Only ${item.product.quantity} units available in stock!`);
+            toast.warning(`Only ${item.product.quantity} units available in stock!`);
             return;
         }
 
@@ -170,7 +172,7 @@ function EditInvoice() {
         if (isNaN(parsed) || parsed < 1) return;
 
         if (item.product?.quantity && parsed > item.product.quantity) {
-            alert(`⚠️ Only ${item.product.quantity} units available in stock!`);
+            toast.warning(`Only ${item.product.quantity} units available in stock!`);
             return;
         }
 
@@ -199,18 +201,18 @@ function EditInvoice() {
         e.preventDefault();
 
         if (!customerName.trim()) {
-            alert('⚠️ Please enter customer name');
+            toast.warning('Please enter customer name');
             return;
         }
 
         const cleanedContact = customerContact.trim();
         if (cleanedContact && cleanedContact.length !== 10) {
-            alert('⚠️ Contact number must be exactly 10 digits');
+            toast.warning('Contact number must be exactly 10 digits');
             return;
         }
 
         if (items.length === 0) {
-            alert('⚠️ Please add at least one product to the invoice');
+            toast.warning('Please add at least one product to the invoice');
             return;
         }
 
@@ -237,13 +239,13 @@ function EditInvoice() {
 
         try {
             await updateInvoice(id, payload);
-            alert('✅ Invoice updated successfully!');
+            toast.success('Invoice updated successfully!');
             navigate(`/invoice/${id}`);
         } catch (error) {
             console.error('Error updating invoice:', error);
             const apiMessage = error?.response?.data?.message;
             const fallbackMessage = error instanceof Error ? error.message : String(error);
-            alert('❌ Error saving invoice: ' + (apiMessage || fallbackMessage));
+            toast.error('Error saving invoice: ' + (apiMessage || fallbackMessage));
         }
 
         setSaving(false);

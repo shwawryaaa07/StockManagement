@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { createProduct } from '../services/api';
+import { useToast } from '../context/ToastContext';
 
 function AddProduct({ onRefresh, isOpen, onClose }) {
     const [name, setName] = useState('');
@@ -11,6 +12,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
     const [serialNumbers, setSerialNumbers] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+    const toast = useToast();
 
     if (!isOpen) return null;
 
@@ -20,7 +22,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
         e.preventDefault();
 
         if (!name.trim() || !price || !quantity) {
-            setMessage('⚠️ Please fill in product name, price, and stock quantity.');
+            toast.warning('Please fill in product name, price, and stock quantity.');
             return;
         }
 
@@ -40,6 +42,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
 
         try {
             await createProduct(productData);
+            toast.success(`Product "${productData.name}" added to inventory!`);
             setName('');
             setModelNumber('');
             setPrice('');
@@ -54,7 +57,9 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
         } catch (error) {
             const apiMessage = error?.response?.data?.message;
             const fallbackMessage = error instanceof Error ? error.message : String(error);
-            setMessage('❌ Error adding product: ' + (apiMessage || fallbackMessage));
+            const err = apiMessage || fallbackMessage;
+            setMessage('❌ Error adding product: ' + err);
+            toast.error('Failed to add product: ' + err);
         }
 
         setLoading(false);

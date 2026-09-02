@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import api from '../services/api';
 import { getStoreProfile, saveStoreProfile } from '../services/storeProfile';
 
@@ -15,6 +16,7 @@ const DEFAULT_PROD_STAFF = [
 
 function StaffManagement() {
     const { isVisitor } = useAuth();
+    const toast = useToast();
     
     // Store profile state (Synced across components)
     const [storeProfile, setStoreProfile] = useState(() => getStoreProfile(isVisitor));
@@ -115,7 +117,7 @@ function StaffManagement() {
         if (!isVisitor) {
             api.post('/staff/store-profile', updated).catch(() => { });
         }
-        alert(`✅ Store Profile for "${updated.shopName}" updated!`);
+        toast.success(`Store Profile for "${updated.shopName}" updated!`);
     };
 
     // Handle Owner PIN Update
@@ -142,6 +144,7 @@ function StaffManagement() {
                 return;
             }
             setPinSuccessMsg('✅ Demo Master PIN updated in-memory for this session!');
+            toast.success('Owner Master PIN successfully updated!');
             setCurrentPin('');
             setNewPin('');
             setConfirmPin('');
@@ -174,6 +177,7 @@ function StaffManagement() {
         } catch (err) { }
 
         setPinSuccessMsg(`✅ Owner Master PIN successfully updated!`);
+        toast.success('Owner Master PIN successfully updated!');
         setCurrentPin('');
         setNewPin('');
         setConfirmPin('');
@@ -246,7 +250,7 @@ function StaffManagement() {
         }
 
         setEditingStaff(null);
-        alert(`✅ Staff profile for ${cleanName} updated!`);
+        toast.success(`Staff profile for ${cleanName} updated!`);
     };
 
     // Add New Staff
@@ -300,7 +304,7 @@ function StaffManagement() {
         setNewStaffRole('Cashier');
         setNewStaffUsername('');
         setNewStaffPin('');
-        alert(`✅ New Staff Profile created for ${cleanName}! Login ID: ${cleanUsername}`);
+        toast.success(`New Staff Profile created for ${cleanName}!`);
     };
 
     const toggleStaffStatus = async (id) => {

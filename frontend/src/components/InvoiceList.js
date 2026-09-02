@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getInvoices, deleteInvoice } from '../services/api';
+import { useToast } from '../context/ToastContext';
+import { TableSkeleton } from './SkeletonLoader';
 import DeleteModal from './DeleteModal';
 
 function InvoiceList() {
@@ -11,6 +13,7 @@ function InvoiceList() {
     const [statusFilter, setStatusFilter] = useState('ALL');
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [selectedInvoice, setSelectedInvoice] = useState(null);
+    const toast = useToast();
 
     // Format date to DD/MM/YYYY
     const formatDate = (dateStr) => {
@@ -31,15 +34,17 @@ function InvoiceList() {
 
     useEffect(() => {
         loadInvoices().catch(console.error);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const loadInvoices = async () => {
         try {
             const response = await getInvoices();
             setInvoices(response.data || []);
-            setLoading(false);
         } catch (error) {
             console.error('Error loading invoices:', error);
+            toast.error('Failed to load invoices.');
+        } finally {
             setLoading(false);
         }
     };
@@ -54,12 +59,13 @@ function InvoiceList() {
             try {
                 await deleteInvoice(selectedInvoice.id);
                 setShowDeleteModal(false);
+                toast.success(`Invoice #${selectedInvoice.invoiceNumber} deleted and stock restored.`);
                 setSelectedInvoice(null);
                 await loadInvoices();
             } catch (error) {
                 console.error('Error deleting invoice:', error);
                 const message = error?.response?.data?.message || error.message;
-                alert('❌ Error deleting invoice: ' + message);
+                toast.error('Error deleting invoice: ' + message);
             }
         }
     };
@@ -87,8 +93,8 @@ function InvoiceList() {
 
     if (loading) {
         return (
-            <div style={{ padding: '40px 20px', maxWidth: '1350px', margin: '0 auto' }}>
-                <h2 style={{ color: 'var(--text-primary)' }}>Loading all invoices...</h2>
+            <div style={{ maxWidth: '1350px', margin: '0 auto', padding: '24px 20px' }}>
+                <TableSkeleton rows={7} cols={6} />
             </div>
         );
     }

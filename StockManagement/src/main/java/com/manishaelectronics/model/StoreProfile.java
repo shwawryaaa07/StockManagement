@@ -21,13 +21,17 @@ public class StoreProfile {
 
     public StoreProfile() {}
 
+    public StoreProfile(String shopName, String ownerName, String gstin, String phone, String address) {
+        this(shopName, ownerName, gstin, phone, address, "9309736172@upi");
+    }
+
     public StoreProfile(String shopName, String ownerName, String gstin, String phone, String address, String upiId) {
         this.shopName = shopName;
         this.ownerName = ownerName;
         this.gstin = gstin;
         this.phone = phone;
         this.address = address;
-        this.upiId = upiId;
+        this.upiId = upiId != null ? upiId : "9309736172@upi";
     }
 
     public Long getId() { return id; }

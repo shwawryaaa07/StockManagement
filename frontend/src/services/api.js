@@ -133,9 +133,10 @@ export const loginAsVisitor = async () => {
 };
 
 export const verifyAuthToken = async (token) => {
-    if (token && (token.startsWith('mock_') || token.startsWith('owner_jwt_') || token.startsWith('staff_jwt_') || token.startsWith('visitor_jwt_'))) {
-        const isOwner = token.startsWith('owner_');
-        const isStaff = token.startsWith('staff_');
+    const activeToken = token || localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+    if (activeToken && (activeToken.startsWith('mock_') || activeToken.startsWith('owner_jwt_') || activeToken.startsWith('staff_jwt_') || activeToken.startsWith('visitor_jwt_'))) {
+        const isOwner = activeToken.startsWith('owner_');
+        const isStaff = activeToken.startsWith('staff_');
         return Promise.resolve({
             data: {
                 valid: true,
@@ -146,7 +147,7 @@ export const verifyAuthToken = async (token) => {
             }
         });
     }
-    return api.get('/auth/verify', { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({
+    return api.get('/auth/verify', { headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {} }).catch(() => ({
         data: { valid: true, role: 'OWNER', username: 'Ramesh Naik (Owner)', tenantType: 'PROD', shopName: 'MANISHA ELECTRONICS' }
     }));
 };

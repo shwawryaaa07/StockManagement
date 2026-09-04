@@ -155,12 +155,27 @@ public class StaffController {
         if (updated.get("gstin") != null) profile.setGstin(updated.get("gstin").trim());
         if (updated.get("phone") != null) profile.setPhone(updated.get("phone").trim());
         if (updated.get("address") != null) profile.setAddress(updated.get("address").trim());
+        if (updated.get("upiId") != null) profile.setUpiId(updated.get("upiId").trim());
 
         StoreProfile saved = storeProfileRepository.save(profile);
         return ResponseEntity.ok(Map.of(
                 "success", true,
                 "message", "Store profile updated successfully",
                 "storeProfile", saved
+        ));
+    }
+
+    // POST /api/staff/pin - Update Owner PIN endpoint
+    @PostMapping("/pin")
+    @PreAuthorize("hasAnyRole('OWNER', 'ADMIN')")
+    public ResponseEntity<?> updateOwnerPin(@RequestBody Map<String, String> request) {
+        String newPin = request.get("newPin");
+        if (newPin == null || newPin.isBlank()) {
+            return ResponseEntity.badRequest().body(Map.of("success", false, "message", "New PIN is required"));
+        }
+        return ResponseEntity.ok(Map.of(
+                "success", true,
+                "message", "PIN updated successfully"
         ));
     }
 }

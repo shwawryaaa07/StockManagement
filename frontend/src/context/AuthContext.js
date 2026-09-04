@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
         if (token) {
-            verifyAuthToken()
+            verifyAuthToken(token)
                 .then(res => {
                     if (res.data && res.data.valid) {
                         setIsAuthenticated(true);

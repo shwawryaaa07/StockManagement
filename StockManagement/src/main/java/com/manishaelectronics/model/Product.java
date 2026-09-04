@@ -12,71 +12,80 @@ import java.math.BigDecimal;
 @Table(name = "products")
 public class Product {
 
- @Id
- @GeneratedValue(strategy = GenerationType.IDENTITY)
- private Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
- @NotBlank(message = "Product name is required")
- @Column(nullable = false)
- private String name;
+	@NotBlank(message = "Product name is required")
+	@Column(nullable = false)
+	private String name;
 
- @NotNull(message = "Price is required")
- @Positive(message = "Price must be greater than 0")
- @Column(nullable = false)
- private BigDecimal price;
+	@NotNull(message = "Price is required")
+	@Positive(message = "Price must be greater than 0")
+	@Column(nullable = false)
+	private BigDecimal price;
 
- @NotNull(message = "Quantity is required")
- @Min(value = 0, message = "Quantity cannot be negative")
- @Column(nullable = false)
- private Integer quantity;
+	@NotNull(message = "Quantity is required")
+	@Min(value = 0, message = "Quantity cannot be negative")
+	@Column(nullable = false)
+	private Integer quantity;
 
- private String category;
- private String modelNumber;
- private String serialNumbers;
+	@Column(name = "low_stock_threshold")
+	private Integer lowStockThreshold = 2;
 
- @Column(name = "active")
- private Boolean active = true;
+	private String category;
+	private String modelNumber;
+	private String serialNumbers;
 
- // ============================================================
- // CONSTRUCTORS
- // ============================================================
+	@Column(name = "active")
+	private Boolean active = true;
 
- public Product() {
-  this.active = true;
- }
+	// ============================================================
+	// CONSTRUCTORS
+	// ============================================================
 
- public Product(String name, BigDecimal price, Integer quantity, String category) {
-  this.name = name;
-  this.price = price;
-  this.quantity = quantity;
-  this.category = category;
- }
+	public Product() {
+		this.active = true;
+		this.lowStockThreshold = 2;
+	}
 
- // ============================================================
- // GETTERS & SETTERS
- // ============================================================
+	public Product(String name, BigDecimal price, Integer quantity, String category) {
+		this.name = name;
+		this.price = price;
+		this.quantity = quantity;
+		this.category = category;
+		this.lowStockThreshold = 2;
+		this.active = true;
+	}
 
- public Long getId() { return id; }
- public void setId(Long id) { this.id = id; }
+	// ============================================================
+	// GETTERS & SETTERS
+	// ============================================================
 
- public String getName() { return name; }
- public void setName(String name) { this.name = name; }
+	public Long getId() { return id; }
+	public void setId(Long id) { this.id = id; }
 
- public BigDecimal getPrice() { return price; }
- public void setPrice(BigDecimal price) { this.price = price; }
+	public String getName() { return name; }
+	public void setName(String name) { this.name = name; }
 
- public Integer getQuantity() { return quantity; }
- public void setQuantity(Integer quantity) { this.quantity = quantity; }
+	public BigDecimal getPrice() { return price; }
+	public void setPrice(BigDecimal price) { this.price = price; }
 
- public String getCategory() { return category; }
- public void setCategory(String category) { this.category = category; }
+	public Integer getQuantity() { return quantity; }
+	public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
- public String getModelNumber() { return modelNumber; }
- public void setModelNumber(String modelNumber) { this.modelNumber = modelNumber; }
+	public Integer getLowStockThreshold() { return lowStockThreshold != null ? lowStockThreshold : 2; }
+	public void setLowStockThreshold(Integer lowStockThreshold) { this.lowStockThreshold = lowStockThreshold != null ? lowStockThreshold : 2; }
 
- public String getSerialNumbers() { return serialNumbers; }
- public void setSerialNumbers(String serialNumbers) { this.serialNumbers = serialNumbers; }
+	public String getCategory() { return category; }
+	public void setCategory(String category) { this.category = category; }
 
- public Boolean getActive() { return active != null ? active : true; }
- public void setActive(Boolean active) { this.active = active; }
+	public String getModelNumber() { return modelNumber; }
+	public void setModelNumber(String modelNumber) { this.modelNumber = modelNumber; }
+
+	public String getSerialNumbers() { return serialNumbers; }
+	public void setSerialNumbers(String serialNumbers) { this.serialNumbers = serialNumbers; }
+
+	public Boolean getActive() { return active != null ? active : true; }
+	public void setActive(Boolean active) { this.active = active; }
 }

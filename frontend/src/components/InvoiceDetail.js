@@ -5,6 +5,9 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getStoreProfile, saveStoreProfile, getUpiPaymentUri } from '../services/storeProfile';
 import { InvoiceDetailSkeleton } from './SkeletonLoader';
+import Icon from './Icon';
+import { formatDate } from '../utils/dateUtils';
+import usePageTitle from '../utils/usePageTitle';
 
 function InvoiceDetail() {
     const { id } = useParams();
@@ -18,6 +21,8 @@ function InvoiceDetail() {
     const [showUpiModal, setShowUpiModal] = useState(false);
     const [editingUpiInModal, setEditingUpiInModal] = useState(false);
     const [tempUpiInput, setTempUpiInput] = useState('');
+
+    usePageTitle(invoice ? `Invoice #${invoice.invoiceNumber}` : 'Invoice Details');
 
     useEffect(() => {
         const handleProfileUpdate = (e) => {
@@ -44,15 +49,6 @@ function InvoiceDetail() {
         }
     };
 
-    const formatDate = (dateStr) => {
-        if (!dateStr) return 'N/A';
-        const parts = String(dateStr).split('T')[0].split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-        return dateStr;
-    };
-
     const handlePrint = () => {
         window.print();
     };
@@ -65,9 +61,10 @@ function InvoiceDetail() {
             cleanPhone = '91' + cleanPhone;
         }
 
-        const itemsList = (invoice.items || []).map((it, idx) => 
-            `${idx + 1}. ${it.product?.name || 'Product'} (Qty: ${it.quantity}) - ₹${(it.quantity * it.unitPrice).toLocaleString('en-IN')}`
-        ).join('\n');
+        const itemsList = (invoice.items || []).map((it, idx) => {
+            const warrantyText = it.warrantyMonths ? ` [Warranty: ${it.warrantyMonths}M ${it.warrantyType || ''}]` : '';
+            return `${idx + 1}. ${it.product?.name || it.productName || 'Product'} (Qty: ${it.quantity})${warrantyText} - ₹${(it.quantity * it.unitPrice).toLocaleString('en-IN')}`;
+        }).join('\n');
 
         const displayShopName = isVisitor ? 'Manisha Electronics (Demo Sandbox)' : storeProfile.shopName;
         const displayShopFooter = isVisitor
@@ -174,7 +171,7 @@ ${displayShopFooter}`;
                     className="btn-cancel"
                     style={{ padding: '9px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                 >
-                    <span>←</span> Back to Invoices
+                    <Icon name="chevron-left" size={14} /> Back to Invoices
                 </button>
 
                 {/* Print Format Selector & Actions */}
@@ -237,23 +234,23 @@ ${displayShopFooter}`;
                             gap: '6px'
                         }}
                     >
-                        📱 Show UPI QR
+                        <Icon name="credit-card" size={15} /> Show UPI QR
                     </button>
 
                     <button
                         onClick={handleWhatsAppShare}
                         className="btn-whatsapp"
-                        style={{ padding: '9px 16px', fontSize: '13px' }}
+                        style={{ padding: '9px 16px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                         title="Share tax invoice receipt on WhatsApp"
                     >
-                        📲 Share WhatsApp
+                        <Icon name="share" size={15} /> Share WhatsApp
                     </button>
                     <button
                         onClick={handlePrint}
                         className="btn-primary"
-                        style={{ padding: '9px 20px', fontSize: '13px' }}
+                        style={{ padding: '9px 20px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
-                        🖨️ Print {printMode === 'A4' ? 'Tax Invoice' : 'Thermal Slip'}
+                        <Icon name="print" size={15} /> Print {printMode === 'A4' ? 'Tax Invoice' : 'Thermal Slip'}
                     </button>
                 </div>
             </div>
@@ -490,12 +487,23 @@ ${displayShopFooter}`;
                                         <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
                                             <td style={{ padding: '10px 12px', textAlign: 'center', color: '#64748b', fontWeight: '700' }}>{idx + 1}</td>
                                             <td style={{ padding: '10px 12px' }}>
-                                                <div style={{ fontWeight: '800', color: '#0f172a' }}>{it.product?.name || 'Product'}</div>
+                                                <div style={{ fontWeight: '800', color: '#0f172a' }}>{it.product?.name || it.productName || 'Product'}</div>
+                                                {it.modelNumber && (
+                                                    <div style={{ fontSize: '11px', color: '#64748b' }}>
+                                                        Mod: {it.modelNumber}
+                                                    </div>
+                                                )}
                                                 {it.serialNumber && (
-                                                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '2px' }}>
+                                                    <div style={{ fontSize: '11px', color: '#64748b', marginTop: '1px' }}>
                                                         S/N: {it.serialNumber}
                                                     </div>
                                                 )}
+                                                {it.warrantyMonths ? (
+                                                    <div style={{ fontSize: '11px', color: '#059669', fontWeight: '700', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                                                        <span>🛡️</span> {it.warrantyMonths}M Warranty ({it.warrantyType || 'Manufacturer'})
+                                                        {it.warrantyNotes && <span style={{ color: '#64748b', fontWeight: 'normal' }}> - {it.warrantyNotes}</span>}
+                                                    </div>
+                                                ) : null}
                                             </td>
                                             <td style={{ padding: '10px 12px', textAlign: 'center', fontWeight: '800' }}>{it.quantity}</td>
                                             <td style={{ padding: '10px 12px', textAlign: 'right', fontWeight: '600' }}>₹{Number(it.unitPrice).toLocaleString('en-IN')}</td>

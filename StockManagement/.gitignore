@@ -14,6 +14,8 @@ target/
 *.iws
 *.ipr
 .vscode/
+*-local.properties
+application-local.properties
 
 # Node / React
 frontend/node_modules/

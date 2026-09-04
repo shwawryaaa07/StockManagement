@@ -17,7 +17,7 @@ public class JwtUtil {
     private final long expirationMs;
 
     public JwtUtil(
-            @Value("${auth.jwt.secret:ManishaElectronicsSecretSigningKey2026SecureRetailKeyMustBeLongEnough}") String secret,
+            @Value("${auth.jwt.secret}") String secret,
             @Value("${auth.jwt.expiration-days:30}") long expirationDays
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));

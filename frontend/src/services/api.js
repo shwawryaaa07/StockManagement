@@ -36,7 +36,7 @@ api.interceptors.response.use((response) => {
 });
 
 // Helper: Check if user is in Sandbox / Demo mode
-const isSandboxMode = () => {
+export const isSandboxMode = () => {
     const tenant = localStorage.getItem('tenantType') || sessionStorage.getItem('tenantType');
     const role = localStorage.getItem('userRole') || sessionStorage.getItem('userRole');
     return tenant === 'DEMO' || role === 'VISITOR';
@@ -148,7 +148,7 @@ export const verifyAuthToken = async (token) => {
         });
     }
     return api.get('/auth/verify', { headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {} }).catch(() => ({
-        data: { valid: true, role: 'OWNER', username: 'Ramesh Naik (Owner)', tenantType: 'PROD', shopName: 'MANISHA ELECTRONICS' }
+        data: { valid: false }
     }));
 };
 
@@ -169,8 +169,6 @@ export const getProductById = async (id) => {
     }
     return api.get(`/products/${id}`);
 };
-
-export const getProduct = getProductById;
 
 export const createProduct = async (productData) => {
     if (isSandboxMode()) {
@@ -396,6 +394,5 @@ export const getDashboardSummary = async () => {
 };
 
 export const getDashboard = getDashboardSummary;
-export const getStats = getDashboardSummary;
 
 export default api;

@@ -1084,3 +1084,37 @@ body.dark-mode .qty-control-btn:hover {
     color: #334155;
 }
 
+/* ============================================================
+   MOBILE TOUCH ACCESSIBILITY & LAYOUT OVERRIDES
+   ============================================================ */
+
+/* Minimum touch target for accessibility */
+button, .btn-primary, .btn-secondary, .btn-cancel, .btn-whatsapp, .nav-link, .mobile-tab {
+    min-height: 44px;
+}
+
+/* Small icon buttons */
+.btn-icon-sm {
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .fab {
+        bottom: 76px !important; /* 60px nav bar + 16px gap */
+    }
+
+    .page-container,
+    .page-content,
+    div[style*="maxWidth: '1350px'"],
+    div[style*="maxWidth: '1280px'"],
+    div[style*="maxWidth: '1180px'"],
+    div[style*="maxWidth: '1080px'"] {
+        padding-bottom: 80px !important; /* 60px nav + 20px gap */
+    }
+}
+
+

@@ -1,0 +1,30 @@
+# Java / Maven
+target/
+*.class
+*.jar
+*.war
+*.ear
+!StockManagement/.mvn/wrapper/maven-wrapper.jar
+
+# Spring Boot & Local Properties
+*.log
+*.pid
+.idea/
+*.iml
+.vscode/
+*-local.properties
+application-local.properties
+**/src/main/resources/*-local.properties
+
+# Node / React
+node_modules/
+build/
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# OS
+.DS_Store
+Thumbs.db

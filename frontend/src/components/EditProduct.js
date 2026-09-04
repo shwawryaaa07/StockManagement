@@ -7,11 +7,11 @@ function EditProduct({ product, onClose, onRefresh }) {
     const [modelNumber, setModelNumber] = useState(product?.modelNumber !== undefined ? String(product.modelNumber || '') : '');
     const [price, setPrice] = useState(product?.price !== undefined ? String(product.price) : '0');
     const [quantity, setQuantity] = useState(product?.quantity !== undefined ? String(product.quantity) : '0');
+    const [lowStockThreshold, setLowStockThreshold] = useState(product?.lowStockThreshold !== undefined ? String(product.lowStockThreshold) : '2');
     const [category, setCategory] = useState(product?.category !== undefined ? String(product.category) : '');
     const [serialNumbers, setSerialNumbers] = useState(product?.serialNumbers !== undefined ? String(product.serialNumbers || '') : '');
 
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState('');
     const toast = useToast();
 
     const commonCategories = ['TV', 'AC', 'Washing Machine', 'Refrigerator', 'Microwave', 'Mobile', 'Audio', 'Home Appliance', 'Other'];
@@ -25,13 +25,13 @@ function EditProduct({ product, onClose, onRefresh }) {
         }
 
         setLoading(true);
-        setMessage('');
 
         const productData = {
             name: name.trim(),
             modelNumber: modelNumber.trim(),
             price: parseFloat(price),
             quantity: parseInt(quantity, 10),
+            lowStockThreshold: parseInt(lowStockThreshold, 10) || 2,
             category: category || 'General',
             serialNumbers: serialNumbers.trim()
         };
@@ -47,11 +47,10 @@ function EditProduct({ product, onClose, onRefresh }) {
             const apiMessage = error?.response?.data?.message;
             const fallbackMessage = error instanceof Error ? error.message : String(error);
             const err = apiMessage || fallbackMessage;
-            setMessage('❌ Error updating product: ' + err);
             toast.error('Failed to update product: ' + err);
+        } finally {
+            setLoading(false);
         }
-
-        setLoading(false);
     };
 
     return (
@@ -82,7 +81,7 @@ function EditProduct({ product, onClose, onRefresh }) {
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        ✏️ <span>Edit Product Details</span>
+                        <span>✏️</span> <span>Edit Product Details</span>
                     </h3>
                     <button
                         onClick={onClose}
@@ -91,20 +90,6 @@ function EditProduct({ product, onClose, onRefresh }) {
                         ✕
                     </button>
                 </div>
-
-                {message && (
-                    <div style={{
-                        padding: '10px 14px',
-                        borderRadius: '8px',
-                        background: message.startsWith('✅') ? 'rgba(76, 175, 80, 0.15)' : 'rgba(239, 83, 80, 0.15)',
-                        color: message.startsWith('✅') ? '#2e7d32' : '#c62828',
-                        fontSize: '13px',
-                        fontWeight: '600',
-                        marginBottom: '16px'
-                    }}>
-                        {message}
-                    </div>
-                )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '12px' }}>
@@ -159,6 +144,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                             </label>
                             <input
                                 type="number"
+                                inputMode="decimal"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
                                 placeholder="Enter unit price"
@@ -183,6 +169,7 @@ function EditProduct({ product, onClose, onRefresh }) {
                             </label>
                             <input
                                 type="number"
+                                inputMode="numeric"
                                 value={quantity}
                                 onChange={(e) => setQuantity(e.target.value)}
                                 placeholder="Enter stock quantity"
@@ -201,28 +188,53 @@ function EditProduct({ product, onClose, onRefresh }) {
                         </div>
                     </div>
 
-                    <div>
-                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
-                            Category
-                        </label>
-                        <select
-                            value={category}
-                            onChange={(e) => setCategory(e.target.value)}
-                            style={{
-                                width: '100%',
-                                padding: '10px 12px',
-                                border: '1px solid var(--border-color)',
-                                borderRadius: '8px',
-                                background: 'var(--bg-body)',
-                                color: 'var(--text-primary)',
-                                fontSize: '13px'
-                            }}
-                        >
-                            <option value="">Select Category...</option>
-                            {commonCategories.map((c, i) => (
-                                <option key={i} value={c}>{c}</option>
-                            ))}
-                        </select>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '12px' }}>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                                Category
+                            </label>
+                            <select
+                                value={category}
+                                onChange={(e) => setCategory(e.target.value)}
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    background: 'var(--bg-body)',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '13px'
+                                }}
+                            >
+                                <option value="">Select Category...</option>
+                                {commonCategories.map((c, i) => (
+                                    <option key={i} value={c}>{c}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                                Low Stock Alert Level
+                            </label>
+                            <input
+                                type="number"
+                                inputMode="numeric"
+                                value={lowStockThreshold}
+                                onChange={(e) => setLowStockThreshold(e.target.value)}
+                                placeholder="e.g. 2"
+                                min="0"
+                                style={{
+                                    width: '100%',
+                                    padding: '10px 12px',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: '8px',
+                                    background: 'var(--bg-body)',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '13px'
+                                }}
+                            />
+                        </div>
                     </div>
 
                     <div>

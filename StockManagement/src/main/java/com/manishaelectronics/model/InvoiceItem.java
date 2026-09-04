@@ -30,6 +30,15 @@ public class InvoiceItem {
     private String modelNumber;
     private String serialNumber;
 
+    @Column
+    private Integer warrantyMonths; // e.g. 12, 24, 36
+
+    @Column
+    private String warrantyType; // e.g. "Manufacturer", "Extended", "Store"
+
+    @Column
+    private String warrantyNotes; // e.g. "Samsung India warranty card included"
+
     // Default constructor
     public InvoiceItem() {}
 
@@ -40,7 +49,7 @@ public class InvoiceItem {
         this.quantity = quantity;
         this.unitPrice = unitPrice;
         this.discount = BigDecimal.ZERO;
-        this.totalPrice = unitPrice.multiply(BigDecimal.valueOf(quantity));
+        this.totalPrice = unitPrice != null && quantity != null ? unitPrice.multiply(BigDecimal.valueOf(quantity)) : BigDecimal.ZERO;
     }
 
     // Getters and Setters
@@ -70,6 +79,15 @@ public class InvoiceItem {
 
     public String getSerialNumber() { return serialNumber; }
     public void setSerialNumber(String serialNumber) { this.serialNumber = serialNumber; }
+
+    public Integer getWarrantyMonths() { return warrantyMonths; }
+    public void setWarrantyMonths(Integer warrantyMonths) { this.warrantyMonths = warrantyMonths; }
+
+    public String getWarrantyType() { return warrantyType; }
+    public void setWarrantyType(String warrantyType) { this.warrantyType = warrantyType; }
+
+    public String getWarrantyNotes() { return warrantyNotes; }
+    public void setWarrantyNotes(String warrantyNotes) { this.warrantyNotes = warrantyNotes; }
 
     public String getProductName() {
         if (productName != null && !productName.isBlank()) {

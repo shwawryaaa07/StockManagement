@@ -279,7 +279,7 @@ function CreateInvoice() {
     handleSubmitRef.current = handleSubmit;
 
     return (
-        <div className="page-container" style={{ maxWidth: '1180px', margin: '0 auto', boxSizing: 'border-box' }}>
+        <div className="page-container" style={{ maxWidth: '1440px', margin: '0 auto', boxSizing: 'border-box' }}>
             {/* Top Action Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '14px' }}>
                 <div>
@@ -291,36 +291,30 @@ function CreateInvoice() {
                     </p>
                 </div>
 
-                <div style={{ display: 'flex', gap: '10px', width: '100%', maxWidth: '360px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                <div>
                     <button
                         type="button"
                         onClick={() => navigate('/')}
                         className="btn-cancel"
-                        style={{ padding: '10px 18px', fontSize: '13px', flex: 1 }}
+                        style={{ padding: '9px 18px', fontSize: '13px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
-                        Cancel
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleSubmit}
-                        disabled={submitting || items.length === 0}
-                        className="btn-primary"
-                        style={{ padding: '10px 20px', fontSize: '13.5px', fontWeight: '800', flex: 1.5 }}
-                    >
-                        {submitting ? 'Creating Bill...' : `🖨️ Create (${items.length} Items)`}
+                        ← Back to Dashboard
                     </button>
                 </div>
             </div>
 
-            {/* SECTION 1: Customer Information Card */}
-            <div style={{
-                background: 'var(--bg-card)',
-                borderRadius: '16px',
-                padding: '22px',
-                border: '1px solid var(--border-color)',
-                boxShadow: 'var(--shadow-sm)',
-                marginBottom: '20px'
-            }}>
+            {/* Split Screen POS Grid */}
+            <div className="pos-grid-layout">
+                {/* LEFT COLUMN: Customer Entry & Product Selection / Cart Items */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* SECTION 1: Customer Information Card */}
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        borderRadius: '16px',
+                        padding: '22px',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: 'var(--shadow-sm)'
+                    }}>
                 <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     👤 <span>Customer Details</span>
                 </h3>
@@ -679,22 +673,26 @@ function CreateInvoice() {
                     </div>
                 )}
             </div>
+            </div>
 
-            {/* SECTION 3: Billing Breakdown & Payment Settlement Card */}
-            <div style={{
-                background: 'var(--bg-card)',
-                borderRadius: '16px',
-                padding: '24px',
-                border: '1px solid var(--border-color)',
-                boxShadow: 'var(--shadow-md)'
-            }}>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px', alignItems: 'flex-start' }}>
-                    {/* Left: Live Breakdown */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <h4 style={{ fontSize: '15px', fontWeight: '800', margin: '0 0 6px 0', color: 'var(--text-primary)' }}>
-                            📊 Tax &amp; Totals Breakdown
-                        </h4>
+            {/* RIGHT COLUMN: Money Related Details (Totals, Taxes, Payment & Settlement) */}
+            <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: '16px',
+                    padding: '22px',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: 'var(--shadow-md)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '14px'
+                }}>
+                    <h4 style={{ fontSize: '16px', fontWeight: '800', margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        📊 <span>Bill Summary &amp; Payment</span>
+                    </h4>
 
+                    {/* Totals Breakdown */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13.5px' }}>
                             <span style={{ color: 'var(--text-secondary)' }}>Items Subtotal:</span>
                             <span style={{ fontWeight: '700' }}>₹{subtotal.toLocaleString('en-IN')}</span>
@@ -764,143 +762,145 @@ function CreateInvoice() {
                             display: 'flex',
                             justifyContent: 'space-between',
                             alignItems: 'center',
-                            paddingTop: '12px',
-                            marginTop: '6px',
+                            paddingTop: '10px',
+                            marginTop: '4px',
                             borderTop: '2px dashed var(--border-color)'
                         }}>
-                            <span style={{ fontSize: '16px', fontWeight: '900', color: 'var(--text-primary)' }}>Grand Total:</span>
-                            <span style={{ fontSize: '26px', fontWeight: '900', color: 'var(--gold)' }}>
+                            <span style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text-primary)' }}>Grand Total:</span>
+                            <span style={{ fontSize: '24px', fontWeight: '900', color: 'var(--gold)' }}>
                                 ₹{grandTotal.toLocaleString('en-IN')}
                             </span>
                         </div>
                     </div>
 
-                    {/* Right: Payment & Settlement Controls */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                        <h4 style={{ fontSize: '15px', fontWeight: '800', margin: '0 0 2px 0', color: 'var(--text-primary)' }}>
-                            💳 Payment &amp; Checkout
-                        </h4>
+                    {/* Divider */}
+                    <div style={{ borderTop: '1px solid var(--border-color)' }} />
 
-                        <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                                Payment Method
+                    {/* Payment Method */}
+                    <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                            Payment Method
+                        </label>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                            {[
+                                { id: 'CASH', label: '💵 Cash' },
+                                { id: 'UPI', label: '📱 UPI / QR' },
+                                { id: 'CARD', label: '💳 Card' },
+                                { id: 'BANK_TRANSFER', label: '🏦 Net Banking' }
+                            ].map((pm) => (
+                                <button
+                                    key={pm.id}
+                                    type="button"
+                                    onClick={() => setPaymentMethod(pm.id)}
+                                    style={{
+                                        padding: '9px 10px',
+                                        borderRadius: '8px',
+                                        fontSize: '12.5px',
+                                        fontWeight: '700',
+                                        border: '1px solid',
+                                        borderColor: paymentMethod === pm.id ? 'var(--gold)' : 'var(--border-color)',
+                                        background: paymentMethod === pm.id ? 'var(--gold-light)' : 'var(--bg-body)',
+                                        color: paymentMethod === pm.id ? '#92400e' : 'var(--text-primary)',
+                                        cursor: 'pointer',
+                                        transition: 'var(--transition)'
+                                    }}
+                                >
+                                    {pm.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Amount Collected */}
+                    <div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                            <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)' }}>
+                                Amount Received / Collected (₹)
                             </label>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                                {[
-                                    { id: 'CASH', label: '💵 Cash' },
-                                    { id: 'UPI', label: '📱 UPI / QR' },
-                                    { id: 'CARD', label: '💳 Card' },
-                                    { id: 'BANK_TRANSFER', label: '🏦 Net Banking' }
-                                ].map((pm) => (
-                                    <button
-                                        key={pm.id}
-                                        type="button"
-                                        onClick={() => setPaymentMethod(pm.id)}
-                                        style={{
-                                            padding: '9px 10px',
-                                            borderRadius: '8px',
-                                            fontSize: '12.5px',
-                                            fontWeight: '700',
-                                            border: '1px solid',
-                                            borderColor: paymentMethod === pm.id ? 'var(--gold)' : 'var(--border-color)',
-                                            background: paymentMethod === pm.id ? 'var(--gold-light)' : 'var(--bg-body)',
-                                            color: paymentMethod === pm.id ? '#92400e' : 'var(--text-primary)',
-                                            cursor: 'pointer',
-                                            transition: 'var(--transition)'
-                                        }}
-                                    >
-                                        {pm.label}
-                                    </button>
-                                ))}
+                            <div style={{ display: 'flex', gap: '6px' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setAmountPaid(String(grandTotal))}
+                                    style={{ background: '#d1fae5', color: '#065f46', border: 'none', borderRadius: '4px', fontSize: '11px', padding: '2px 8px', cursor: 'pointer', fontWeight: 'bold' }}
+                                >
+                                    100% Paid
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setAmountPaid('0')}
+                                    style={{ background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: '4px', fontSize: '11px', padding: '2px 8px', cursor: 'pointer', fontWeight: 'bold' }}
+                                >
+                                    Full Due
+                                </button>
                             </div>
                         </div>
-
-                        <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                                <label style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)' }}>
-                                    Amount Received / Collected (₹)
-                                </label>
-                                <div style={{ display: 'flex', gap: '6px' }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAmountPaid(String(grandTotal))}
-                                        style={{ background: '#d1fae5', color: '#065f46', border: 'none', borderRadius: '4px', fontSize: '11px', padding: '2px 8px', cursor: 'pointer', fontWeight: 'bold' }}
-                                    >
-                                        100% Paid
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setAmountPaid('0')}
-                                        style={{ background: '#fee2e2', color: '#991b1b', border: 'none', borderRadius: '4px', fontSize: '11px', padding: '2px 8px', cursor: 'pointer', fontWeight: 'bold' }}
-                                    >
-                                        Full Due
-                                    </button>
-                                </div>
-                            </div>
-                            <input
-                                type="number"
-                                value={amountPaid}
-                                onChange={(e) => setAmountPaid(e.target.value)}
-                                placeholder="Enter amount collected (₹)"
-                                min="0"
-                                step="0.01"
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 14px',
-                                    fontSize: '15px',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border-color)',
-                                    background: 'var(--bg-body)',
-                                    color: 'var(--text-primary)',
-                                    fontWeight: '800',
-                                    boxSizing: 'border-box'
-                                }}
-                            />
-                        </div>
-
-                        {balanceDue > 0 && (
-                            <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#b91c1c', fontWeight: '800' }}>
-                                <span>⚠️ Balance Due (Credit):</span>
-                                <span>₹{balanceDue.toLocaleString('en-IN')}</span>
-                            </div>
-                        )}
-
-                        <div>
-                            <input
-                                type="text"
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                placeholder="Enter bill remarks or warranty notes (optional)"
-                                style={{
-                                    width: '100%',
-                                    padding: '8px 12px',
-                                    fontSize: '12px',
-                                    borderRadius: '8px',
-                                    border: '1px solid var(--border-color)',
-                                    background: 'var(--bg-body)',
-                                    color: 'var(--text-primary)',
-                                    boxSizing: 'border-box'
-                                }}
-                            />
-                        </div>
-
-                        <button
-                            type="button"
-                            onClick={handleSubmit}
-                            disabled={submitting || items.length === 0}
-                            className="btn-primary"
+                        <input
+                            type="number"
+                            value={amountPaid}
+                            onChange={(e) => setAmountPaid(e.target.value)}
+                            placeholder="Enter amount collected (₹)"
+                            min="0"
+                            step="0.01"
                             style={{
                                 width: '100%',
-                                padding: '14px',
+                                padding: '10px 14px',
                                 fontSize: '15px',
-                                fontWeight: '900',
-                                marginTop: '4px'
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-color)',
+                                background: 'var(--bg-body)',
+                                color: 'var(--text-primary)',
+                                fontWeight: '800',
+                                boxSizing: 'border-box'
                             }}
-                        >
-                            {submitting ? 'Generating Invoice...' : `✅ Collect ₹${actualPaid.toLocaleString('en-IN')} & Print Invoice (F2)`}
-                        </button>
+                        />
                     </div>
+
+                    {/* Balance Due Alert */}
+                    {balanceDue > 0 && (
+                        <div style={{ padding: '8px 12px', background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#b91c1c', fontWeight: '800' }}>
+                            <span>⚠️ Balance Due (Credit):</span>
+                            <span>₹{balanceDue.toLocaleString('en-IN')}</span>
+                        </div>
+                    )}
+
+                    {/* Remarks / Notes */}
+                    <div>
+                        <input
+                            type="text"
+                            value={notes}
+                            onChange={(e) => setNotes(e.target.value)}
+                            placeholder="Enter bill remarks or warranty notes (optional)"
+                            style={{
+                                width: '100%',
+                                padding: '8px 12px',
+                                fontSize: '12px',
+                                borderRadius: '8px',
+                                border: '1px solid var(--border-color)',
+                                background: 'var(--bg-body)',
+                                color: 'var(--text-primary)',
+                                boxSizing: 'border-box'
+                            }}
+                        />
+                    </div>
+
+                    {/* Primary Submit Button */}
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={submitting || items.length === 0}
+                        className="btn-primary"
+                        style={{
+                            width: '100%',
+                            padding: '14px',
+                            fontSize: '15px',
+                            fontWeight: '900',
+                            marginTop: '4px'
+                        }}
+                    >
+                        {submitting ? 'Generating Invoice...' : `✅ Collect ₹${actualPaid.toLocaleString('en-IN')} & Print Invoice (F2)`}
+                    </button>
                 </div>
+            </div>
             </div>
         </div>
     );

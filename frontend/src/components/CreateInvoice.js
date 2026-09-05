@@ -304,22 +304,24 @@ function CreateInvoice() {
             </div>
 
             {/* Split Screen POS Grid */}
-            <div className="pos-grid-layout">
+            <div className="pos-grid-layout" style={{ width: '100%', boxSizing: 'border-box' }}>
                 {/* LEFT COLUMN: Customer Entry & Product Selection / Cart Items */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', minWidth: 0, width: '100%' }}>
                     {/* SECTION 1: Customer Information Card */}
                     <div style={{
                         background: 'var(--bg-card)',
                         borderRadius: '16px',
-                        padding: '22px',
+                        padding: '20px',
                         border: '1px solid var(--border-color)',
-                        boxShadow: 'var(--shadow-sm)'
+                        boxShadow: 'var(--shadow-sm)',
+                        width: '100%',
+                        boxSizing: 'border-box'
                     }}>
                 <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     👤 <span>Customer Details</span>
                 </h3>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '16px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '14px', width: '100%' }}>
                     <div>
                         <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '6px' }}>
                             Customer Full Name *
@@ -393,10 +395,12 @@ function CreateInvoice() {
             <div style={{
                 background: 'var(--bg-card)',
                 borderRadius: '16px',
-                padding: '22px',
+                padding: '20px',
                 border: '1px solid var(--border-color)',
                 boxShadow: 'var(--shadow-sm)',
-                marginBottom: '20px'
+                marginBottom: '20px',
+                width: '100%',
+                boxSizing: 'border-box'
             }}>
                 <h3 style={{ fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)', margin: '0 0 16px 0', display: 'flex', alignItems: 'center', gap: '8px' }}>
                     📦 <span>Select Products &amp; Quantities</span>
@@ -484,7 +488,7 @@ function CreateInvoice() {
                 </div>
 
                 {/* Category Pills for quick discovery */}
-                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '16px', scrollbarWidth: 'thin' }}>
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '10px', marginBottom: '16px', scrollbarWidth: 'thin', width: '100%', minWidth: 0 }}>
                     {CATEGORY_TABS.map((cat) => (
                         <button
                             key={cat.id}
@@ -503,15 +507,17 @@ function CreateInvoice() {
                 {!loadingProducts && filteredProducts.length > 0 && (
                     <div style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
-                        gap: '12px',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+                        gap: '10px',
                         maxHeight: '220px',
                         overflowY: 'auto',
                         padding: '4px',
                         marginBottom: '20px',
                         background: 'var(--bg-surface)',
                         borderRadius: '12px',
-                        border: '1px solid var(--border-color)'
+                        border: '1px solid var(--border-color)',
+                        width: '100%',
+                        boxSizing: 'border-box'
                     }}>
                         {filteredProducts.slice(0, 12).map((prod) => {
                             const stock = prod.quantity !== undefined ? prod.quantity : 0;
@@ -563,7 +569,7 @@ function CreateInvoice() {
                         <div style={{ fontSize: '12px', marginTop: '4px' }}>Click on a product card above or search to add items</div>
                     </div>
                 ) : (
-                    <div style={{ overflowX: 'auto' }}>
+                    <div style={{ overflowX: 'auto', width: '100%', minWidth: 0 }}>
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13.5px' }}>
                             <thead>
                                 <tr style={{ borderBottom: '2px solid var(--border-color)', color: 'var(--text-secondary)', textAlign: 'left' }}>
@@ -676,18 +682,20 @@ function CreateInvoice() {
             </div>
 
             {/* RIGHT COLUMN: Money Related Details (Totals, Taxes, Payment & Settlement) */}
-            <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ position: 'sticky', top: '80px', display: 'flex', flexDirection: 'column', gap: '16px', minWidth: 0, width: '100%' }}>
                 <div style={{
                     background: 'var(--bg-card)',
                     borderRadius: '16px',
-                    padding: '22px',
+                    padding: '18px 20px',
                     border: '1px solid var(--border-color)',
                     boxShadow: 'var(--shadow-md)',
                     display: 'flex',
                     flexDirection: 'column',
-                    gap: '14px'
+                    gap: '14px',
+                    width: '100%',
+                    boxSizing: 'border-box'
                 }}>
-                    <h4 style={{ fontSize: '16px', fontWeight: '800', margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <h4 style={{ fontSize: '15px', fontWeight: '800', margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
                         📊 <span>Bill Summary &amp; Payment</span>
                     </h4>
 
@@ -698,7 +706,7 @@ function CreateInvoice() {
                             <span style={{ fontWeight: '700' }}>₹{subtotal.toLocaleString('en-IN')}</span>
                         </div>
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Special Discount (₹):</span>
                             <input
                                 type="number"
@@ -708,15 +716,16 @@ function CreateInvoice() {
                                 value={discountAmount}
                                 onChange={(e) => setDiscountAmount(e.target.value)}
                                 style={{
-                                    width: '100px',
-                                    padding: '5px 10px',
+                                    width: '85px',
+                                    padding: '5px 8px',
                                     fontSize: '13px',
                                     borderRadius: '6px',
                                     border: '1px solid var(--border-color)',
                                     background: 'var(--bg-body)',
                                     color: 'var(--text-primary)',
                                     textAlign: 'right',
-                                    fontWeight: '700'
+                                    fontWeight: '700',
+                                    boxSizing: 'border-box'
                                 }}
                             />
                         </div>
@@ -728,13 +737,13 @@ function CreateInvoice() {
                             </div>
                         )}
 
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
                             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>GST Rate:</span>
                             <select
                                 value={gstRate}
                                 onChange={(e) => setGstRate(Number(e.target.value))}
                                 style={{
-                                    padding: '5px 10px',
+                                    padding: '5px 8px',
                                     borderRadius: '6px',
                                     border: '1px solid var(--border-color)',
                                     background: 'var(--bg-body)',
@@ -766,8 +775,8 @@ function CreateInvoice() {
                             marginTop: '4px',
                             borderTop: '2px dashed var(--border-color)'
                         }}>
-                            <span style={{ fontSize: '15px', fontWeight: '900', color: 'var(--text-primary)' }}>Grand Total:</span>
-                            <span style={{ fontSize: '24px', fontWeight: '900', color: 'var(--gold)' }}>
+                            <span style={{ fontSize: '14px', fontWeight: '900', color: 'var(--text-primary)' }}>Grand Total:</span>
+                            <span style={{ fontSize: '22px', fontWeight: '900', color: 'var(--gold)' }}>
                                 ₹{grandTotal.toLocaleString('en-IN')}
                             </span>
                         </div>
@@ -793,16 +802,18 @@ function CreateInvoice() {
                                     type="button"
                                     onClick={() => setPaymentMethod(pm.id)}
                                     style={{
-                                        padding: '9px 10px',
+                                        padding: '8px 4px',
                                         borderRadius: '8px',
-                                        fontSize: '12.5px',
+                                        fontSize: '12px',
                                         fontWeight: '700',
                                         border: '1px solid',
                                         borderColor: paymentMethod === pm.id ? 'var(--gold)' : 'var(--border-color)',
                                         background: paymentMethod === pm.id ? 'var(--gold-light)' : 'var(--bg-body)',
                                         color: paymentMethod === pm.id ? '#92400e' : 'var(--text-primary)',
                                         cursor: 'pointer',
-                                        transition: 'var(--transition)'
+                                        transition: 'var(--transition)',
+                                        textAlign: 'center',
+                                        whiteSpace: 'nowrap'
                                     }}
                                 >
                                     {pm.label}
@@ -843,7 +854,7 @@ function CreateInvoice() {
                             step="0.01"
                             style={{
                                 width: '100%',
-                                padding: '10px 14px',
+                                padding: '9px 12px',
                                 fontSize: '15px',
                                 borderRadius: '8px',
                                 border: '1px solid var(--border-color)',
@@ -891,10 +902,17 @@ function CreateInvoice() {
                         className="btn-primary"
                         style={{
                             width: '100%',
-                            padding: '14px',
-                            fontSize: '15px',
+                            padding: '13px 10px',
+                            fontSize: '14px',
                             fontWeight: '900',
-                            marginTop: '4px'
+                            marginTop: '4px',
+                            whiteSpace: 'normal',
+                            lineHeight: 1.3,
+                            textAlign: 'center',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxSizing: 'border-box'
                         }}
                     >
                         {submitting ? 'Generating Invoice...' : `✅ Collect ₹${actualPaid.toLocaleString('en-IN')} & Print Invoice (F2)`}

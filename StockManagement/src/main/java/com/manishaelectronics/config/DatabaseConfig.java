@@ -12,13 +12,13 @@ import javax.sql.DataSource;
 @Configuration
 public class DatabaseConfig {
 
-    @Value("${spring.datasource.url:jdbc:mysql://gateway01.ap-southeast-1.prod.aws.tidbcloud.com:4000/test?sslMode=VERIFY_IDENTITY&enabledTLSProtocols=TLSv1.2,TLSv1.3}")
+    @Value("${spring.datasource.url}")
     private String dbUrl;
 
-    @Value("${spring.datasource.username:2Fvd4sjxP75iF8f.root}")
+    @Value("${spring.datasource.username}")
     private String dbUsername;
 
-    @Value("${spring.datasource.password:3jx2Nbsmeb79jUaP}")
+    @Value("${spring.datasource.password}")
     private String dbPassword;
 
     @Value("${spring.datasource.driver-class-name:com.mysql.cj.jdbc.Driver}")

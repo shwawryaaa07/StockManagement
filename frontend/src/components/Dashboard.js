@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDashboard, getInvoices, getProducts } from '../services/api';
 import { CardSkeleton, TableSkeleton } from './SkeletonLoader';
@@ -14,8 +14,9 @@ function Dashboard() {
     const [invoices, setInvoices] = useState([]);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
+    const isMountedRef = useRef(true);
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const results = await Promise.allSettled([
@@ -23,6 +24,8 @@ function Dashboard() {
                 getInvoices(),
                 getProducts()
             ]);
+
+            if (!isMountedRef.current) return;
 
             if (results[0].status === 'fulfilled' && results[0].value?.data) {
                 setData(results[0].value.data);
@@ -36,13 +39,19 @@ function Dashboard() {
         } catch (error) {
             console.error('Error loading dashboard data:', error);
         } finally {
-            setLoading(false);
+            if (isMountedRef.current) {
+                setLoading(false);
+            }
         }
-    };
+    }, []);
 
     useEffect(() => {
+        isMountedRef.current = true;
         loadData();
-    }, []);
+        return () => {
+            isMountedRef.current = false;
+        };
+    }, [loadData]);
 
     // Derived inventory statistics
     const totalUnitsInStock = products.reduce((acc, p) => acc + (Number(p.quantity) || 0), 0);
@@ -70,7 +79,7 @@ function Dashboard() {
             <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                 <div style={{ height: '40px' }} className="skeleton skeleton-title" />
                 <CardSkeleton count={4} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                <div className="dash-main-grid">
                     <TableSkeleton rows={5} cols={3} />
                     <TableSkeleton rows={5} cols={3} />
                 </div>

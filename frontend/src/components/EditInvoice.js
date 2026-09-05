@@ -31,7 +31,60 @@ function EditInvoice() {
     const dropdownRef = useRef(null);
 
     useEffect(() => {
-        loadData().catch(console.error);
+        let isMounted = true;
+        const fetchAll = async () => {
+            try {
+                const [prodRes, invRes] = await Promise.all([
+                    getProducts(),
+                    getInvoice(id)
+                ]);
+
+                if (!isMounted) return;
+
+                const loadedProducts = prodRes.data || [];
+                setProducts(loadedProducts);
+
+                const inv = invRes.data;
+                if (inv) {
+                    setInvoiceNumber(inv.invoiceNumber || `INV-${id}`);
+                    setCustomerName(inv.customerName || '');
+                    setCustomerContact(inv.customerContact === 'N/A' ? '' : (inv.customerContact || ''));
+                    setDeliveryAddress(inv.deliveryAddress === 'N/A' ? '' : (inv.deliveryAddress || ''));
+                    setPaymentMode(inv.paymentMode || inv.paymentMethod || 'CASH');
+                    setDiscountAmount(inv.discount !== undefined ? inv.discount : (inv.discountAmount !== undefined ? inv.discountAmount : 0));
+                    setAmountPaid(String(inv.amountPaid !== undefined ? inv.amountPaid : ''));
+                    setGstRate(inv.gstRate !== undefined ? inv.gstRate : 0);
+
+                    if (inv.items && Array.isArray(inv.items)) {
+                        setItems(inv.items.map(item => {
+                            const matchedProduct = loadedProducts.find(p => p.id === (item.product?.id || item.product));
+                            const serialsList = (matchedProduct?.serialNumbers || '')
+                                .split(',')
+                                .map(s => s.trim())
+                                .filter(Boolean);
+
+                            return {
+                                product: matchedProduct || item.product || { id: item.productId, name: 'Product', price: item.unitPrice, quantity: 99 },
+                                quantity: Number(item.quantity || 1),
+                                unitPrice: Number(item.unitPrice || 0),
+                                modelNumber: item.modelNumber || matchedProduct?.modelNumber || '',
+                                serialNumber: item.serialNumber || '',
+                                availableSerials: serialsList
+                            };
+                        }));
+                    }
+                }
+                setLoading(false);
+            } catch (error) {
+                console.error('Error loading invoice data:', error);
+                if (isMounted) {
+                    toast.error('Error loading invoice details: ' + (error.response?.data?.message || error.message));
+                    setLoading(false);
+                }
+            }
+        };
+
+        fetchAll();
 
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -40,58 +93,11 @@ function EditInvoice() {
         };
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
+            isMounted = false;
             document.removeEventListener('mousedown', handleClickOutside);
         };
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [id]);
-
-    const loadData = async () => {
-        try {
-            const [prodRes, invRes] = await Promise.all([
-                getProducts(),
-                getInvoice(id)
-            ]);
-
-            const loadedProducts = prodRes.data || [];
-            setProducts(loadedProducts);
-
-            const inv = invRes.data;
-            if (inv) {
-                setInvoiceNumber(inv.invoiceNumber || `INV-${id}`);
-                setCustomerName(inv.customerName || '');
-                setCustomerContact(inv.customerContact === 'N/A' ? '' : (inv.customerContact || ''));
-                setDeliveryAddress(inv.deliveryAddress === 'N/A' ? '' : (inv.deliveryAddress || ''));
-                setPaymentMode(inv.paymentMode || inv.paymentMethod || 'CASH');
-                setDiscountAmount(inv.discount !== undefined ? inv.discount : (inv.discountAmount !== undefined ? inv.discountAmount : 0));
-                setAmountPaid(String(inv.amountPaid !== undefined ? inv.amountPaid : ''));
-                setGstRate(inv.gstRate !== undefined ? inv.gstRate : 0);
-
-                if (inv.items && Array.isArray(inv.items)) {
-                    setItems(inv.items.map(item => {
-                        const matchedProduct = loadedProducts.find(p => p.id === (item.product?.id || item.product));
-                        const serialsList = (matchedProduct?.serialNumbers || '')
-                            .split(',')
-                            .map(s => s.trim())
-                            .filter(Boolean);
-
-                        return {
-                            product: matchedProduct || item.product || { id: item.productId, name: 'Product', price: item.unitPrice, quantity: 99 },
-                            quantity: Number(item.quantity || 1),
-                            unitPrice: Number(item.unitPrice || 0),
-                            modelNumber: item.modelNumber || matchedProduct?.modelNumber || '',
-                            serialNumber: item.serialNumber || '',
-                            availableSerials: serialsList
-                        };
-                    }));
-                }
-            }
-            setLoading(false);
-        } catch (error) {
-            console.error('Error loading invoice data:', error);
-            toast.error('Error loading invoice details: ' + (error.response?.data?.message || error.message));
-            setLoading(false);
-        }
-    };
 
     // Filter products for search
     const filteredProducts = products.filter(p => {
@@ -253,14 +259,14 @@ function EditInvoice() {
 
     if (loading) {
         return (
-            <div style={{ padding: '40px 20px', maxWidth: '1350px', margin: '0 auto' }}>
+            <div className="page-container" style={{ maxWidth: '1350px', margin: '0 auto', textAlign: 'center' }}>
                 <h2 style={{ color: 'var(--text-primary)' }}>Loading invoice details...</h2>
             </div>
         );
     }
 
     return (
-        <div style={{ maxWidth: '1350px', margin: '0 auto', padding: '24px 20px' }}>
+        <div className="page-container" style={{ maxWidth: '1350px', margin: '0 auto' }}>
             {/* Header */}
             <div style={{
                 display: 'flex',

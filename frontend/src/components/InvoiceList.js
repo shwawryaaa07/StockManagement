@@ -93,14 +93,14 @@ function InvoiceList() {
 
     if (loading) {
         return (
-            <div style={{ maxWidth: '1350px', margin: '0 auto', padding: '24px 20px' }}>
+            <div className="page-container" style={{ maxWidth: '1350px', margin: '0 auto' }}>
                 <TableSkeleton rows={7} cols={6} />
             </div>
         );
     }
 
     return (
-        <div style={{ maxWidth: '1350px', margin: '0 auto', padding: '24px 20px' }}>
+        <div className="page-container" style={{ maxWidth: '1350px', margin: '0 auto' }}>
             {/* Header & New Sale Action */}
             <div style={{
                 display: 'flex',
@@ -200,7 +200,7 @@ function InvoiceList() {
                 </div>
 
                 {/* Status Filter Tabs */}
-                <div style={{ display: 'flex', gap: '8px' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {[
                         { id: 'ALL', label: 'All Bills' },
                         { id: 'PAID', label: '🟢 Fully Paid' },

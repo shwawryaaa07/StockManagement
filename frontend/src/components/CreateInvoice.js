@@ -41,11 +41,34 @@ function CreateInvoice() {
 
     const searchInputRef = useRef(null);
     const dropdownRef = useRef(null);
+    const handleSubmitRef = useRef();
 
-    // Load catalog and register hotkeys
+    // 1. Load catalog on mount with isMounted guard
     useEffect(() => {
-        loadData();
+        let isMounted = true;
+        const load = async () => {
+            setLoadingProducts(true);
+            try {
+                const prodRes = await getProducts();
+                if (isMounted && prodRes.data && Array.isArray(prodRes.data)) {
+                    setProducts(prodRes.data);
+                }
+            } catch (error) {
+                console.error('Error loading products catalog:', error);
+                if (isMounted) toast.error('Failed to load product catalog.');
+            } finally {
+                if (isMounted) setLoadingProducts(false);
+            }
+        };
+        load();
+        return () => {
+            isMounted = false;
+        };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
+    // 2. Click outside & Keyboard shortcuts listener (registered once)
+    useEffect(() => {
         const handleClickOutside = (event) => {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
                 setShowSuggestions(false);
@@ -59,7 +82,7 @@ function CreateInvoice() {
                 searchInputRef.current?.focus();
             } else if (e.key === 'F2') {
                 e.preventDefault();
-                handleSubmit();
+                handleSubmitRef.current?.();
             } else if (e.key === 'Escape') {
                 setShowSuggestions(false);
                 setSearchTerm('');
@@ -71,23 +94,7 @@ function CreateInvoice() {
             document.removeEventListener('mousedown', handleClickOutside);
             window.removeEventListener('keydown', handleKeyDown);
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [items, customerName, amountPaid, discountAmount, gstRate, paymentMethod]);
-
-    const loadData = async () => {
-        setLoadingProducts(true);
-        try {
-            const prodRes = await getProducts();
-            if (prodRes.data && Array.isArray(prodRes.data)) {
-                setProducts(prodRes.data);
-            }
-        } catch (error) {
-            console.error('Error loading products catalog:', error);
-            toast.error('Failed to load product catalog.');
-        } finally {
-            setLoadingProducts(false);
-        }
-    };
+    }, []);
 
     // Filter products for category pills & search
     const filteredProducts = useMemo(() => {
@@ -269,6 +276,7 @@ function CreateInvoice() {
             setSubmitting(false);
         }
     };
+    handleSubmitRef.current = handleSubmit;
 
     return (
         <div className="page-container" style={{ maxWidth: '1180px', margin: '0 auto', boxSizing: 'border-box' }}>

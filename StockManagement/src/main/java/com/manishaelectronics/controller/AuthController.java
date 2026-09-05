@@ -36,8 +36,8 @@ public class AuthController {
             StaffAccountRepository staffAccountRepository,
             PasswordEncoder passwordEncoder,
             @Value("${auth.admin.username:Ramesh Naik}") String adminUsername,
-            @Value("${auth.admin.password:15aug2006}") String adminPassword,
-            @Value("${auth.admin.pin:1506}") String adminPin,
+            @Value("${auth.admin.password}") String adminPassword,
+            @Value("${auth.admin.pin}") String adminPin,
             @Value("${shop.name:MANISHA ELECTRONICS}") String shopName
     ) {
         this.jwtUtil = jwtUtil;

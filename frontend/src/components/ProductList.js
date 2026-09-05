@@ -72,14 +72,14 @@ function ProductList() {
 
     if (loading) {
         return (
-            <div style={{ maxWidth: '1350px', margin: '0 auto', padding: '24px 20px' }}>
+            <div className="page-container" style={{ maxWidth: '1350px', margin: '0 auto' }}>
                 <TableSkeleton rows={7} cols={6} />
             </div>
         );
     }
 
     return (
-        <div style={{ maxWidth: '1350px', margin: '0 auto', padding: '24px 20px' }}>
+        <div className="page-container" style={{ maxWidth: '1350px', margin: '0 auto' }}>
             {/* Header & Overview Stats */}
             <div style={{
                 display: 'flex',

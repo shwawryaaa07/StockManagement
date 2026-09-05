@@ -1,372 +1,524 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { getDashboard, getInvoices, getProducts } from '../services/api';
-import api from '../services/api';
 import { CardSkeleton, TableSkeleton } from './SkeletonLoader';
-import KpiCard from './KpiCard';
-import Icon from './Icon';
-import { formatDate, formatCurrency } from '../utils/dateUtils';
-import usePageTitle from '../utils/usePageTitle';
 
-export function Dashboard() {
-  usePageTitle('Dashboard');
-  const navigate = useNavigate();
+function Dashboard() {
+    const navigate = useNavigate();
+    const [data, setData] = useState({
+        todaySales: 0,
+        todayInvoices: 0,
+        dueInvoicesCount: 0,
+        totalDueAmount: 0
+    });
+    const [invoices, setInvoices] = useState([]);
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-  const [data, setData] = useState({
-    todaySales: 0,
-    todayInvoices: 0,
-    dueInvoicesCount: 0,
-    totalDueAmount: 0,
-    monthlySales: []
-  });
-  const [invoices, setInvoices] = useState([]);
-  const [products, setProducts] = useState([]);
-  const [expiringWarranties, setExpiringWarranties] = useState([]);
-  const [loading, setLoading] = useState(true);
+    const loadData = async () => {
+        setLoading(true);
+        try {
+            const results = await Promise.allSettled([
+                getDashboard(),
+                getInvoices(),
+                getProducts()
+            ]);
 
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const results = await Promise.allSettled([
-        getDashboard(),
-        getInvoices(),
-        getProducts(),
-        api.get('/invoices/warranty-expiring?days=30').catch(() => ({ data: [] }))
-      ]);
+            if (results[0].status === 'fulfilled' && results[0].value?.data) {
+                setData(results[0].value.data);
+            }
+            if (results[1].status === 'fulfilled' && Array.isArray(results[1].value?.data)) {
+                setInvoices(results[1].value.data);
+            }
+            if (results[2].status === 'fulfilled' && Array.isArray(results[2].value?.data)) {
+                setProducts(results[2].value.data);
+            }
+        } catch (error) {
+            console.error('Error loading dashboard data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-      if (results[0].status === 'fulfilled' && results[0].value?.data) {
-        setData(results[0].value.data);
-      }
-      if (results[1].status === 'fulfilled' && Array.isArray(results[1].value?.data)) {
-        setInvoices(results[1].value.data);
-      }
-      if (results[2].status === 'fulfilled' && Array.isArray(results[2].value?.data)) {
-        setProducts(results[2].value.data);
-      }
-      if (results[3].status === 'fulfilled' && Array.isArray(results[3].value?.data)) {
-        setExpiringWarranties(results[3].value.data);
-      }
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    useEffect(() => {
+        loadData();
+    }, []);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+    // Derived inventory statistics
+    const totalUnitsInStock = products.reduce((acc, p) => acc + (Number(p.quantity) || 0), 0);
+    const totalInventoryValue = products.reduce((acc, p) => acc + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0);
+    const lowStockProducts = products.filter(p => (Number(p.quantity) || 0) <= 2);
 
-  // Derived inventory statistics
-  const totalUnitsInStock = products.reduce((acc, p) => acc + (Number(p.quantity) || 0), 0);
-  const totalInventoryValue = products.reduce((acc, p) => acc + ((Number(p.price) || 0) * (Number(p.quantity) || 0)), 0);
-  const lowStockProducts = products.filter(p => (Number(p.quantity) || 0) <= (p.lowStockThreshold || 2));
+    const formatDate = (dateStr) => {
+        if (!dateStr) return 'N/A';
+        const parts = String(dateStr).split('T')[0].split('-');
+        if (parts.length === 3) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    };
 
-  // Chart data
-  const chartData = data.monthlySales && data.monthlySales.length > 0
-    ? data.monthlySales
-    : [
-        { month: 'Last 5M', sales: 0, invoices: 0 },
-        { month: 'Last 4M', sales: 0, invoices: 0 },
-        { month: 'Last 3M', sales: 0, invoices: 0 },
-        { month: 'Last 2M', sales: 0, invoices: 0 },
-        { month: 'Last M', sales: 0, invoices: 0 },
-        { month: 'This Month', sales: Number(data.todaySales || 0), invoices: Number(data.todayInvoices || 0) }
-      ];
+    const getInitials = (name) => {
+        if (!name) return 'C';
+        const parts = name.trim().split(' ');
+        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+        return name.slice(0, 2).toUpperCase();
+    };
 
-  if (loading) {
-    return (
-      <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-        <div style={{ height: '40px' }} className="skeleton skeleton-title" />
-        <CardSkeleton count={4} />
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-          <TableSkeleton rows={5} cols={3} />
-          <TableSkeleton rows={5} cols={3} />
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="page-container" style={{ maxWidth: '1240px', margin: '0 auto' }}>
-      {/* Header / Greeting Bar */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '24px',
-        flexWrap: 'wrap',
-        gap: '14px'
-      }}>
-        <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '900', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.5px' }}>
-            Shop Command Center
-          </h1>
-          <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0', fontWeight: '500' }}>
-            Real-time sales, inventory register &amp; customer warranties
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button
-            onClick={() => navigate('/create-invoice')}
-            className="btn-primary"
-            style={{ padding: '10px 20px', fontSize: '13.5px', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
-          >
-            <Icon name="receipt" size={16} /> + Create New Bill
-          </button>
-          <button
-            onClick={loadData}
-            className="btn-cancel"
-            style={{ padding: '10px 14px', fontSize: '13.5px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-            title="Refresh data"
-          >
-            <Icon name="refresh" size={15} /> Refresh
-          </button>
-        </div>
-      </div>
-
-      {/* 4 Hero KPI Metric Cards */}
-      <div className="dash-kpi-grid" style={{ marginBottom: '24px' }}>
-        <KpiCard
-          title="Today's Gross Sales"
-          value={formatCurrency(data.todaySales || 0)}
-          subtitle="Gross counter receipts"
-          icon="trending-up"
-          color="success"
-          onClick={() => navigate('/reports')}
-        />
-        <KpiCard
-          title="Today's Invoices"
-          value={data.todayInvoices || 0}
-          subtitle="Transactions billed today"
-          icon="receipt"
-          color="primary"
-          onClick={() => navigate('/invoices')}
-        />
-        <KpiCard
-          title="Outstanding Dues"
-          value={formatCurrency(data.totalDueAmount || 0)}
-          subtitle={`${data.dueInvoicesCount || 0} pending customer payments`}
-          icon="alert-circle"
-          color="danger"
-          onClick={() => navigate('/invoices?status=DUE')}
-        />
-        <KpiCard
-          title="Total Stock Value"
-          value={formatCurrency(totalInventoryValue)}
-          subtitle={`${totalUnitsInStock} units in ${products.length} products`}
-          icon="boxes"
-          color="purple"
-          badge={lowStockProducts.length > 0 ? `${lowStockProducts.length} Low Stock` : undefined}
-          onClick={() => navigate('/products')}
-        />
-      </div>
-
-      {/* 6-Month Sales Trend Chart (Recharts) */}
-      <div className="card" style={{ padding: '22px', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', flexWrap: 'wrap', gap: '10px' }}>
-          <div>
-            <h3 style={{ fontSize: '16px', fontWeight: '800', margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Icon name="bar-chart" size={20} />
-              <span>6-Month Revenue &amp; Sales Trend</span>
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: '2px 0 0 0' }}>
-              Monthly gross sales volume
-            </p>
-          </div>
-
-          <button
-            onClick={() => navigate('/reports')}
-            className="btn-cancel"
-            style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-          >
-            <Icon name="reports" size={14} /> Full Analytics
-          </button>
-        </div>
-
-        <div style={{ width: '100%', height: 260 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border-color, #e2e8f0)" vertical={false} />
-              <XAxis dataKey="month" stroke="var(--text-secondary, #64748b)" fontSize={12} tickLine={false} />
-              <YAxis
-                stroke="var(--text-secondary, #64748b)"
-                fontSize={12}
-                tickLine={false}
-                tickFormatter={(val) => `₹${val >= 1000 ? `${(val / 1000).toFixed(0)}k` : val}`}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: 'var(--bg-card, #1e293b)',
-                  border: '1px solid var(--border-color, #334155)',
-                  borderRadius: '8px',
-                  color: 'var(--text-primary, #ffffff)'
-                }}
-                formatter={(value) => [`₹${Number(value).toLocaleString('en-IN')}`, 'Gross Revenue']}
-              />
-              <Bar dataKey="sales" fill="var(--gold, #f59e0b)" radius={[6, 6, 0, 0]} maxBarSize={48} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
-      </div>
-
-      {/* Warranty Expiring Soon Widget (Phase 6) */}
-      {expiringWarranties.length > 0 && (
-        <div className="card" style={{ padding: '20px', marginBottom: '24px', borderLeft: '4px solid #f59e0b' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <div style={{ color: '#f59e0b' }}>
-                <Icon name="warranty" size={20} />
-              </div>
-              <h3 style={{ margin: 0, fontSize: '15px', fontWeight: '800', color: 'var(--text-primary)' }}>
-                Warranties Expiring Soon (Next 30 Days)
-              </h3>
+    if (loading) {
+        return (
+            <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                <div style={{ height: '40px' }} className="skeleton skeleton-title" />
+                <CardSkeleton count={4} />
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                    <TableSkeleton rows={5} cols={3} />
+                    <TableSkeleton rows={5} cols={3} />
+                </div>
             </div>
-            <span className="badge badge--warning">{expiringWarranties.length} items</span>
-          </div>
+        );
+    }
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
-            {expiringWarranties.slice(0, 4).map((w, idx) => (
-              <div key={idx} style={{ padding: '12px', background: 'var(--bg-surface)', borderRadius: '10px', border: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    return (
+        <div className="page-container">
+            {/* Header / Greeting Bar */}
+            <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '24px',
+                flexWrap: 'wrap',
+                gap: '14px'
+            }}>
                 <div>
-                  <div style={{ fontWeight: '700', fontSize: '13px', color: 'var(--text-primary)' }}>{w.productName}</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>Cust: {w.customerName} ({w.customerContact || 'No phone'})</div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Expiry: {formatDate(w.expiryDate)}</div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <span className={`badge ${w.daysRemaining <= 7 ? 'badge--danger' : 'badge--warning'}`}>
-                    {w.daysRemaining <= 0 ? 'Expired' : `${w.daysRemaining}d left`}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Bottom Grid: Recent Invoices & Low Stock Inventory */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-        gap: '20px'
-      }}>
-        {/* Recent Invoices Card */}
-        <div className="card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '800', margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Icon name="receipt" size={18} />
-              <span>Recent Invoices</span>
-            </h3>
-            <button
-              onClick={() => navigate('/invoices')}
-              className="btn-cancel"
-              style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '6px' }}
-            >
-              View All &rarr;
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {invoices.slice(0, 5).map((inv) => (
-              <div
-                key={inv.id}
-                onClick={() => navigate(`/invoice/${inv.id}`)}
-                style={{
-                  padding: '12px 14px',
-                  background: 'var(--bg-surface)',
-                  borderRadius: '10px',
-                  border: '1px solid var(--border-color)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  cursor: 'pointer',
-                  transition: 'transform 0.15s ease'
-                }}
-                className="hover-lift"
-              >
-                <div>
-                  <div style={{ fontWeight: '800', fontSize: '13.5px', color: 'var(--text-primary)' }}>
-                    {inv.customerName}
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', gap: '6px', marginTop: '2px' }}>
-                    <span style={{ color: 'var(--gold)', fontWeight: '700' }}>{inv.invoiceNumber}</span>
-                    <span>&bull;</span>
-                    <span>{formatDate(inv.createdAt)}</span>
-                  </div>
+                    <h1 style={{ fontSize: '26px', fontWeight: '900', color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.5px' }}>
+                        Shop Command Center
+                    </h1>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0', fontWeight: '500' }}>
+                        Real-time sales, billing register &amp; stock overview
+                    </p>
                 </div>
 
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontWeight: '800', fontSize: '14px', color: 'var(--text-primary)' }}>
-                    {formatCurrency(inv.totalAmount)}
-                  </div>
-                  <span className={`badge badge--${inv.paymentStatus === 'FULLY_PAID' ? 'success' : inv.paymentStatus === 'PARTIALLY_PAID' ? 'warning' : 'danger'}`} style={{ marginTop: '2px' }}>
-                    {inv.paymentStatus === 'FULLY_PAID' ? 'PAID' : inv.paymentStatus === 'PARTIALLY_PAID' ? 'PARTIAL' : 'DUE'}
-                  </span>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                    <button
+                        onClick={() => navigate('/create-invoice')}
+                        className="btn-primary"
+                        style={{ padding: '11px 22px', fontSize: '14px' }}
+                    >
+                        🧾 + Create New Bill
+                    </button>
+                    <button
+                        onClick={loadData}
+                        className="btn-cancel"
+                        style={{ padding: '11px 16px', fontSize: '14px' }}
+                        title="Refresh data"
+                    >
+                        🔄 Refresh
+                    </button>
                 </div>
-              </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
-        {/* Low Stock Alerts Card */}
-        <div className="card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: '800', margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Icon name="boxes" size={18} />
-              <span>Low Stock Alerts</span>
-            </h3>
-            <button
-              onClick={() => navigate('/products')}
-              className="btn-cancel"
-              style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '6px' }}
-            >
-              Manage &rarr;
-            </button>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {lowStockProducts.length === 0 ? (
-              <div style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
-                All products have healthy stock levels!
-              </div>
-            ) : (
-              lowStockProducts.slice(0, 5).map((prod) => (
-                <div
-                  key={prod.id}
-                  style={{
-                    padding: '12px 14px',
-                    background: 'var(--bg-surface)',
-                    borderRadius: '10px',
+            {/* 4 Hero KPI Metric Cards */}
+            <div className="dash-kpi-grid">
+                {/* 1. Today's Gross Revenue */}
+                <div style={{
+                    background: 'var(--bg-card)',
+                    padding: '22px',
+                    borderRadius: '16px',
                     border: '1px solid var(--border-color)',
+                    boxShadow: 'var(--shadow-md)',
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
-                  }}
-                >
-                  <div>
-                    <div style={{ fontWeight: '800', fontSize: '13.5px', color: 'var(--text-primary)' }}>
-                      {prod.name}
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Today's Sales
+                        </span>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--emerald-light)', color: '#065f46', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                            💰
+                        </div>
                     </div>
-                    <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginTop: '2px' }}>
-                      Mod: {prod.modelNumber || 'N/A'} &bull; {prod.category || 'General'}
+                    <div style={{ marginTop: '14px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: '900', color: '#10b981', letterSpacing: '-0.5px' }}>
+                            ₹{Number(data.todaySales || 0).toLocaleString('en-IN')}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '600' }}>
+                            Gross counter receipts
+                        </div>
                     </div>
-                  </div>
-
-                  <div style={{ textAlign: 'right' }}>
-                    <span className={`badge ${prod.quantity <= 0 ? 'badge--danger' : 'badge--warning'}`}>
-                      {prod.quantity <= 0 ? 'Out of Stock' : `${prod.quantity} Left`}
-                    </span>
-                  </div>
                 </div>
-              ))
-            )}
-          </div>
+
+                {/* 2. Today's Invoices Count */}
+                <div style={{
+                    background: 'var(--bg-card)',
+                    padding: '22px',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: 'var(--shadow-md)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Today's Bills
+                        </span>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                            🧾
+                        </div>
+                    </div>
+                    <div style={{ marginTop: '14px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+                            {data.todayInvoices || 0}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '600' }}>
+                            Transactions created today
+                        </div>
+                    </div>
+                </div>
+
+                {/* 3. Market Receivables (Due Balance) */}
+                <div style={{
+                    background: 'var(--bg-card)',
+                    padding: '22px',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: 'var(--shadow-md)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Outstanding Dues
+                        </span>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--amber-light)', color: '#92400e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                            🟡
+                        </div>
+                    </div>
+                    <div style={{ marginTop: '14px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: '900', color: '#f59e0b', letterSpacing: '-0.5px' }}>
+                            ₹{Number(data.totalDueAmount || 0).toLocaleString('en-IN')}
+                        </div>
+                        <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px', fontWeight: '700' }}>
+                            {data.dueInvoicesCount || 0} customer(s) pending
+                        </div>
+                    </div>
+                </div>
+
+                {/* 4. Total Stock Asset Value */}
+                <div style={{
+                    background: 'var(--bg-card)',
+                    padding: '22px',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: 'var(--shadow-md)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            Inventory Asset Value
+                        </span>
+                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(15, 23, 42, 0.08)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                            📦
+                        </div>
+                    </div>
+                    <div style={{ marginTop: '14px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+                            ₹{totalInventoryValue.toLocaleString('en-IN')}
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '600' }}>
+                            {totalUnitsInStock} total units across {products.length} products
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Quick Shortcuts Bar */}
+            <div className="shortcuts-scroll-bar">
+                <span style={{ fontSize: '13px', fontWeight: '800', color: 'var(--text-secondary)', marginRight: '6px', flexShrink: 0 }}>
+                    ⚡ Jump to:
+                </span>
+                <button
+                    onClick={() => navigate('/create-invoice')}
+                    style={{
+                        padding: '9px 18px',
+                        background: 'linear-gradient(135deg, var(--gold), #d97706)',
+                        color: '#0f172a',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        flexShrink: 0
+                    }}
+                >
+                    🧾 Create Invoice
+                </button>
+                <button
+                    onClick={() => navigate('/products')}
+                    className="btn-secondary"
+                    style={{ padding: '9px 18px', fontSize: '13px', fontWeight: '700', flexShrink: 0 }}
+                >
+                    📦 Manage Products ({products.length})
+                </button>
+                <button
+                    onClick={() => navigate('/due-invoices')}
+                    style={{
+                        padding: '9px 18px',
+                        background: 'var(--amber-light)',
+                        color: '#92400e',
+                        border: '1px solid rgba(245, 158, 11, 0.4)',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: '800',
+                        cursor: 'pointer',
+                        flexShrink: 0
+                    }}
+                >
+                    🟡 Due Ledger ({data.dueInvoicesCount || 0})
+                </button>
+                <button
+                    onClick={() => navigate('/invoices')}
+                    style={{
+                        padding: '9px 18px',
+                        background: 'var(--bg-card)',
+                        color: 'var(--text-primary)',
+                        border: '1px solid var(--border-color)',
+                        borderRadius: '8px',
+                        fontSize: '13px',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        flexShrink: 0
+                    }}
+                >
+                    📋 View Invoices ({invoices.length})
+                </button>
+            </div>
+
+            {/* 2-Column Split: Recent Bills & Inventory Health */}
+            <div className="dash-main-grid">
+                {/* LEFT: Recent Invoices Stream */}
+                <div style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: '16px',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: 'var(--shadow-md)',
+                    overflow: 'hidden'
+                }}>
+                    <div style={{
+                        padding: '18px 24px',
+                        borderBottom: '1px solid var(--border-color)',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        <h2 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            📋 <span>Recent Invoices</span>
+                        </h2>
+                        <button
+                            onClick={() => navigate('/invoices')}
+                            style={{
+                                background: 'none',
+                                border: 'none',
+                                color: 'var(--primary-accent)',
+                                fontWeight: '700',
+                                fontSize: '13px',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            View All ({invoices.length}) →
+                        </button>
+                    </div>
+
+                    {loading ? (
+                        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                            Loading recent bills...
+                        </div>
+                    ) : invoices.length === 0 ? (
+                        <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                            <div style={{ fontSize: '36px', marginBottom: '10px' }}>🧾</div>
+                            <div style={{ fontWeight: '700', fontSize: '15px', color: 'var(--text-primary)' }}>No Invoices Created Yet</div>
+                            <p style={{ fontSize: '13px', margin: '6px 0 16px 0' }}>Generate your first customer bill to see real-time records.</p>
+                            <button
+                                onClick={() => navigate('/create-invoice')}
+                                className="btn-primary"
+                                style={{ padding: '10px 20px', fontSize: '13px' }}
+                            >
+                                + Generate First Bill
+                            </button>
+                        </div>
+                    ) : (
+                        <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
+                            <table style={{ width: '100%', minWidth: '550px', borderCollapse: 'collapse', fontSize: '13px' }}>
+                                <thead>
+                                    <tr style={{ background: 'var(--bg-surface)', borderBottom: '1px solid var(--border-color)', color: 'var(--text-secondary)' }}>
+                                        <th style={{ padding: '12px 18px', textAlign: 'left', fontWeight: '700' }}>Bill # / Customer</th>
+                                        <th style={{ padding: '12px 18px', textAlign: 'left', fontWeight: '700' }}>Date</th>
+                                        <th style={{ padding: '12px 18px', textAlign: 'right', fontWeight: '700' }}>Amount (₹)</th>
+                                        <th style={{ padding: '12px 18px', textAlign: 'center', fontWeight: '700' }}>Status</th>
+                                        <th style={{ padding: '12px 18px', textAlign: 'center', fontWeight: '700' }}>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {invoices.slice(0, 6).map((inv) => (
+                                        <tr
+                                            key={inv.id}
+                                            style={{ borderBottom: '1px solid var(--border-color)', transition: 'background 0.15s' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-surface)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                        >
+                                            <td style={{ padding: '12px 18px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                                    <div style={{
+                                                        width: '34px',
+                                                        height: '34px',
+                                                        borderRadius: '8px',
+                                                        background: 'rgba(15, 23, 42, 0.08)',
+                                                        color: 'var(--text-primary)',
+                                                        fontWeight: '800',
+                                                        fontSize: '12px',
+                                                        display: 'flex',
+                                                        alignItems: 'center',
+                                                        justifyContent: 'center',
+                                                        flexShrink: 0
+                                                    }}>
+                                                        {getInitials(inv.customerName)}
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontWeight: '800', color: 'var(--text-primary)' }}>
+                                                            {inv.customerName}
+                                                        </div>
+                                                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                                            #{inv.invoiceNumber}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td style={{ padding: '12px 18px', color: 'var(--text-secondary)' }}>
+                                                {formatDate(inv.createdAt)}
+                                            </td>
+                                            <td style={{ padding: '12px 18px', textAlign: 'right', fontWeight: '800', color: 'var(--text-primary)' }}>
+                                                ₹{Number(inv.totalAmount || 0).toLocaleString('en-IN')}
+                                            </td>
+                                            <td style={{ padding: '12px 18px', textAlign: 'center' }}>
+                                                {Number(inv.balanceDue || 0) <= 0 ? (
+                                                    <span className="badge-paid">● PAID</span>
+                                                ) : (
+                                                    <span className="badge-due">● DUE ₹{Number(inv.balanceDue).toLocaleString('en-IN')}</span>
+                                                )}
+                                            </td>
+                                            <td style={{ padding: '12px 18px', textAlign: 'center' }}>
+                                                <button
+                                                    onClick={() => navigate(`/invoice/${inv.id}`)}
+                                                    className="btn-cancel"
+                                                    style={{ padding: '5px 10px', fontSize: '12px', fontWeight: '700' }}
+                                                >
+                                                    View / Print 🖨️
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                {/* RIGHT: Inventory Status & Low Stock Watchlist */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                    {/* Inventory Summary Card */}
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        borderRadius: '16px',
+                        padding: '22px',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: 'var(--shadow-md)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h3 style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+                                📦 Inventory Health
+                            </h3>
+                            <button
+                                onClick={() => navigate('/products')}
+                                style={{ background: 'none', border: 'none', color: 'var(--primary-accent)', fontWeight: '700', fontSize: '12px', cursor: 'pointer' }}
+                            >
+                                All Products →
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '16px' }}>
+                            <div style={{ background: 'var(--bg-surface)', padding: '14px', borderRadius: '10px' }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Total Units</div>
+                                <div style={{ fontSize: '22px', fontWeight: '900', color: 'var(--text-primary)', marginTop: '4px' }}>
+                                    {totalUnitsInStock}
+                                </div>
+                            </div>
+                            <div style={{ background: 'var(--bg-surface)', padding: '14px', borderRadius: '10px' }}>
+                                <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: '700', textTransform: 'uppercase' }}>Catalog Items</div>
+                                <div style={{ fontSize: '22px', fontWeight: '900', color: '#10b981', marginTop: '4px' }}>
+                                    {products.length}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>Valuation Breakdown:</span>
+                            <strong style={{ color: 'var(--text-primary)' }}>₹{totalInventoryValue.toLocaleString('en-IN')}</strong>
+                        </div>
+                    </div>
+
+                    {/* Low Stock Alerts */}
+                    <div style={{
+                        background: 'var(--bg-card)',
+                        borderRadius: '16px',
+                        padding: '22px',
+                        border: '1px solid var(--border-color)',
+                        boxShadow: 'var(--shadow-md)'
+                    }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                            <h3 style={{ fontSize: '15px', fontWeight: '800', color: '#e11d48', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                ⚠️ Low Stock Watchlist ({lowStockProducts.length})
+                            </h3>
+                        </div>
+
+                        {lowStockProducts.length === 0 ? (
+                            <div style={{ padding: '16px', background: 'var(--emerald-light)', borderRadius: '10px', color: '#065f46', fontSize: '13px', fontWeight: '700', textAlign: 'center' }}>
+                                ✅ All products are well stocked!
+                            </div>
+                        ) : (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {lowStockProducts.slice(0, 4).map(p => (
+                                    <div
+                                        key={p.id}
+                                        style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            padding: '10px 14px',
+                                            background: 'var(--bg-surface)',
+                                            borderRadius: '8px',
+                                            borderLeft: '4px solid #e11d48'
+                                        }}
+                                    >
+                                        <div>
+                                            <div style={{ fontWeight: '800', fontSize: '13px', color: 'var(--text-primary)' }}>{p.name}</div>
+                                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{p.category} • ₹{Number(p.price).toLocaleString('en-IN')}</div>
+                                        </div>
+                                        <span className="badge-urgent">
+                                            {p.quantity} Left
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }
 
 export default Dashboard;

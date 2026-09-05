@@ -83,28 +83,8 @@ public class InvoiceController {
         }
 
         List<Product> products = productRepository.findByActiveTrue();
-        long lowStockCount = products.stream().filter(p -> (p.getQuantity() != null ? p.getQuantity() : 0) <= (p.getLowStockThreshold() != null ? p.getLowStockThreshold() : 2)).count();
+        long lowStockCount = products.stream().filter(p -> (p.getQuantity() != null ? p.getQuantity() : 0) <= 2).count();
         long totalInvoices = invoiceRepository.count();
-
-        // 6-month sales trend for dashboard analytics
-        List<Map<String, Object>> monthlySales = new java.util.ArrayList<>();
-        for (int i = 5; i >= 0; i--) {
-            LocalDateTime monthStart = LocalDateTime.now().minusMonths(i).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
-            LocalDateTime monthEnd = monthStart.plusMonths(1).minusSeconds(1);
-            List<Invoice> monthInvoices = invoiceRepository.findByCreatedAtBetween(monthStart, monthEnd);
-            BigDecimal monthTotal = BigDecimal.ZERO;
-            for (Invoice inv : monthInvoices) {
-                if (inv.getTotalAmount() != null) {
-                    monthTotal = monthTotal.add(inv.getTotalAmount());
-                }
-            }
-            String monthLabel = monthStart.format(DateTimeFormatter.ofPattern("MMM yyyy"));
-            Map<String, Object> m = new HashMap<>();
-            m.put("month", monthLabel);
-            m.put("sales", monthTotal);
-            m.put("invoices", monthInvoices.size());
-            monthlySales.add(m);
-        }
 
         Map<String, Object> dashboard = new HashMap<>();
         dashboard.put("todayInvoices", todayInvoices.size());
@@ -115,47 +95,9 @@ public class InvoiceController {
         dashboard.put("dueInvoicesCount", dueInvoices.size());
         dashboard.put("totalInvoices", totalInvoices);
         dashboard.put("lowStockCount", lowStockCount);
-        dashboard.put("monthlySales", monthlySales);
         dashboard.put("date", LocalDateTime.now().toLocalDate().toString());
 
         return dashboard;
-    }
-
-    @GetMapping("/warranty-expiring")
-    public List<Map<String, Object>> getExpiringWarranties(@RequestParam(defaultValue = "30") int days) {
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime future = now.plusDays(days);
-        List<Invoice> allInvoices = invoiceRepository.findAll();
-        List<Map<String, Object>> expiringList = new java.util.ArrayList<>();
-        for (Invoice inv : allInvoices) {
-            if (inv.getItems() == null) continue;
-            for (InvoiceItem item : inv.getItems()) {
-                if (item.getWarrantyMonths() != null && item.getWarrantyMonths() > 0) {
-                    LocalDateTime invoiceDate = inv.getCreatedAt() != null ? inv.getCreatedAt() : LocalDateTime.now();
-                    LocalDateTime expiryDate = invoiceDate.plusMonths(item.getWarrantyMonths());
-                    if (expiryDate.isAfter(now.minusDays(7)) && expiryDate.isBefore(future)) {
-                        Map<String, Object> map = new HashMap<>();
-                        map.put("invoiceId", inv.getId());
-                        map.put("invoiceNumber", inv.getInvoiceNumber());
-                        map.put("customerName", inv.getCustomerName());
-                        map.put("customerContact", inv.getCustomerContact());
-                        map.put("productName", item.getProductName());
-                        map.put("modelNumber", item.getModelNumber());
-                        map.put("serialNumber", item.getSerialNumber());
-                        map.put("warrantyMonths", item.getWarrantyMonths());
-                        map.put("warrantyType", item.getWarrantyType());
-                        map.put("warrantyNotes", item.getWarrantyNotes());
-                        map.put("purchaseDate", invoiceDate.toLocalDate().toString());
-                        map.put("expiryDate", expiryDate.toLocalDate().toString());
-                        long daysRemaining = java.time.temporal.ChronoUnit.DAYS.between(now.toLocalDate(), expiryDate.toLocalDate());
-                        map.put("daysRemaining", daysRemaining);
-                        expiringList.add(map);
-                    }
-                }
-            }
-        }
-        expiringList.sort((a, b) -> Long.compare((Long) a.get("daysRemaining"), (Long) b.get("daysRemaining")));
-        return expiringList;
     }
 
     @GetMapping("/search")
@@ -240,14 +182,12 @@ public class InvoiceController {
                     productQuantities.getOrDefault(item.getProduct().getId(), 0) + qty);
         }
 
-        // Validate available stock against aggregated demand and cache product entities
-        Map<Long, Product> productCache = new HashMap<>();
+        // Validate available stock against aggregated demand
         for (Map.Entry<Long, Integer> entry : productQuantities.entrySet()) {
             Long prodId = entry.getKey();
             Integer requestedQty = entry.getValue();
             Product product = productRepository.findById(prodId)
                     .orElseThrow(() -> new RuntimeException("Product not found: " + prodId));
-            productCache.put(prodId, product);
 
             if (product.getQuantity() < requestedQty) {
                 throw new RuntimeException("Insufficient stock for product: " + product.getName() +
@@ -259,11 +199,7 @@ public class InvoiceController {
         BigDecimal subtotal = BigDecimal.ZERO;
         for (InvoiceItem item : invoice.getItems()) {
             item.setInvoice(invoice);
-            Product prod = productCache.get(item.getProduct().getId());
-            if (prod == null) {
-                prod = productRepository.findById(item.getProduct().getId()).orElseThrow();
-                productCache.put(prod.getId(), prod);
-            }
+            Product prod = productRepository.findById(item.getProduct().getId()).orElseThrow();
             BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : prod.getPrice();
             item.setUnitPrice(unitPrice);
             BigDecimal itemTotal = unitPrice.multiply(BigDecimal.valueOf(item.getQuantity()));
@@ -311,12 +247,9 @@ public class InvoiceController {
             invoice.setAmountDue(total.subtract(amountPaid));
         }
 
-        // Deduct aggregated stock using cached products
+        // Deduct aggregated stock
         for (Map.Entry<Long, Integer> entry : productQuantities.entrySet()) {
-            Product product = productCache.get(entry.getKey());
-            if (product == null) {
-                product = productRepository.findById(entry.getKey()).orElseThrow();
-            }
+            Product product = productRepository.findById(entry.getKey()).orElseThrow();
             product.setQuantity(product.getQuantity() - entry.getValue());
             productRepository.save(product);
         }
@@ -367,14 +300,12 @@ public class InvoiceController {
                     newProductQuantities.getOrDefault(newItem.getProduct().getId(), 0) + qty);
         }
 
-        // 3. Validate stock against newly restored balances and cache product entities
-        Map<Long, Product> productCache = new HashMap<>();
+        // 3. Validate stock against newly restored balances
         for (Map.Entry<Long, Integer> entry : newProductQuantities.entrySet()) {
             Long prodId = entry.getKey();
             Integer requestedQty = entry.getValue();
             Product product = productRepository.findById(prodId)
                     .orElseThrow(() -> new RuntimeException("Product not found: " + prodId));
-            productCache.put(prodId, product);
 
             if (product.getQuantity() < requestedQty) {
                 throw new RuntimeException("Insufficient stock for product: " + product.getName() +
@@ -384,10 +315,7 @@ public class InvoiceController {
 
         // 4. Deduct new stock demand
         for (Map.Entry<Long, Integer> entry : newProductQuantities.entrySet()) {
-            Product product = productCache.get(entry.getKey());
-            if (product == null) {
-                product = productRepository.findById(entry.getKey()).orElseThrow();
-            }
+            Product product = productRepository.findById(entry.getKey()).orElseThrow();
             product.setQuantity(product.getQuantity() - entry.getValue());
             productRepository.save(product);
         }
@@ -417,12 +345,8 @@ public class InvoiceController {
         for (InvoiceItem item : updatedInvoice.getItems()) {
             InvoiceItem newItem = new InvoiceItem();
             newItem.setInvoice(existingInvoice);
-            Product prod = productCache.get(item.getProduct().getId());
-            if (prod == null) {
-                prod = productRepository.findById(item.getProduct().getId())
-                        .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProduct().getId()));
-                productCache.put(prod.getId(), prod);
-            }
+            Product prod = productRepository.findById(item.getProduct().getId())
+                    .orElseThrow(() -> new RuntimeException("Product not found: " + item.getProduct().getId()));
             newItem.setProduct(prod);
             newItem.setQuantity(item.getQuantity());
             BigDecimal unitPrice = item.getUnitPrice() != null ? item.getUnitPrice() : prod.getPrice();
@@ -433,9 +357,6 @@ public class InvoiceController {
             newItem.setProductName(prod.getName());
             newItem.setModelNumber(item.getModelNumber() != null && !item.getModelNumber().isBlank() ? item.getModelNumber() : prod.getModelNumber());
             newItem.setSerialNumber(item.getSerialNumber());
-            newItem.setWarrantyMonths(item.getWarrantyMonths());
-            newItem.setWarrantyType(item.getWarrantyType());
-            newItem.setWarrantyNotes(item.getWarrantyNotes());
             existingInvoice.getItems().add(newItem);
 
             subtotal = subtotal.add(itemTotal);

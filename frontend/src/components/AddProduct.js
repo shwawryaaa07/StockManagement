@@ -7,11 +7,11 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
     const [modelNumber, setModelNumber] = useState('');
     const [price, setPrice] = useState('');
     const [quantity, setQuantity] = useState('');
-    const [lowStockThreshold, setLowStockThreshold] = useState('2');
     const [category, setCategory] = useState('');
     const [customCategory, setCustomCategory] = useState('');
     const [serialNumbers, setSerialNumbers] = useState('');
     const [loading, setLoading] = useState(false);
+    const [message, setMessage] = useState('');
     const toast = useToast();
 
     if (!isOpen) return null;
@@ -29,13 +29,13 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
         const finalCategory = category === 'Other' ? (customCategory.trim() || 'General') : (category || 'General');
 
         setLoading(true);
+        setMessage('');
 
         const productData = {
             name: name.trim(),
             modelNumber: modelNumber.trim(),
             price: parseFloat(price),
             quantity: parseInt(quantity, 10),
-            lowStockThreshold: parseInt(lowStockThreshold, 10) || 2,
             category: finalCategory,
             serialNumbers: serialNumbers.trim()
         };
@@ -47,7 +47,6 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
             setModelNumber('');
             setPrice('');
             setQuantity('');
-            setLowStockThreshold('2');
             setCategory('');
             setCustomCategory('');
             setSerialNumbers('');
@@ -59,10 +58,11 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
             const apiMessage = error?.response?.data?.message;
             const fallbackMessage = error instanceof Error ? error.message : String(error);
             const err = apiMessage || fallbackMessage;
+            setMessage('❌ Error adding product: ' + err);
             toast.error('Failed to add product: ' + err);
-        } finally {
-            setLoading(false);
         }
+
+        setLoading(false);
     };
 
     return (
@@ -93,7 +93,7 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
             }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span>📦</span> <span>Add New Product to Inventory</span>
+                        📦 <span>Add New Product to Inventory</span>
                     </h3>
                     <button
                         onClick={onClose}
@@ -102,6 +102,20 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                         ✕
                     </button>
                 </div>
+
+                {message && (
+                    <div style={{
+                        padding: '10px 14px',
+                        borderRadius: '8px',
+                        background: message.startsWith('✅') ? 'rgba(76, 175, 80, 0.15)' : 'rgba(239, 83, 80, 0.15)',
+                        color: message.startsWith('✅') ? '#2e7d32' : '#c62828',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        marginBottom: '16px'
+                    }}>
+                        {message}
+                    </div>
+                )}
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '12px' }}>
@@ -156,7 +170,6 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                             </label>
                             <input
                                 type="number"
-                                inputMode="decimal"
                                 value={price}
                                 onChange={(e) => setPrice(e.target.value)}
                                 placeholder="Enter unit price"
@@ -181,7 +194,6 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                             </label>
                             <input
                                 type="number"
-                                inputMode="numeric"
                                 value={quantity}
                                 onChange={(e) => setQuantity(e.target.value)}
                                 placeholder="Enter stock quantity"
@@ -200,53 +212,28 @@ function AddProduct({ onRefresh, isOpen, onClose }) {
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '12px' }}>
-                        <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
-                                Category
-                            </label>
-                            <select
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 12px',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    background: 'var(--bg-body)',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '13px'
-                                }}
-                            >
-                                <option value="">Select Category...</option>
-                                {commonCategories.map((c, i) => (
-                                    <option key={i} value={c}>{c}</option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
-                                Low Stock Alert Level
-                            </label>
-                            <input
-                                type="number"
-                                inputMode="numeric"
-                                value={lowStockThreshold}
-                                onChange={(e) => setLowStockThreshold(e.target.value)}
-                                placeholder="e.g. 2"
-                                min="0"
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 12px',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    background: 'var(--bg-body)',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '13px'
-                                }}
-                            />
-                        </div>
+                    <div>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                            Category
+                        </label>
+                        <select
+                            value={category}
+                            onChange={(e) => setCategory(e.target.value)}
+                            style={{
+                                width: '100%',
+                                padding: '10px 12px',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: '8px',
+                                background: 'var(--bg-body)',
+                                color: 'var(--text-primary)',
+                                fontSize: '13px'
+                            }}
+                        >
+                            <option value="">Select Category...</option>
+                            {commonCategories.map((c, i) => (
+                                <option key={i} value={c}>{c}</option>
+                            ))}
+                        </select>
                     </div>
 
                     {category === 'Other' && (

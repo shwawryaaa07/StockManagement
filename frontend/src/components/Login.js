@@ -306,18 +306,47 @@ function Login() {
                             </div>
 
                             <div className="login-form-group">
-                                <label className="login-form-label">
+                                <label className="login-form-label" style={{ textAlign: 'center' }}>
                                     4-Digit Counter PIN
                                 </label>
-                                <input
-                                    type="password"
-                                    maxLength={6}
-                                    value={staffPin}
-                                    onChange={(e) => setStaffPin(e.target.value)}
-                                    placeholder="Enter 4-digit PIN"
-                                    required
-                                    className="login-input pin-style"
-                                />
+                                <div className="pin-input-group">
+                                    {[0, 1, 2, 3].map((idx) => (
+                                        <input
+                                            key={idx}
+                                            id={`staff-pin-${idx}`}
+                                            type="password"
+                                            inputMode="numeric"
+                                            maxLength={1}
+                                            value={staffPin[idx] || ''}
+                                            className={`pin-digit ${staffPin[idx] ? 'filled' : ''}`}
+                                            onChange={(e) => {
+                                                const val = e.target.value.replace(/\D/g, '');
+                                                let digits = staffPin.split('');
+                                                while (digits.length < 4) digits.push('');
+                                                digits[idx] = val ? val[val.length - 1] : '';
+                                                const newPin = digits.join('').slice(0, 4);
+                                                setStaffPin(newPin);
+                                                if (val && idx < 3) {
+                                                    document.getElementById(`staff-pin-${idx + 1}`)?.focus();
+                                                }
+                                            }}
+                                            onKeyDown={(e) => {
+                                                if (e.key === 'Backspace' && !staffPin[idx] && idx > 0) {
+                                                    document.getElementById(`staff-pin-${idx - 1}`)?.focus();
+                                                }
+                                            }}
+                                            onPaste={(e) => {
+                                                e.preventDefault();
+                                                const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+                                                if (pasted) {
+                                                    setStaffPin(pasted);
+                                                    const focusIdx = Math.min(pasted.length, 3);
+                                                    document.getElementById(`staff-pin-${focusIdx}`)?.focus();
+                                                }
+                                            }}
+                                        />
+                                    ))}
+                                </div>
                             </div>
 
                             <div className="login-remember-row">

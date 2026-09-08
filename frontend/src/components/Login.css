@@ -253,6 +253,27 @@
   }
 }
 
+/* Animated border glow */
+.login-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 25px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg, 
+    rgba(245, 158, 11, 0.3), 
+    transparent 40%, 
+    transparent 60%, 
+    rgba(245, 158, 11, 0.15)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 .login-card-icon {
   width: 56px;
   height: 56px;
@@ -459,6 +480,42 @@
   letter-spacing: 3px;
   font-family: monospace;
   font-size: 15px;
+}
+
+/* Change 7: PIN Input Polish */
+.pin-input-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 14px 0 20px;
+}
+
+.pin-digit {
+  width: 48px;
+  height: 56px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f9fafb;
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  caret-color: #f59e0b;
+  transition: all 0.2s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.pin-digit:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.06);
+  outline: none;
+}
+
+.pin-digit.filled {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
 }
 
 .login-input-has-toggle {

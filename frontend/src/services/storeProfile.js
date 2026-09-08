@@ -2,7 +2,7 @@ export const DEFAULT_STORE_PROFILE = {
     shopName: 'MANISHA ELECTRONICS',
     ownerName: 'Ramesh Naik (Owner)',
     gstin: '30AMYPN1753F1ZY',
-    phone: '9309736172, 70205592347',
+    phone: '9309736172',
     address: 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa',
     upiId: '9309736172@upi'
 };
@@ -16,12 +16,24 @@ export const DEMO_STORE_PROFILE = {
     upiId: 'demostore@upi'
 };
 
+const sanitizePhone = (phone) => {
+    if (!phone || typeof phone !== 'string') return '9309736172';
+    const cleaned = phone.replace(/,\s*70205592347/g, '').replace(/70205592347\s*,?/g, '').trim();
+    return cleaned || '9309736172';
+};
+
 export const getStoreProfile = (isVisitor = false) => {
     if (isVisitor) return DEMO_STORE_PROFILE;
     const saved = localStorage.getItem('manisha_store_profile') || sessionStorage.getItem('manisha_store_profile');
     if (saved) {
         try {
-            return { ...DEFAULT_STORE_PROFILE, ...JSON.parse(saved) };
+            const parsed = JSON.parse(saved);
+            if (parsed && parsed.phone) {
+                parsed.phone = sanitizePhone(parsed.phone);
+                localStorage.setItem('manisha_store_profile', JSON.stringify({ ...DEFAULT_STORE_PROFILE, ...parsed }));
+                sessionStorage.setItem('manisha_store_profile', JSON.stringify({ ...DEFAULT_STORE_PROFILE, ...parsed }));
+            }
+            return { ...DEFAULT_STORE_PROFILE, ...parsed };
         } catch (e) { }
     }
     return DEFAULT_STORE_PROFILE;
@@ -34,6 +46,9 @@ export const saveStoreProfile = (profile, isVisitor = false) => {
         return merged;
     }
     const merged = { ...DEFAULT_STORE_PROFILE, ...profile };
+    if (merged.phone) {
+        merged.phone = sanitizePhone(merged.phone);
+    }
     localStorage.setItem('manisha_store_profile', JSON.stringify(merged));
     sessionStorage.setItem('manisha_store_profile', JSON.stringify(merged));
     window.dispatchEvent(new CustomEvent('store-profile-updated', { detail: merged }));

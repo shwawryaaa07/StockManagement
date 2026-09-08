@@ -331,8 +331,6 @@ function Login() {
                         <span>🔒 256-Bit SSL Encrypted</span>
                         <span>•</span>
                         <span>⚡ 100% Client Isolation</span>
-                        <span>•</span>
-                        <span>📍 Valpoi, Goa</span>
                     </div>
                 </div>
 

@@ -6,16 +6,16 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class ShopConfig {
 
-    @Value("${shop.name:Manisha Electronics}")
+    @Value("${shop.name:MANISHA ELECTRONICS}")
     private String name;
 
-    @Value("${shop.address:123 Shop Street, City}")
+    @Value("${shop.address:EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa}")
     private String address;
 
-    @Value("${shop.phone:9876543210}")
+    @Value("${shop.phone:9309736172}")
     private String phone;
 
-    @Value("${shop.gstin:22AAAAA0000A1Z5}")
+    @Value("${shop.gstin:30AMYPN1753F1ZY}")
     private String gstin;
 
     public String getName() { return name; }

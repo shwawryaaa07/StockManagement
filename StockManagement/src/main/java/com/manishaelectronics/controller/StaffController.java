@@ -122,6 +122,16 @@ public class StaffController {
         ));
     }
 
+    private String sanitizePhone(String phone) {
+        if (phone == null) return "9309736172";
+        String cleaned = phone.replace(", 70205592347", "")
+                              .replace("70205592347", "")
+                              .replaceAll(",\\s*,", ",")
+                              .replaceAll("^,\\s*|\\s*,$", "")
+                              .trim();
+        return cleaned.isEmpty() ? "9309736172" : cleaned;
+    }
+
     // GET /api/staff/store-profile - Get persistent store profile
     @GetMapping("/store-profile")
     public ResponseEntity<StoreProfile> getStoreProfile() {
@@ -130,11 +140,15 @@ public class StaffController {
                     "MANISHA ELECTRONICS",
                     "Ramesh Naik (Owner)",
                     "30AMYPN1753F1ZY",
-                    "9309736172, 70205592347",
+                    "9309736172",
                     "EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa"
             );
             return storeProfileRepository.save(initial);
         });
+        if (profile.getPhone() != null && profile.getPhone().contains("70205592347")) {
+            profile.setPhone(sanitizePhone(profile.getPhone()));
+            profile = storeProfileRepository.save(profile);
+        }
         return ResponseEntity.ok(profile);
     }
 
@@ -146,14 +160,14 @@ public class StaffController {
                 "MANISHA ELECTRONICS",
                 "Ramesh Naik (Owner)",
                 "30AMYPN1753F1ZY",
-                "9309736172, 70205592347",
+                "9309736172",
                 "EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa"
         ));
 
         if (updated.get("shopName") != null) profile.setShopName(updated.get("shopName").trim());
         if (updated.get("ownerName") != null) profile.setOwnerName(updated.get("ownerName").trim());
         if (updated.get("gstin") != null) profile.setGstin(updated.get("gstin").trim());
-        if (updated.get("phone") != null) profile.setPhone(updated.get("phone").trim());
+        if (updated.get("phone") != null) profile.setPhone(sanitizePhone(updated.get("phone").trim()));
         if (updated.get("address") != null) profile.setAddress(updated.get("address").trim());
         if (updated.get("upiId") != null) profile.setUpiId(updated.get("upiId").trim());
 

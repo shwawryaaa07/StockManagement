@@ -72,9 +72,10 @@ function InvoiceDetail() {
         ).join('\n');
 
         const displayShopName = isVisitor ? 'Manisha Electronics (Demo Sandbox)' : storeProfile.shopName;
+        const cleanStorePhone = (storeProfile.phone || '').replace(/,\s*70205592347/g, '').replace(/70205592347\s*,?/g, '').trim() || '9309736172';
         const displayShopFooter = isVisitor
             ? `Thank you for choosing *Manisha Electronics (Demo)*!\n📍 Goa • 📞 +91 98000 00000`
-            : `Thank you for choosing *${storeProfile.shopName}*!\n📍 ${storeProfile.address} • 📞 ${storeProfile.phone}`;
+            : `Thank you for choosing *${storeProfile.shopName}*!\n📍 ${storeProfile.address} • 📞 ${cleanStorePhone}`;
 
         const customerName = cleanText(invoice.customerName) || 'Customer';
         const customerContact = cleanText(invoice.customerContact);
@@ -152,7 +153,7 @@ ${displayShopFooter}`;
 
     const displayShopPhone = isVisitor
         ? "📞 +91 98000 00000"
-        : "📞 " + storeProfile.phone;
+        : "📞 " + ((storeProfile.phone || '').replace(/,\s*70205592347/g, '').replace(/70205592347\s*,?/g, '').trim() || '9309736172');
 
     const displayGSTIN = isVisitor
         ? "30AAAAA0000A1Z5"

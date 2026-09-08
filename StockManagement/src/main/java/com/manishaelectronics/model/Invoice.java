@@ -81,8 +81,24 @@ public class Invoice {
     public String getBusinessAddress() { return businessAddress; }
     public void setBusinessAddress(String businessAddress) { this.businessAddress = businessAddress; }
 
-    public String getBusinessPhone() { return businessPhone; }
-    public void setBusinessPhone(String businessPhone) { this.businessPhone = businessPhone; }
+    public String getBusinessPhone() {
+        if (businessPhone != null && businessPhone.contains("70205592347")) {
+            String cleaned = businessPhone.replace(", 70205592347", "").replace("70205592347", "").trim();
+            if (cleaned.endsWith(",")) cleaned = cleaned.substring(0, cleaned.length() - 1).trim();
+            return cleaned.isEmpty() ? "9309736172" : cleaned;
+        }
+        return businessPhone;
+    }
+
+    public void setBusinessPhone(String businessPhone) {
+        if (businessPhone != null && businessPhone.contains("70205592347")) {
+            String cleaned = businessPhone.replace(", 70205592347", "").replace("70205592347", "").trim();
+            if (cleaned.endsWith(",")) cleaned = cleaned.substring(0, cleaned.length() - 1).trim();
+            this.businessPhone = cleaned.isEmpty() ? "9309736172" : cleaned;
+        } else {
+            this.businessPhone = businessPhone;
+        }
+    }
 
     public String getBusinessGstin() { return businessGstin; }
     public void setBusinessGstin(String businessGstin) { this.businessGstin = businessGstin; }

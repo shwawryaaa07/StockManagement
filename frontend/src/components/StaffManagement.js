@@ -111,7 +111,7 @@ function StaffManagement() {
             shopName: (editShopName || '').trim() || (isVisitor ? 'DEMO STORE' : 'MANISHA ELECTRONICS'),
             ownerName: (editOwnerName || '').trim() || (isVisitor ? 'Demo Administrator' : 'Ramesh Naik (Owner)'),
             gstin: (editGstin || '').trim() || (isVisitor ? '30AAAAA0000A1Z5' : '30AMYPN1753F1ZY'),
-            phone: (editPhone || '').trim() || (isVisitor ? '+91 98000 00000' : '9309736172, 70205592347'),
+            phone: (editPhone || '').trim() || (isVisitor ? '+91 98000 00000' : '9309736172'),
             address: (editAddress || '').trim() || (isVisitor ? 'Sample Commercial Plaza, Panaji - Goa' : 'EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa'),
             upiId: formattedUpi || '9309736172@upi'
         };
@@ -424,7 +424,7 @@ function StaffManagement() {
                             <strong style={{ color: 'var(--gold)', letterSpacing: '0.5px' }}>{gstin}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>
-                            <span style={{ color: 'var(--text-secondary)' }}>Contact Numbers:</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>Contact Number:</span>
                             <strong style={{ color: 'var(--text-primary)' }}>{phone}</strong>
                         </div>
                         <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '6px' }}>

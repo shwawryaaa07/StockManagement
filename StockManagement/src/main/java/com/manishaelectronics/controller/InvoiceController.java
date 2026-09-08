@@ -73,13 +73,17 @@ public class InvoiceController {
 
         BigDecimal todaySales = BigDecimal.ZERO;
         for (Invoice inv : todayInvoices) {
-            todaySales = todaySales.add(inv.getTotalAmount());
+            if (inv.getTotalAmount() != null) {
+                todaySales = todaySales.add(inv.getTotalAmount());
+            }
         }
 
         List<Invoice> dueInvoices = invoiceRepository.findByAmountDueGreaterThan(BigDecimal.ZERO);
         BigDecimal totalDue = BigDecimal.ZERO;
         for (Invoice inv : dueInvoices) {
-            totalDue = totalDue.add(inv.getAmountDue());
+            if (inv.getAmountDue() != null) {
+                totalDue = totalDue.add(inv.getAmountDue());
+            }
         }
 
         List<Product> products = productRepository.findByActiveTrue();
@@ -126,7 +130,9 @@ public class InvoiceController {
 
         BigDecimal totalSpent = BigDecimal.ZERO;
         for (Invoice inv : invoices) {
-            totalSpent = totalSpent.add(inv.getTotalAmount());
+            if (inv.getTotalAmount() != null) {
+                totalSpent = totalSpent.add(inv.getTotalAmount());
+            }
         }
 
         Map<String, Object> result = new HashMap<>();
@@ -423,11 +429,24 @@ public class InvoiceController {
         Invoice invoice = invoiceRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Invoice not found with id: " + id));
 
-        if (paymentAmount.compareTo(invoice.getAmountDue()) > 0) {
-            throw new IllegalArgumentException("Payment cannot exceed due amount: ₹" + invoice.getAmountDue());
+        BigDecimal currentPaid = invoice.getAmountPaid() != null ? invoice.getAmountPaid() : BigDecimal.ZERO;
+        BigDecimal invoiceTotal = invoice.getTotalAmount();
+        BigDecimal invoiceDue = invoice.getAmountDue();
+
+        if (invoiceTotal == null) {
+            invoiceTotal = currentPaid.add(invoiceDue != null ? invoiceDue : BigDecimal.ZERO);
+            invoice.setTotalAmount(invoiceTotal);
         }
 
-        BigDecimal currentPaid = invoice.getAmountPaid() != null ? invoice.getAmountPaid() : BigDecimal.ZERO;
+        if (invoiceDue == null) {
+            invoiceDue = invoiceTotal.subtract(currentPaid);
+            invoice.setAmountDue(invoiceDue);
+        }
+
+        if (paymentAmount.compareTo(invoiceDue) > 0) {
+            throw new IllegalArgumentException("Payment cannot exceed due amount: ₹" + invoiceDue);
+        }
+
         BigDecimal newPaid = currentPaid.add(paymentAmount);
         invoice.setAmountPaid(newPaid);
 
@@ -435,12 +454,12 @@ public class InvoiceController {
             invoice.setPaymentMode(paymentMode);
         }
 
-        if (newPaid.compareTo(invoice.getTotalAmount()) >= 0) {
+        if (newPaid.compareTo(invoiceTotal) >= 0) {
             invoice.setPaymentStatus(PaymentStatus.FULLY_PAID);
             invoice.setAmountDue(BigDecimal.ZERO);
         } else {
             invoice.setPaymentStatus(PaymentStatus.PARTIALLY_PAID);
-            invoice.setAmountDue(invoice.getTotalAmount().subtract(newPaid));
+            invoice.setAmountDue(invoiceTotal.subtract(newPaid));
         }
 
         return invoiceRepository.save(invoice);

@@ -333,34 +333,27 @@ function EditInvoice() {
                         <div className="customer-info-grid">
                             {/* Customer Name */}
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                                <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
                                     Customer Name *
                                 </label>
                                 <input
                                     type="text"
+                                    className="form-input"
                                     value={customerName}
                                     onChange={(e) => setCustomerName(e.target.value)}
                                     placeholder="Enter customer name"
                                     required
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px 12px',
-                                        border: '1px solid var(--border-color)',
-                                        borderRadius: '8px',
-                                        background: 'var(--bg-body)',
-                                        color: 'var(--text-primary)',
-                                        fontSize: '13px'
-                                    }}
                                 />
                             </div>
 
                             {/* Contact Number */}
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                                <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
                                     Phone Number (10 Digits)
                                 </label>
                                 <input
                                     type="tel"
+                                    className="form-input"
                                     value={customerContact}
                                     onChange={(e) => {
                                         const clean = e.target.value.replace(/\D/g, '').slice(0, 10);
@@ -368,38 +361,21 @@ function EditInvoice() {
                                     }}
                                     placeholder="Enter 10-digit mobile number"
                                     maxLength="10"
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px 12px',
-                                        border: '1px solid var(--border-color)',
-                                        borderRadius: '8px',
-                                        background: 'var(--bg-body)',
-                                        color: 'var(--text-primary)',
-                                        fontSize: '13px'
-                                    }}
                                 />
                             </div>
                         </div>
 
                         {/* Delivery Address */}
                         <div style={{ marginTop: '14px' }}>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', marginBottom: '6px', color: 'var(--text-secondary)' }}>
+                            <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
                                 Delivery / Billing Address
                             </label>
                             <input
                                 type="text"
+                                className="form-input"
                                 value={deliveryAddress}
                                 onChange={(e) => setDeliveryAddress(e.target.value)}
                                 placeholder="Enter delivery address"
-                                style={{
-                                    width: '100%',
-                                    padding: '10px 12px',
-                                    border: '1px solid var(--border-color)',
-                                    borderRadius: '8px',
-                                    background: 'var(--bg-body)',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '13px'
-                                }}
                             />
                         </div>
                     </div>
@@ -419,25 +395,33 @@ function EditInvoice() {
 
                         {/* Autocomplete Input */}
                         <div style={{ position: 'relative' }}>
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onFocus={() => setShowSuggestions(true)}
-                                onChange={(e) => {
-                                    setSearchQuery(e.target.value);
-                                    setShowSuggestions(true);
-                                }}
-                                placeholder="🔍 Search product name, model, or category..."
-                                style={{
-                                    width: '100%',
-                                    padding: '12px 16px',
-                                    border: '2px solid var(--primary)',
-                                    borderRadius: '8px',
-                                    background: 'var(--bg-body)',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '14px'
-                                }}
-                            />
+                            <div className="search-wrapper">
+                                <span className="search-icon">🔍</span>
+                                <input
+                                    type="text"
+                                    className="form-input"
+                                    value={searchQuery}
+                                    onFocus={() => setShowSuggestions(true)}
+                                    onChange={(e) => {
+                                        setSearchQuery(e.target.value);
+                                        setShowSuggestions(true);
+                                    }}
+                                    placeholder="Search product name, model, or category..."
+                                />
+                                {searchQuery && (
+                                    <button
+                                        type="button"
+                                        className="search-clear"
+                                        onClick={() => {
+                                            setSearchQuery('');
+                                            setShowSuggestions(false);
+                                        }}
+                                        aria-label="Clear search"
+                                    >
+                                        ✕
+                                    </button>
+                                )}
+                            </div>
 
                             {/* Dropdown Suggestions List */}
                             {showSuggestions && (
@@ -510,9 +494,8 @@ function EditInvoice() {
                     </div>
 
                     {/* Added Bill Line Items Table */}
-                    <div style={{
+                    <div className="table-card" style={{
                         background: 'var(--bg-card)',
-                        borderRadius: '12px',
                         border: '1px solid var(--border-color)',
                         boxShadow: 'var(--shadow)',
                         overflow: 'hidden'

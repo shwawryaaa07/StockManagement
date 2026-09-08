@@ -51,12 +51,13 @@ public class ProductController {
         }
     }
 
-    // ✅ FIX 3: Extracted method to reduce complexity
     private Product mergeProduct(Product existing, Product incoming) {
         existing.setActive(true);
-        existing.setQuantity(existing.getQuantity() + incoming.getQuantity());
+        int currentQty = existing.getQuantity() != null ? existing.getQuantity() : 0;
+        int incomingQty = incoming.getQuantity() != null ? incoming.getQuantity() : 0;
+        existing.setQuantity(currentQty + incomingQty);
 
-        if (incoming.getPrice() != null && incoming.getPrice().compareTo(existing.getPrice()) != 0) {
+        if (incoming.getPrice() != null && (existing.getPrice() == null || incoming.getPrice().compareTo(existing.getPrice()) != 0)) {
             existing.setPrice(incoming.getPrice());
         }
 

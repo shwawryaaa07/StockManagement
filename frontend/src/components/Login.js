@@ -672,31 +672,39 @@ function Login() {
 
             {/* Modal: Protected Action for Visitors */}
             {showVisitorRestrictedModal && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-                    backdropFilter: 'blur(8px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 99999,
-                    padding: '16px'
-                }}>
-                    <div style={{
-                        background: '#0f172a',
-                        border: '1px solid rgba(245, 158, 11, 0.35)',
-                        borderRadius: '20px',
-                        padding: '28px',
-                        maxWidth: '400px',
-                        width: '100%',
-                        textAlign: 'center',
-                        boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
-                        color: '#f8fafc'
-                    }}>
+                <div
+                    className="modal-overlay"
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                        backdropFilter: 'blur(8px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 99999,
+                        padding: '16px'
+                    }}
+                    onClick={() => setShowVisitorRestrictedModal(false)}
+                >
+                    <div
+                        className="modal-card"
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: '#0f172a',
+                            border: '1px solid rgba(245, 158, 11, 0.35)',
+                            borderRadius: '20px',
+                            padding: '28px',
+                            maxWidth: '400px',
+                            width: '100%',
+                            textAlign: 'center',
+                            boxShadow: '0 25px 60px rgba(0,0,0,0.6)',
+                            color: '#f8fafc'
+                        }}
+                    >
                         <div style={{
                             width: '52px',
                             height: '52px',

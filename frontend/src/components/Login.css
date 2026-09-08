@@ -21,32 +21,47 @@
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
-/* Ambient glow spots */
+/* 1. Background radial gradient glow blobs */
 .login-page::before {
   content: '';
   position: absolute;
-  top: -15%;
-  left: -8%;
-  width: 650px;
-  height: 650px;
-  background: radial-gradient(circle, rgba(245, 158, 11, 0.15) 0%, transparent 70%);
+  top: -20%;
+  left: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.06) 40%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(80px);
+  filter: blur(60px);
   z-index: 0;
 }
 
 .login-page::after {
   content: '';
   position: absolute;
-  bottom: -15%;
-  right: -5%;
-  width: 550px;
-  height: 550px;
-  background: radial-gradient(circle, rgba(59, 130, 246, 0.12) 0%, transparent 70%);
+  bottom: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.14) 0%, rgba(59, 130, 246, 0.04) 40%, transparent 70%);
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(80px);
+  filter: blur(60px);
+  z-index: 0;
+}
+
+/* Dedicated ambient glow blob right behind the login card */
+.login-bg-glow-card {
+  position: absolute;
+  top: 50%;
+  right: 6%;
+  transform: translateY(-50%);
+  width: 480px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 50%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(50px);
   z-index: 0;
 }
 
@@ -76,6 +91,18 @@
   max-width: 540px;
   position: relative;
   z-index: 1;
+  animation: heroEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes heroEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .login-tagline-badge {
@@ -101,27 +128,46 @@
   color: #34d399;
 }
 
+/* 3. Title is 48px on desktop */
 .login-title {
   font-size: 48px;
   font-weight: 900;
   color: #f9fafb;
-  letter-spacing: -1px;
-  line-height: 1.08;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
   margin: 0 0 14px 0;
 }
 
+/* 4. Gold shimmer animation on the word "ELECTRONICS" */
+.gold,
 .login-title .gold {
-  color: #f59e0b;
-  background: linear-gradient(135deg, #f59e0b, #fbbf24, #f59e0b);
+  display: inline-block;
+  background: linear-gradient(
+    135deg,
+    #f59e0b 0%,
+    #fbbf24 25%,
+    #fffbeb 50%,
+    #fbbf24 75%,
+    #f59e0b 100%
+  );
   background-size: 200% 200%;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
   animation: goldShimmer 3s ease-in-out infinite;
 }
 
 @keyframes goldShimmer {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .login-subtitle {
@@ -219,13 +265,14 @@
 }
 
 /* ==========================================================================
-   ACCESS PORTAL CARD - GLASSMORPHISM + GOLD GLOW
+   2. ACCESS PORTAL CARD - GLASSMORPHISM + GLOW
+   7. CARD ENTRANCE ANIMATION (SLIDE UP + FADE IN)
    ========================================================================== */
 .login-card {
-  background: rgba(17, 24, 39, 0.65);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(245, 158, 11, 0.18);
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(245, 158, 11, 0.15);
   border-radius: 24px;
   padding: 36px 32px;
   width: 100%;
@@ -235,21 +282,22 @@
   box-sizing: border-box;
   
   box-shadow: 
-    0 0 60px rgba(245, 158, 11, 0.06),
+    0 0 60px rgba(245, 158, 11, 0.08),
     0 25px 50px rgba(0, 0, 0, 0.35),
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
     
-  animation: cardEntrance 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: cardEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
 }
 
 @keyframes cardEntrance {
-  from {
+  0% {
     opacity: 0;
-    transform: translateY(24px) scale(0.96);
+    transform: translateY(32px);
   }
-  to {
+  100% {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
@@ -378,7 +426,9 @@
   color: #cbd5e1;
 }
 
-/* CTA Button */
+/* ==========================================================================
+   5. CTA BUTTON - ANGLED SHINE SWEEP ANIMATION
+   ========================================================================== */
 .login-cta {
   width: 100%;
   padding: 14px 24px;
@@ -415,25 +465,37 @@
   cursor: not-allowed;
 }
 
+/* Angled Specular Shine Sweep */
 .login-cta::after {
   content: '';
   position: absolute;
-  top: 0;
-  left: -100%;
-  width: 60%;
-  height: 100%;
+  top: -50%;
+  left: -130%;
+  width: 70%;
+  height: 200%;
   background: linear-gradient(
-    90deg, 
-    transparent, 
-    rgba(255, 255, 255, 0.2), 
-    transparent
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 25%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 100%
   );
-  animation: btnSweep 3s ease-in-out infinite;
+  transform: rotate(25deg);
+  pointer-events: none;
+  animation: btnSweep 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes btnSweep {
-  0%, 100% { left: -100%; }
-  50% { left: 120%; }
+  0% {
+    left: -130%;
+  }
+  35% {
+    left: 140%;
+  }
+  100% {
+    left: 140%;
+  }
 }
 
 /* Form inputs */
@@ -482,7 +544,7 @@
   font-size: 15px;
 }
 
-/* Change 7: PIN Input Polish */
+/* PIN Input Polish */
 .pin-input-group {
   display: flex;
   gap: 10px;
@@ -582,37 +644,47 @@
   gap: 8px;
 }
 
-/* Install POS Ghost Button */
+/* ==========================================================================
+   6. INSTALL POS GHOST BUTTON (SUBTLE OUTLINE, NO GOLD PILL)
+   ========================================================================== */
 .install-btn {
   position: fixed;
   top: 20px;
   right: 24px;
   z-index: 10;
   padding: 8px 16px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #94a3b8;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #94a3b8 !important;
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 6px;
   transition: all 0.2s ease;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: none !important;
 }
 
 .install-btn:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: #e2e8f0;
-  border-color: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  transform: translateY(-1px);
 }
 
 /* ==========================================================================
    RESPONSIVE DESIGN (MOBILE-FIRST POLISH)
    ========================================================================== */
+@media (max-width: 1024px) {
+  .login-title {
+    font-size: 42px;
+  }
+}
+
 @media (max-width: 860px) {
   .login-page-layout {
     flex-direction: column-reverse; /* Card first on mobile! */
@@ -630,7 +702,7 @@
   }
 
   .login-title {
-    font-size: 32px;
+    font-size: 38px;
   }
 
   .login-subtitle {
@@ -672,11 +744,18 @@
   .install-btn {
     display: none;
   }
+  
+  .login-bg-glow-card {
+    right: 50%;
+    transform: translate(50%, -50%);
+    width: 320px;
+    height: 360px;
+  }
 }
 
-@media (max-width: 420px) {
+@media (max-width: 480px) {
   .login-title {
-    font-size: 26px;
+    font-size: 30px;
   }
 
   .login-card {
@@ -688,3 +767,4 @@
     font-size: 12px;
   }
 }
+

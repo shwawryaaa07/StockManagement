@@ -152,6 +152,9 @@ function Login() {
 
     return (
         <div className="login-page">
+            {/* Ambient card backlight glow blob */}
+            <div className="login-bg-glow-card" aria-hidden="true"></div>
+
             {/* Top Right Ghost Install POS Button */}
             {!isStoreMode && (
                 <button

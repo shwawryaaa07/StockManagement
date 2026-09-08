@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProducts, createInvoice } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { ProductGridSkeleton } from './SkeletonLoader';
+import { cleanText } from '../utils/sanitize';
+import { validateInvoice } from '../schemas/invoiceSchema';
 
 const CATEGORY_TABS = [
     { id: 'ALL', label: 'All Products', icon: '⚡' },
@@ -38,6 +41,7 @@ function CreateInvoice() {
     const [paymentMethod, setPaymentMethod] = useState('CASH');
     const [amountPaid, setAmountPaid] = useState('');
     const [notes, setNotes] = useState('');
+    const [formErrors, setFormErrors] = useState({});
 
     const searchInputRef = useRef(null);
     const dropdownRef = useRef(null);
@@ -229,29 +233,40 @@ function CreateInvoice() {
     const handleSubmit = async (e) => {
         if (e) e.preventDefault();
 
-        if (!customerName.trim()) {
-            toast.warning('Please enter customer name');
+        // Comprehensive Zod schema validation (Issue 13)
+        const validation = validateInvoice({
+            customerName: cleanText(customerName),
+            customerContact: cleanText(customerContact),
+            deliveryAddress: cleanText(deliveryAddress),
+            items,
+            gstRate: Number(gstRate),
+            discountAmount: discount,
+            paymentMethod,
+            amountPaid: actualPaid,
+            notes: cleanText(notes)
+        });
+
+        if (!validation.isValid) {
+            setFormErrors(validation.errors);
+            const firstError = Object.values(validation.errors)[0];
+            toast.warning(firstError);
             return;
         }
 
-        if (items.length === 0) {
-            toast.warning('Please add at least 1 product to the bill');
-            return;
-        }
-
+        setFormErrors({});
         setSubmitting(true);
 
         const payload = {
-            customerName: customerName.trim(),
-            customerContact: customerContact.trim() || 'N/A',
-            deliveryAddress: deliveryAddress.trim() || 'N/A',
+            customerName: cleanText(customerName),
+            customerContact: cleanText(customerContact) || 'N/A',
+            deliveryAddress: cleanText(deliveryAddress) || 'N/A',
             gstRate: Number(gstRate),
             discount: discount,
             discountAmount: discount,
             paymentMode: paymentMethod,
             paymentMethod: paymentMethod,
             amountPaid: actualPaid,
-            notes: notes.trim(),
+            notes: cleanText(notes),
             items: items.map((item) => ({
                 product: { id: item.productId },
                 quantity: Number(item.quantity),
@@ -337,12 +352,17 @@ function CreateInvoice() {
                                 padding: '10px 14px',
                                 fontSize: '14px',
                                 borderRadius: '8px',
-                                border: '1px solid var(--border-color)',
+                                border: `1px solid ${formErrors.customerName ? '#ef4444' : 'var(--border-color)'}`,
                                 background: 'var(--bg-body)',
                                 color: 'var(--text-primary)',
                                 boxSizing: 'border-box'
                             }}
                         />
+                        {formErrors.customerName && (
+                            <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '600' }}>
+                                ⚠️ {formErrors.customerName}
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -352,19 +372,29 @@ function CreateInvoice() {
                         <input
                             type="tel"
                             value={customerContact}
-                            onChange={(e) => setCustomerContact(e.target.value)}
+                            onChange={(e) => {
+                                setCustomerContact(e.target.value);
+                                if (formErrors.customerContact) {
+                                    setFormErrors((prev) => ({ ...prev, customerContact: undefined }));
+                                }
+                            }}
                             placeholder="Enter 10-digit mobile number"
                             style={{
                                 width: '100%',
                                 padding: '10px 14px',
                                 fontSize: '14px',
                                 borderRadius: '8px',
-                                border: '1px solid var(--border-color)',
+                                border: `1px solid ${formErrors.customerContact ? '#ef4444' : 'var(--border-color)'}`,
                                 background: 'var(--bg-body)',
                                 color: 'var(--text-primary)',
                                 boxSizing: 'border-box'
                             }}
                         />
+                        {formErrors.customerContact && (
+                            <div style={{ color: '#ef4444', fontSize: '11px', marginTop: '4px', fontWeight: '600' }}>
+                                ⚠️ {formErrors.customerContact}
+                            </div>
+                        )}
                     </div>
 
                     <div>
@@ -504,6 +534,7 @@ function CreateInvoice() {
                 </div>
 
                 {/* Quick Add Product Grid (Filtered) */}
+                {loadingProducts && <ProductGridSkeleton count={6} />}
                 {!loadingProducts && filteredProducts.length > 0 && (
                     <div style={{
                         display: 'grid',

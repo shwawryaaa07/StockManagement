@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getInvoice, getProducts, updateInvoice } from '../services/api';
 import { useToast } from '../context/ToastContext';
+import { InvoiceDetailSkeleton } from './SkeletonLoader';
 
 function EditInvoice() {
     const { id } = useParams();
@@ -259,8 +260,8 @@ function EditInvoice() {
 
     if (loading) {
         return (
-            <div className="page-container" style={{ maxWidth: '1350px', margin: '0 auto', textAlign: 'center' }}>
-                <h2 style={{ color: 'var(--text-primary)' }}>Loading invoice details...</h2>
+            <div className="page-container" style={{ maxWidth: '1080px', margin: '0 auto' }}>
+                <InvoiceDetailSkeleton />
             </div>
         );
     }

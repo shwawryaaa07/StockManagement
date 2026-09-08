@@ -5,6 +5,8 @@ import { useToast } from '../context/ToastContext';
 import { getStoreProfile, saveStoreProfile, getUpiPaymentUri } from '../services/storeProfile';
 import { useAuth } from '../context/AuthContext';
 import { TableSkeleton } from './SkeletonLoader';
+import EmptyState from './EmptyState';
+import QRCodeDisplay from './QRCodeDisplay';
 
 function DueInvoices() {
     const { isVisitor } = useAuth();
@@ -206,8 +208,24 @@ function DueInvoices() {
                         <tbody>
                             {filteredInvoices.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px 20px', color: '#10b981', fontSize: '14px', fontWeight: '700' }}>
-                                        🎉 No pending customer dues found! All sales are fully settled.
+                                    <td colSpan="6" style={{ padding: '20px' }}>
+                                        <EmptyState
+                                            icon="🎉"
+                                            title={searchTerm ? 'No Matching Due Records' : 'All Accounts Fully Settled!'}
+                                            description={
+                                                searchTerm
+                                                    ? `No overdue balances found matching "${searchTerm}".`
+                                                    : 'Excellent news! There are currently zero outstanding customer balances in your store register.'
+                                            }
+                                            actionLabel={searchTerm ? 'Clear Filter' : '📋 View All Invoices'}
+                                            onAction={() => {
+                                                if (searchTerm) {
+                                                    setSearchTerm('');
+                                                } else {
+                                                    navigate('/invoices');
+                                                }
+                                            }}
+                                        />
                                     </td>
                                 </tr>
                             ) : (
@@ -322,11 +340,11 @@ function DueInvoices() {
                                 &times;
                             </button>
                         </div>
-                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', display: 'inline-block', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
-                            <img
-                                src={`https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(getUpiPaymentUri(storeProfile, getDueAmount(qrModalInv), qrModalInv.invoiceNumber))}`}
-                                alt="UPI Payment QR Code"
-                                style={{ width: '210px', height: '210px', display: 'block' }}
+                        <div style={{ marginBottom: '14px' }}>
+                            <QRCodeDisplay
+                                value={getUpiPaymentUri(storeProfile, getDueAmount(qrModalInv), qrModalInv.invoiceNumber)}
+                                size={200}
+                                includeCopy={false}
                             />
                         </div>
                         <div style={{ fontSize: '22px', fontWeight: '900', color: '#ef4444', marginBottom: '4px' }}>

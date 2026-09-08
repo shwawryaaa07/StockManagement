@@ -5,6 +5,8 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { getStoreProfile, saveStoreProfile, getUpiPaymentUri } from '../services/storeProfile';
 import { InvoiceDetailSkeleton } from './SkeletonLoader';
+import QRCodeDisplay from './QRCodeDisplay';
+import { cleanText } from '../utils/purify';
 
 function InvoiceDetail() {
     const { id } = useParams();
@@ -74,13 +76,16 @@ function InvoiceDetail() {
             ? `Thank you for choosing *Manisha Electronics (Demo)*!\n📍 Goa • 📞 +91 98000 00000`
             : `Thank you for choosing *${storeProfile.shopName}*!\n📍 ${storeProfile.address} • 📞 ${storeProfile.phone}`;
 
+        const customerName = cleanText(invoice.customerName) || 'Customer';
+        const customerContact = cleanText(invoice.customerContact);
+
         const message = 
 `🏪 *${displayShopName.toUpperCase()} - TAX INVOICE*
 ----------------------------------------
 *Invoice No:* #${invoice.invoiceNumber}
 *Date:* ${formatDate(invoice.createdAt)}
-*Customer:* ${invoice.customerName}
-${invoice.customerContact && invoice.customerContact !== 'N/A' ? `*Phone:* ${invoice.customerContact}` : ''}
+*Customer:* ${customerName}
+${customerContact && customerContact !== 'N/A' ? `*Phone:* ${customerContact}` : ''}
 
 *Purchased Items:*
 ${itemsList}
@@ -123,7 +128,6 @@ ${displayShopFooter}`;
     const dueAmount = Number(invoice.balanceDue !== undefined ? invoice.balanceDue : (invoice.amountDue || 0));
     const upiPayableAmount = dueAmount > 0 ? dueAmount : Number(invoice.totalAmount || 0);
     const upiString = getUpiPaymentUri(storeProfile, upiPayableAmount, invoice.invoiceNumber);
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiString)}`;
 
     const handleSaveQuickUpi = (e) => {
         e.preventDefault();
@@ -293,12 +297,8 @@ ${displayShopFooter}`;
                             </button>
                         </div>
 
-                        <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', display: 'inline-block', border: '1px solid #e2e8f0', marginBottom: '12px' }}>
-                            <img
-                                src={qrUrl}
-                                alt="UPI Payment QR Code"
-                                style={{ width: '210px', height: '210px', display: 'block' }}
-                            />
+                        <div style={{ marginBottom: '14px' }}>
+                            <QRCodeDisplay value={upiString} size={200} includeCopy={false} />
                         </div>
 
                         <div style={{ fontSize: '20px', fontWeight: '900', color: '#0f172a', marginBottom: '4px' }}>

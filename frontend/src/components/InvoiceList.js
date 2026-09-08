@@ -4,6 +4,7 @@ import { getInvoices, deleteInvoice } from '../services/api';
 import { useToast } from '../context/ToastContext';
 import { TableSkeleton } from './SkeletonLoader';
 import DeleteModal from './DeleteModal';
+import EmptyState from './EmptyState';
 
 function InvoiceList() {
     const navigate = useNavigate();
@@ -251,8 +252,25 @@ function InvoiceList() {
                         <tbody>
                             {filteredInvoices.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-                                        📋 No invoices found matching your criteria.
+                                    <td colSpan="6" style={{ padding: '20px' }}>
+                                        <EmptyState
+                                            icon={invoices.length === 0 ? '🧾' : '🔍'}
+                                            title={invoices.length === 0 ? 'No Invoices Created Yet' : 'No Invoices Matching Criteria'}
+                                            description={
+                                                invoices.length === 0
+                                                    ? 'Create your first invoice to record sales and track customer dues.'
+                                                    : `No bills found matching your current filter. Try a different search term or clear the filter.`
+                                            }
+                                            actionLabel={invoices.length === 0 ? '➕ Create First Invoice' : 'Reset Search'}
+                                            onAction={() => {
+                                                if (invoices.length === 0) {
+                                                    navigate('/create-invoice');
+                                                } else {
+                                                    setSearchTerm('');
+                                                    setStatusFilter('ALL');
+                                                }
+                                            }}
+                                        />
                                     </td>
                                 </tr>
                             ) : (

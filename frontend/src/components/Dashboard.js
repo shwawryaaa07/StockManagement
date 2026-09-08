@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getDashboard, getInvoices, getProducts } from '../services/api';
 import { CardSkeleton, TableSkeleton } from './SkeletonLoader';
+import EmptyState from './EmptyState';
 
 function Dashboard() {
     const navigate = useNavigate();
@@ -343,21 +344,18 @@ function Dashboard() {
                     </div>
 
                     {loading ? (
-                        <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                            Loading recent bills...
+                        <div style={{ padding: '20px' }}>
+                            <TableSkeleton rows={4} cols={4} />
                         </div>
                     ) : invoices.length === 0 ? (
-                        <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                            <div style={{ fontSize: '36px', marginBottom: '10px' }}>🧾</div>
-                            <div style={{ fontWeight: '700', fontSize: '15px', color: 'var(--text-primary)' }}>No Invoices Created Yet</div>
-                            <p style={{ fontSize: '13px', margin: '6px 0 16px 0' }}>Generate your first customer bill to see real-time records.</p>
-                            <button
-                                onClick={() => navigate('/create-invoice')}
-                                className="btn-primary"
-                                style={{ padding: '10px 20px', fontSize: '13px' }}
-                            >
-                                + Generate First Bill
-                            </button>
+                        <div style={{ padding: '16px' }}>
+                            <EmptyState
+                                icon="🧾"
+                                title="No Invoices Created Yet"
+                                description="Generate your first customer bill to see real-time records and sales performance."
+                                actionLabel="+ Generate First Bill"
+                                onAction={() => navigate('/create-invoice')}
+                            />
                         </div>
                     ) : (
                         <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>

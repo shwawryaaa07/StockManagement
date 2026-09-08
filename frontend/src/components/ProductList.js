@@ -5,6 +5,7 @@ import { TableSkeleton } from './SkeletonLoader';
 import AddProduct from './AddProduct';
 import EditProduct from './EditProduct';
 import DeleteModal from './DeleteModal';
+import EmptyState from './EmptyState';
 
 function ProductList() {
     const [products, setProducts] = useState([]);
@@ -230,8 +231,25 @@ function ProductList() {
                         <tbody>
                             {filteredProducts.length === 0 ? (
                                 <tr>
-                                    <td colSpan="6" style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--text-muted)' }}>
-                                        📦 No products found matching your search.
+                                    <td colSpan="6" style={{ padding: '20px' }}>
+                                        <EmptyState
+                                            icon="📦"
+                                            title={products.length === 0 ? 'No Products in Inventory' : 'No Matching Products'}
+                                            description={
+                                                products.length === 0
+                                                    ? 'Your catalog is empty. Add appliances, televisions, ACs, or accessories to start billing.'
+                                                    : `No inventory found matching "${searchTerm}". Try searching by model name or category.`
+                                            }
+                                            actionLabel={products.length === 0 ? '➕ Add First Product' : 'Clear Filter'}
+                                            onAction={() => {
+                                                if (products.length === 0) {
+                                                    setShowAddModal(true);
+                                                } else {
+                                                    setSearchTerm('');
+                                                    setSelectedCategory('ALL');
+                                                }
+                                            }}
+                                        />
                                     </td>
                                 </tr>
                             ) : (

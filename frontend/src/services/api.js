@@ -1,29 +1,72 @@
 import axios from 'axios';
+import demoAdapter from './demoAdapter';
 
-// Cloud production backend with local fallback
-const API_BASE_URL = process.env.REACT_APP_API_URL || 
-                     process.env.REACT_APP_API_BASE_URL || 
+// Cloud production backend with local fallback (Issue 15: prioritized env var)
+const API_BASE_URL = process.env.REACT_APP_API_URL ||
+                     process.env.REACT_APP_API_BASE_URL ||
                      'https://stockmanagement07.onrender.com/api';
 
 const api = axios.create({
     baseURL: API_BASE_URL
 });
 
-// Request Interceptor: Automatically inject Bearer JWT Token
+// Request Interceptor: Automatically inject Bearer JWT Token & detect cold starts
+let activeColdStartTimer = null;
+let isColdStarting = false;
+let pendingRequestsCount = 0;
+
 api.interceptors.request.use((config) => {
     const token = localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+
+    pendingRequestsCount++;
+    // Set timer to notify UI if request takes longer than 3.5s (free-tier cold start)
+    if (!activeColdStartTimer && !config.url?.includes('/auth/verify')) {
+        activeColdStartTimer = setTimeout(() => {
+            isColdStarting = true;
+            window.dispatchEvent(new CustomEvent('backend-cold-start'));
+        }, 3500);
+    }
+
     return config;
 }, (error) => {
+    pendingRequestsCount = Math.max(0, pendingRequestsCount - 1);
+    if (pendingRequestsCount === 0 && activeColdStartTimer) {
+        clearTimeout(activeColdStartTimer);
+        activeColdStartTimer = null;
+    }
     return Promise.reject(error);
 });
 
-// Response Interceptor: Handle 401 Unauthorized
+// Response Interceptor: Handle 401 Unauthorized & Cold Start resolution
 api.interceptors.response.use((response) => {
+    pendingRequestsCount = Math.max(0, pendingRequestsCount - 1);
+    if (pendingRequestsCount === 0 && activeColdStartTimer) {
+        clearTimeout(activeColdStartTimer);
+        activeColdStartTimer = null;
+    }
+    if (isColdStarting) {
+        isColdStarting = false;
+        window.dispatchEvent(new CustomEvent('backend-ready'));
+    }
     return response;
 }, (error) => {
+    pendingRequestsCount = Math.max(0, pendingRequestsCount - 1);
+    if (pendingRequestsCount === 0 && activeColdStartTimer) {
+        clearTimeout(activeColdStartTimer);
+        activeColdStartTimer = null;
+    }
+
+    // If network failed or server 502/503/504, server might still be waking up
+    if (!error.response || [502, 503, 504].includes(error.response.status)) {
+        if (!isColdStarting) {
+            isColdStarting = true;
+            window.dispatchEvent(new CustomEvent('backend-cold-start'));
+        }
+    }
+
     if (error.response && error.response.status === 401) {
         const url = error.config?.url || '';
         if (!url.includes('/auth/')) {
@@ -42,66 +85,8 @@ export const isSandboxMode = () => {
     return tenant === 'DEMO' || role === 'VISITOR';
 };
 
-// Pristine initial demo dataset (Never mutates)
-const INITIAL_DEMO_PRODUCTS = [
-    { id: 101, name: 'Samsung Crystal 4K 55" Smart TV', category: 'Television', price: 46990, unitPrice: 46990, quantity: 8, stockQuantity: 8, active: true },
-    { id: 102, name: 'LG 260L Double Door Refrigerator', category: 'Refrigerator', price: 26500, unitPrice: 26500, quantity: 2, stockQuantity: 2, active: true },
-    { id: 103, name: 'Voltas 1.5 Ton 5-Star Split AC', category: 'Air Conditioner', price: 37490, unitPrice: 37490, quantity: 5, stockQuantity: 5, active: true },
-    { id: 104, name: 'Sony HT-S20R 5.1ch Soundbar', category: 'Audio System', price: 17990, unitPrice: 17990, quantity: 1, stockQuantity: 1, active: true },
-    { id: 105, name: 'Whirlpool 7.5kg Automatic Washing Machine', category: 'Washing Machine', price: 18750, unitPrice: 18750, quantity: 6, stockQuantity: 6, active: true },
-    { id: 106, name: 'Havells 1200mm Ceiling Fan (Gold)', category: 'Small Appliances', price: 2450, unitPrice: 2450, quantity: 0, stockQuantity: 0, active: true }
-];
-
-const INITIAL_DEMO_INVOICES = [
-    {
-        id: 501,
-        invoiceNumber: 'DEMO-1001',
-        customerName: 'Anand Shirodkar',
-        customerContact: '9822123456',
-        deliveryAddress: 'Sample Tech Park, Panaji - Goa',
-        paymentMethod: 'UPI',
-        subtotal: 46990,
-        gstRate: 18,
-        gstAmount: 8458.20,
-        discountAmount: 1000,
-        totalAmount: 54448.20,
-        amountPaid: 54448.20,
-        balanceDue: 0,
-        amountDue: 0,
-        createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-        items: [
-            { product: { name: 'Samsung Crystal 4K 55" Smart TV' }, quantity: 1, unitPrice: 46990, serialNumber: 'SAM-55-TV-9921' }
-        ]
-    },
-    {
-        id: 502,
-        invoiceNumber: 'DEMO-1002',
-        customerName: 'Pooja Naik',
-        customerContact: '9765432100',
-        deliveryAddress: 'Near Central Plaza, Panaji',
-        paymentMethod: 'CASH',
-        subtotal: 26500,
-        gstRate: 18,
-        gstAmount: 4770,
-        discountAmount: 500,
-        totalAmount: 30770,
-        amountPaid: 20000,
-        balanceDue: 10770,
-        amountDue: 10770,
-        createdAt: new Date(Date.now() - 3600000 * 8).toISOString(),
-        items: [
-            { product: { name: 'LG 260L Double Door Refrigerator' }, quantity: 1, unitPrice: 26500, serialNumber: 'LG-REF-4412' }
-        ]
-    }
-];
-
-// Ephemeral In-Memory State for Visitors (Resets completely on page refresh!)
-let memoryDemoProducts = JSON.parse(JSON.stringify(INITIAL_DEMO_PRODUCTS));
-let memoryDemoInvoices = JSON.parse(JSON.stringify(INITIAL_DEMO_INVOICES));
-
 export const resetDemoSandbox = () => {
-    memoryDemoProducts = JSON.parse(JSON.stringify(INITIAL_DEMO_PRODUCTS));
-    memoryDemoInvoices = JSON.parse(JSON.stringify(INITIAL_DEMO_INVOICES));
+    demoAdapter.reset();
 };
 
 // 3-Tier Authentication (Real Cryptographic JWT Session)
@@ -128,7 +113,7 @@ export const loginAsStaff = async (username, pin) => {
 };
 
 export const loginAsVisitor = async () => {
-    resetDemoSandbox(); // Always start demo session fresh
+    demoAdapter.reset(); // Always start demo session fresh
     return api.post('/auth/visitor');
 };
 
@@ -156,62 +141,27 @@ export const verifyAuthToken = async (token) => {
 // PRODUCTS API
 // ==========================================
 export const getProducts = async () => {
-    if (isSandboxMode()) {
-        return Promise.resolve({ data: memoryDemoProducts.filter(p => p.active !== false) });
-    }
+    if (isSandboxMode()) return demoAdapter.getProducts();
     return api.get('/products');
 };
 
 export const getProductById = async (id) => {
-    if (isSandboxMode()) {
-        const prod = memoryDemoProducts.find(p => p.id === Number(id));
-        return prod ? Promise.resolve({ data: prod }) : Promise.reject({ response: { status: 404 } });
-    }
+    if (isSandboxMode()) return demoAdapter.getProductById(id);
     return api.get(`/products/${id}`);
 };
 
 export const createProduct = async (productData) => {
-    if (isSandboxMode()) {
-        const newProduct = {
-            id: Date.now(),
-            name: productData.name,
-            category: productData.category || 'General',
-            price: Number(productData.price || productData.unitPrice || 0),
-            unitPrice: Number(productData.price || productData.unitPrice || 0),
-            quantity: Number(productData.quantity || productData.stockQuantity || 0),
-            stockQuantity: Number(productData.quantity || productData.stockQuantity || 0),
-            active: true
-        };
-        memoryDemoProducts.unshift(newProduct);
-        return Promise.resolve({ data: newProduct });
-    }
+    if (isSandboxMode()) return demoAdapter.createProduct(productData);
     return api.post('/products', productData);
 };
 
 export const updateProduct = async (id, productData) => {
-    if (isSandboxMode()) {
-        const index = memoryDemoProducts.findIndex(p => p.id === Number(id));
-        if (index !== -1) {
-            memoryDemoProducts[index] = {
-                ...memoryDemoProducts[index],
-                ...productData,
-                price: Number(productData.price !== undefined ? productData.price : memoryDemoProducts[index].price),
-                unitPrice: Number(productData.unitPrice !== undefined ? productData.unitPrice : memoryDemoProducts[index].unitPrice),
-                quantity: Number(productData.quantity !== undefined ? productData.quantity : memoryDemoProducts[index].quantity),
-                stockQuantity: Number(productData.stockQuantity !== undefined ? productData.stockQuantity : memoryDemoProducts[index].stockQuantity)
-            };
-            return Promise.resolve({ data: memoryDemoProducts[index] });
-        }
-        return Promise.reject({ response: { status: 404 } });
-    }
+    if (isSandboxMode()) return demoAdapter.updateProduct(id, productData);
     return api.put(`/products/${id}`, productData);
 };
 
 export const deleteProduct = async (id) => {
-    if (isSandboxMode()) {
-        memoryDemoProducts = memoryDemoProducts.filter(p => p.id !== Number(id));
-        return Promise.resolve({ data: { message: 'Product deleted from sandbox' } });
-    }
+    if (isSandboxMode()) return demoAdapter.deleteProduct(id);
     return api.delete(`/products/${id}`);
 };
 
@@ -219,93 +169,35 @@ export const deleteProduct = async (id) => {
 // INVOICES API
 // ==========================================
 export const getInvoices = async () => {
-    if (isSandboxMode()) {
-        return Promise.resolve({ data: memoryDemoInvoices });
-    }
+    if (isSandboxMode()) return demoAdapter.getInvoices();
     return api.get('/invoices');
 };
 
 export const getInvoiceById = async (id) => {
-    if (isSandboxMode()) {
-        const inv = memoryDemoInvoices.find(i => i.id === Number(id));
-        return inv ? Promise.resolve({ data: inv }) : Promise.reject({ response: { status: 404 } });
-    }
+    if (isSandboxMode()) return demoAdapter.getInvoiceById(id);
     return api.get(`/invoices/${id}`);
 };
 
 export const getInvoice = getInvoiceById;
 
 export const createInvoice = async (invoiceData) => {
-    if (isSandboxMode()) {
-        const subtotal = invoiceData.items.reduce((sum, it) => sum + (Number(it.quantity) * Number(it.unitPrice)), 0);
-        const gstRate = Number(invoiceData.gstRate || 18);
-        const gstAmount = Number(((subtotal * gstRate) / 100).toFixed(2));
-        const grossTotal = subtotal + gstAmount;
-        const discountAmount = Number(invoiceData.discountAmount || 0);
-        const grandTotal = Math.max(0, Number((grossTotal - discountAmount).toFixed(2)));
-        const amountPaid = invoiceData.amountPaid === undefined || invoiceData.amountPaid === '' ? grandTotal : Number(invoiceData.amountPaid);
-        const balanceDue = Math.max(0, Number((grandTotal - amountPaid).toFixed(2)));
-
-        // Deduct quantity from in-memory demo stock
-        invoiceData.items.forEach(item => {
-            const p = memoryDemoProducts.find(prod => prod.name === item.productName || prod.id === item.productId);
-            if (p) {
-                p.quantity = Math.max(0, p.quantity - item.quantity);
-                p.stockQuantity = p.quantity;
-            }
-        });
-
-        const newInvoice = {
-            id: Date.now(),
-            invoiceNumber: 'DEMO-' + (memoryDemoInvoices.length + 1003),
-            customerName: invoiceData.customerName,
-            customerContact: invoiceData.customerContact,
-            deliveryAddress: invoiceData.deliveryAddress || '',
-            paymentMethod: invoiceData.paymentMethod || 'CASH',
-            subtotal,
-            gstRate,
-            gstAmount,
-            discountAmount,
-            totalAmount: grandTotal,
-            amountPaid,
-            balanceDue,
-            amountDue: balanceDue,
-            createdAt: new Date().toISOString(),
-            items: invoiceData.items.map(it => ({
-                product: { name: it.productName || 'Appliance Item' },
-                quantity: it.quantity,
-                unitPrice: it.unitPrice,
-                serialNumber: it.serialNumber || ''
-            }))
-        };
-
-        memoryDemoInvoices.unshift(newInvoice);
-        return Promise.resolve({ data: newInvoice });
-    }
+    if (isSandboxMode()) return demoAdapter.createInvoice(invoiceData);
     return api.post('/invoices', invoiceData);
 };
 
 export const updateInvoice = async (id, invoiceData) => {
-    if (isSandboxMode()) {
-        const index = memoryDemoInvoices.findIndex(i => i.id === Number(id));
-        if (index !== -1) {
-            memoryDemoInvoices[index] = { ...memoryDemoInvoices[index], ...invoiceData };
-            return Promise.resolve({ data: memoryDemoInvoices[index] });
-        }
-        return Promise.reject({ response: { status: 404 } });
-    }
+    if (isSandboxMode()) return demoAdapter.updateInvoice(id, invoiceData);
     return api.put(`/invoices/${id}`, invoiceData);
 };
 
 export const deleteInvoice = async (id) => {
-    if (isSandboxMode()) {
-        memoryDemoInvoices = memoryDemoInvoices.filter(i => i.id !== Number(id));
-        return Promise.resolve({ data: { message: 'Invoice deleted from sandbox' } });
-    }
+    if (isSandboxMode()) return demoAdapter.deleteInvoice(id);
     return api.delete(`/invoices/${id}`);
 };
 
 export const settleDueInvoice = async (id, settlePayload) => {
+    if (isSandboxMode()) return demoAdapter.settleDueInvoice(id, settlePayload);
+
     let paymentAmount = 0;
     let paymentMode = 'CASH';
 
@@ -316,20 +208,6 @@ export const settleDueInvoice = async (id, settlePayload) => {
         paymentAmount = Number(settlePayload || 0);
     }
 
-    if (isSandboxMode()) {
-        const inv = memoryDemoInvoices.find(i => i.id === Number(id));
-        if (inv) {
-            const actualPayment = paymentAmount > 0 ? paymentAmount : Number(inv.balanceDue || inv.amountDue || 0);
-            inv.amountPaid = Number(((inv.amountPaid || 0) + actualPayment).toFixed(2));
-            inv.balanceDue = Math.max(0, Number(((inv.totalAmount || 0) - inv.amountPaid).toFixed(2)));
-            inv.amountDue = inv.balanceDue;
-            inv.paymentMethod = paymentMode;
-            inv.paymentMode = paymentMode;
-            return Promise.resolve({ data: inv });
-        }
-        return Promise.reject({ response: { status: 404 } });
-    }
-
     const payload = typeof settlePayload === 'object' && settlePayload !== null
         ? { ...settlePayload, amount: paymentAmount, amountPaid: paymentAmount }
         : { amount: paymentAmount, amountPaid: paymentAmount, paymentMode };
@@ -338,10 +216,8 @@ export const settleDueInvoice = async (id, settlePayload) => {
 };
 
 export const getDueInvoices = async () => {
-    if (isSandboxMode()) {
-        const dueList = memoryDemoInvoices.filter(i => (i.balanceDue || i.amountDue || 0) > 0);
-        return Promise.resolve({ data: dueList });
-    }
+    if (isSandboxMode()) return demoAdapter.getDueInvoices();
+
     try {
         const res = await api.get('/invoices/due');
         return res;
@@ -358,26 +234,7 @@ export const getDueInvoices = async () => {
 // DASHBOARD & ANALYTICS API
 // ==========================================
 export const getDashboardSummary = async () => {
-    if (isSandboxMode()) {
-        const totalSales = memoryDemoInvoices.reduce((sum, inv) => sum + Number(inv.amountPaid || 0), 0);
-        const totalDue = memoryDemoInvoices.reduce((sum, inv) => sum + Number(inv.balanceDue || inv.amountDue || 0), 0);
-        const totalInvoices = memoryDemoInvoices.length;
-        const lowStockCount = memoryDemoProducts.filter(p => (p.quantity || p.stockQuantity || 0) <= 2).length;
-
-        return Promise.resolve({
-            data: {
-                todaySales: totalSales,
-                todayInvoices: totalInvoices,
-                totalSales,
-                totalDue,
-                totalDueAmount: totalDue,
-                totalInvoices,
-                lowStockCount,
-                recentInvoices: memoryDemoInvoices.slice(0, 5),
-                lowStockProducts: memoryDemoProducts.filter(p => (p.quantity || p.stockQuantity || 0) <= 2)
-            }
-        });
-    }
+    if (isSandboxMode()) return demoAdapter.getDashboard();
 
     try {
         const res = await api.get('/invoices/dashboard');

@@ -59,6 +59,12 @@ function Navbar() {
         );
     };
 
+    const triggerHaptic = () => {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(12); } catch (e) {}
+        }
+    };
+
     return (
         <>
             {/* Visitor Sandbox Top Banner */}
@@ -235,33 +241,33 @@ function Navbar() {
 
             {/* CLEAN NATIVE MOBILE BOTTOM NAVIGATION BAR (Uniform 5-tab grid, zero text overlap) */}
             <div className="mobile-bottom-bar no-print">
-                <NavLink to="/" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`} end>
+                <NavLink to="/" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`} end>
                     <span className="tab-icon">📊</span>
                     <span className="tab-label">Dashboard</span>
                 </NavLink>
 
-                <NavLink to="/products" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <NavLink to="/products" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
                     <span className="tab-icon">📦</span>
                     <span className="tab-label">Products</span>
                 </NavLink>
 
-                <NavLink to="/create-invoice" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <NavLink to="/create-invoice" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
                     <span className="tab-icon">🧾</span>
                     <span className="tab-label">New Bill</span>
                 </NavLink>
 
-                <NavLink to="/invoices" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                <NavLink to="/invoices" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
                     <span className="tab-icon">📋</span>
                     <span className="tab-label">Invoices</span>
                 </NavLink>
 
                 {(isOwner || isVisitor) ? (
-                    <NavLink to="/staff-management" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                    <NavLink to="/staff-management" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
                         <span className="tab-icon">👥</span>
                         <span className="tab-label">Staff</span>
                     </NavLink>
                 ) : (
-                    <NavLink to="/due-invoices" className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                    <NavLink to="/due-invoices" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
                         <span className="tab-icon">🟡</span>
                         <span className="tab-label">Due Bills</span>
                     </NavLink>

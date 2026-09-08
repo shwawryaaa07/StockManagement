@@ -494,27 +494,56 @@ body.dark-mode .badge-urgent {
     gap: 2px;
     color: var(--text-secondary);
     text-decoration: none;
-    padding: 6px 0;
-    transition: all 0.15s ease;
+    padding: 6px 10px;
+    border-radius: var(--radius-md);
+    transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-tab:active {
+    transform: scale(0.92);
 }
 
 .mobile-tab .tab-icon {
     font-size: 20px;
     line-height: 1;
+    transition: transform 0.2s ease;
 }
 
 .mobile-tab .tab-label {
     font-size: 10px;
     font-weight: 700;
     letter-spacing: -0.2px;
+    transition: color 0.2s ease;
 }
 
 .mobile-tab.active {
     color: var(--gold);
+    background: rgba(245, 158, 11, 0.12);
 }
 
 .mobile-tab.active .tab-icon {
-    transform: scale(1.12);
+    transform: scale(1.15) translateY(-1px);
+}
+
+.mobile-tab.active .tab-label {
+    color: var(--gold);
+    font-weight: 800;
+}
+
+.mobile-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 14px;
+    height: 3px;
+    background: var(--gold);
+    border-radius: 9999px;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
 }
 
 /* Dashboard Layout Grids */
@@ -1096,4 +1125,310 @@ body.dark-mode .qty-control-btn:hover {
     background: #f1f5f9;
     color: #334155;
 }
+
+/* ============================================================
+   REUSABLE COMPONENT CLASSES (Issue 7)
+   ============================================================ */
+
+.card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: 24px;
+    transition: var(--transition);
+}
+
+.card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.card-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.card-subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 4px 0 0 0;
+}
+
+/* Form System */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.form-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.form-input, .form-select, .form-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    font-size: 14px;
+    font-family: inherit;
+    box-sizing: border-box;
+    transition: var(--transition);
+}
+
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+    outline: none;
+    border-color: var(--gold);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+}
+
+/* Button Variants */
+.btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-ghost:hover {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-danger:hover {
+    background: #ef4444;
+    color: #ffffff;
+}
+
+.btn-success {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #10b981;
+    padding: 8px 16px;
+    border-radius: var(--radius-md);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-success:hover {
+    background: #10b981;
+    color: #ffffff;
+}
+
+/* Summary Box */
+.summary-box {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 18px;
+    font-weight: 900;
+    color: var(--text-primary);
+    border-top: 2px dashed var(--border-color);
+    padding-top: 10px;
+    margin-top: 4px;
+}
+
+/* ============================================================
+   EMPTY STATE COMPONENT STYLES (Issue 10)
+   ============================================================ */
+
+.empty-state-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 48px 24px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px dashed var(--border-color);
+    margin: 20px 0;
+    box-sizing: border-box;
+}
+
+.empty-state-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 16px;
+}
+
+.empty-state-icon {
+    font-size: 32px;
+}
+
+.empty-state-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+}
+
+.empty-state-desc {
+    font-size: 14px;
+    color: var(--text-muted);
+    max-width: 420px;
+    line-height: 1.5;
+    margin: 0 0 20px 0;
+}
+
+.empty-state-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.empty-state-btn {
+    padding: 10px 22px;
+    font-size: 13px;
+    font-weight: 700;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+/* ============================================================
+   OFFLINE & SERVER WAKEUP BANNERS (Issues 1 & 3)
+   ============================================================ */
+
+.offline-banner {
+    position: sticky;
+    top: 0;
+    z-index: 10001;
+    background: linear-gradient(90deg, #b45309, #d97706);
+    color: #ffffff;
+    padding: 8px 16px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    animation: banner-slide-down 0.25s ease;
+}
+
+.offline-icon {
+    font-size: 16px;
+}
+
+.server-wakeup-banner {
+    position: sticky;
+    top: 0;
+    z-index: 10002;
+    background: linear-gradient(90deg, #1e293b, #0f172a);
+    border-bottom: 2px solid var(--gold);
+    color: #f8fafc;
+    padding: 10px 18px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: banner-slide-down 0.25s ease;
+}
+
+@keyframes banner-slide-down {
+    from { transform: translateY(-100%); }
+    to { transform: translateY(0); }
+}
+
+.wakeup-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(245, 158, 11, 0.3);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: wakeup-spin 0.8s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes wakeup-spin {
+    to { transform: rotate(360deg); }
+}
+
+.wakeup-content {
+    flex: 1;
+    max-width: 900px;
+}
+
+.wakeup-dismiss {
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: #94a3b8;
+    cursor: pointer;
+    border-radius: 4px;
+    padding: 2px 6px;
+    font-size: 12px;
+    transition: var(--transition);
+}
+
+.wakeup-dismiss:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.2);
+}
+
 

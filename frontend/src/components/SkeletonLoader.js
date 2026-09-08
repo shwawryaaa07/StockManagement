@@ -59,3 +59,18 @@ export const InvoiceDetailSkeleton = () => (
         </div>
     </div>
 );
+
+export const PageSkeleton = () => (
+    <div className="page-container" style={{ display: 'flex', flexDirection: 'column', gap: '20px', padding: '24px', maxWidth: '1350px', margin: '0 auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div className="skeleton skeleton-title" style={{ width: '260px', height: '32px' }} />
+                <div className="skeleton skeleton-text" style={{ width: '180px', height: '14px' }} />
+            </div>
+            <div className="skeleton" style={{ width: '140px', height: '40px', borderRadius: 'var(--radius-md)' }} />
+        </div>
+        <CardSkeleton count={4} />
+        <TableSkeleton rows={6} cols={5} />
+    </div>
+);
+

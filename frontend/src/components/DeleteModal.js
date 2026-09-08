@@ -8,32 +8,38 @@ function DeleteModal({ isOpen, onClose, onConfirm, invoiceNumber, title, itemTyp
         : `Delete ${itemType}`);
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.65)',
-            backdropFilter: 'blur(4px)',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            zIndex: 99999,
-            padding: '16px'
-        }}>
-            <div style={{
-                backgroundColor: 'var(--bg-card, #ffffff)',
-                padding: '28px 24px',
-                borderRadius: '20px',
-                maxWidth: '440px',
-                width: '100%',
-                boxSizing: 'border-box',
-                textAlign: 'center',
-                boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
-                border: '1px solid var(--border-color, #e2e8f0)',
-                color: 'var(--text-primary, #0f172a)'
-            }}>
+        <div
+            className="modal-overlay"
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.65)',
+                backdropFilter: 'blur(4px)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 99999,
+                padding: '16px'
+            }}
+        >
+            <div
+                className="modal-card"
+                style={{
+                    backgroundColor: 'var(--bg-card, #ffffff)',
+                    padding: '28px 24px',
+                    borderRadius: '20px',
+                    maxWidth: '440px',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    textAlign: 'center',
+                    boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
+                    border: '1px solid var(--border-color, #e2e8f0)',
+                    color: 'var(--text-primary, #0f172a)'
+                }}
+            >
                 <div style={{
                     width: '60px',
                     height: '60px',

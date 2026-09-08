@@ -46,26 +46,39 @@
     --btn-secondary-bg: #0f172a;
     --btn-secondary-text: #ffffff;
 
+    /* Spacing Scale System (Issue 12) */
+    --space-xs: 4px;
+    --space-sm: 8px;
+    --space-md: 12px;
+    --space-lg: 16px;
+    --space-xl: 20px;
+    --space-2xl: 24px;
+    --space-3xl: 32px;
+    --space-4xl: 40px;
+
     --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Dark Theme */
+/* Dark Theme (Issue 11 Refined Contrast) */
 body.dark-mode {
-    --bg-body: #090d16;
+    --bg-body: #0a0f1a;
     --bg-card: #111827;
-    --bg-surface: #1f2937;
-    --border-color: #374151;
+    --bg-surface: #1a2236;
+    --border-color: #1e293b;
     --border-hover: #4b5563;
+
+    --gold: #fbbf24;
+    --gold-hover: #f59e0b;
 
     --text-primary: #f9fafb;
     --text-secondary: #9ca3af;
     --text-muted: #6b7280;
 
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4);
     --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
-    
+
     --btn-secondary-bg: #1f2937;
     --btn-secondary-text: #f9fafb;
 }
@@ -81,7 +94,7 @@ body.dark-mode {
 }
 
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     background-color: var(--bg-body);
     color: var(--text-primary);
     min-height: 100vh;
@@ -107,16 +120,29 @@ body {
 }
 
 /* ============================================================
-   BUTTON CLASSES & MICRO-INTERACTIONS
+   BUTTON CLASSES & MICRO-INTERACTIONS (Issues 6 & 13)
    ============================================================ */
 
-.btn-primary {
-    background: var(--gold);
-    color: #0f172a;
-    border: none;
+/* Small — for table actions, inline controls */
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+/* Default buttons */
+.btn-primary, .btn-secondary, .btn-cancel, .btn-ghost {
     padding: 10px 20px;
-    border-radius: var(--radius-sm);
     font-size: 14px;
+    border-radius: 10px;
+    min-height: 40px;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
@@ -124,6 +150,12 @@ body {
     justify-content: center;
     gap: 8px;
     transition: var(--transition);
+}
+
+.btn-primary {
+    background: var(--gold);
+    color: #0f172a;
+    border: none;
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
 }
 
@@ -133,24 +165,15 @@ body {
     box-shadow: 0 4px 14px rgba(245, 158, 11, 0.4);
 }
 
-.btn-primary:active {
-    transform: translateY(0);
+.btn-primary:active, .btn-secondary:active, .btn-whatsapp:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
 }
 
 .btn-secondary {
     background: var(--primary);
     color: #ffffff;
     border: 1px solid var(--border-color);
-    padding: 10px 18px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: var(--transition);
 }
 
 .btn-secondary:hover {
@@ -162,12 +185,6 @@ body {
     background: var(--bg-surface);
     color: var(--text-secondary);
     border: 1px solid var(--border-color);
-    padding: 10px 18px;
-    border-radius: var(--radius-sm);
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
 }
 
 .btn-cancel:hover {
@@ -179,13 +196,15 @@ body {
     background: #25d366;
     color: #ffffff;
     border: none;
-    padding: 10px 18px;
-    border-radius: var(--radius-sm);
+    padding: 10px 20px;
+    min-height: 40px;
+    border-radius: 10px;
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
     box-shadow: 0 2px 10px rgba(37, 211, 102, 0.35);
     transition: var(--transition);
@@ -197,21 +216,61 @@ body {
     box-shadow: 0 4px 16px rgba(37, 211, 102, 0.45);
 }
 
-/* ============================================================
-   STATUS PILL BADGES
-   ============================================================ */
-
-.badge-paid {
+/* Large — CTAs like "Create Invoice", "Save Changes" */
+.btn-lg {
+    padding: 14px 28px;
+    font-size: 15px;
+    font-weight: 800;
+    border-radius: 12px;
+    min-height: 48px;
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+/* Theme Toggle Button (Issue 11) */
+.theme-toggle {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.06);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all 0.3s ease;
+    color: #ffffff;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.12);
+    transform: rotate(15deg);
+}
+
+/* ============================================================
+   STATUS PILL BADGES (Issue 9)
+   ============================================================ */
+
+.badge-paid, .badge-due, .badge-urgent {
+    font-size: 11px;
+    padding: 3px 10px;
+    font-weight: 800;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    gap: 4px;
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-full);
+}
+
+.badge-paid {
     background: var(--emerald-light);
     color: #065f46;
-    border-radius: var(--radius-full);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
 }
 
 body.dark-mode .badge-paid {
@@ -220,16 +279,8 @@ body.dark-mode .badge-paid {
 }
 
 .badge-due {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
     background: var(--amber-light);
     color: #92400e;
-    border-radius: var(--radius-full);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
 }
 
 body.dark-mode .badge-due {
@@ -238,16 +289,8 @@ body.dark-mode .badge-due {
 }
 
 .badge-urgent {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
     background: var(--rose-light);
     color: #9f1239;
-    border-radius: var(--radius-full);
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.3px;
 }
 
 body.dark-mode .badge-urgent {
@@ -256,15 +299,17 @@ body.dark-mode .badge-urgent {
 }
 
 /* ============================================================
-   NAVBAR (Sticky & Responsive)
+   NAVBAR (Thinner, Glassmorphism & Breathable - Issue 2)
    ============================================================ */
 
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 28px;
-    background: var(--primary);
+    padding: 10px 24px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(15, 23, 42, 0.95);
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     position: sticky;
     top: 0;
@@ -279,19 +324,19 @@ body.dark-mode .badge-urgent {
 }
 
 .navbar-logo-badge {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--gold), #d97706);
+    height: 36px;
+    width: 36px;
+    font-size: 18px;
     border-radius: 10px;
+    background: linear-gradient(135deg, var(--gold), #d97706);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
     box-shadow: 0 2px 10px rgba(245, 158, 11, 0.35);
 }
 
 .navbar-brand .main {
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 900;
     color: #ffffff;
     letter-spacing: 0.5px;
@@ -302,9 +347,11 @@ body.dark-mode .badge-urgent {
 }
 
 .navbar-brand .tagline {
-    font-size: 11px;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    opacity: 0.7;
     color: #94a3b8;
-    font-weight: 500;
     display: block;
 }
 
@@ -608,27 +655,44 @@ body.dark-mode .badge-urgent {
         width: 100vw !important;
         left: 0 !important;
         right: 0 !important;
+        height: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.04) !important;
+        padding: 0 8px !important;
+    }
+    body.dark-mode .mobile-bottom-bar {
+        background: rgba(17, 24, 39, 0.9) !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
     }
     .mobile-tab {
         flex: 1 1 0 !important;
-        width: 20% !important;
+        min-width: 56px !important;
+        min-height: 48px !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        padding: 6px 2px !important;
+        padding: 6px 8px !important;
+        border-radius: 12px !important;
+        gap: 3px !important;
         text-align: center !important;
         text-decoration: none !important;
     }
     .mobile-tab .tab-icon {
-        font-size: 20px !important;
+        font-size: 22px !important;
         line-height: 1 !important;
     }
     .mobile-tab .tab-label {
         font-size: 10px !important;
-        font-weight: 700 !important;
+        font-weight: 600 !important;
         margin-top: 2px !important;
         white-space: nowrap !important;
+    }
+    .mobile-tab.active .tab-label {
+        font-weight: 800 !important;
     }
     .fab {
         display: none !important;
@@ -637,11 +701,51 @@ body.dark-mode .badge-urgent {
         padding: 14px 12px 90px 12px !important;
     }
     .navbar {
-        padding: 10px 14px;
+        padding: 8px 14px;
         justify-content: space-between;
+    }
+    .navbar-logo-badge {
+        height: 32px;
+        width: 32px;
+        font-size: 16px;
     }
     .navbar-links {
         display: none !important;
+    }
+    .card:hover {
+        transform: none;
+        box-shadow: var(--shadow-sm);
+    }
+    .card {
+        padding: 16px;
+        border-radius: 14px;
+    }
+    .kpi-value {
+        font-size: 22px;
+    }
+    .kpi-label {
+        font-size: 11px;
+    }
+    .btn-primary, .btn-secondary, .btn-cancel,
+    .btn-whatsapp, .btn-ghost, .btn-danger, .btn-success {
+        min-height: 44px;
+        padding: 10px 16px;
+    }
+    .modal-card {
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        border-radius: 20px 20px 0 0 !important;
+        max-height: 85vh;
+        overflow-y: auto;
+        animation: slideUpMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUpMobile {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
     }
     .dashboard-grid {
         grid-template-columns: 1fr !important;
@@ -1127,20 +1231,22 @@ body.dark-mode .qty-control-btn:hover {
 }
 
 /* ============================================================
-   REUSABLE COMPONENT CLASSES (Issue 7)
+   REUSABLE COMPONENT CLASSES (Cards, Forms, Tables, Modals)
    ============================================================ */
 
+/* 3. Cards — Subtle Hover Lift + Consistent Padding */
 .card {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
-    border-radius: var(--radius-lg);
+    border-radius: 16px;
+    padding: 20px;
     box-shadow: var(--shadow-sm);
-    padding: 24px;
-    transition: var(--transition);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
 }
 
 .card:hover {
-    box-shadow: var(--shadow-md);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+    transform: translateY(-2px);
 }
 
 .card-header {
@@ -1168,7 +1274,47 @@ body.dark-mode .qty-control-btn:hover {
     margin: 4px 0 0 0;
 }
 
-/* Form System */
+/* 4. Dashboard KPI Cards */
+.kpi-card {
+    position: relative;
+    overflow: hidden;
+    padding-left: 20px;
+}
+
+.kpi-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 12px;
+    bottom: 12px;
+    width: 4px;
+    border-radius: 0 4px 4px 0;
+    background: var(--gold);
+}
+
+.kpi-card.kpi-revenue::before { background: var(--emerald); }
+.kpi-card.kpi-orders::before { background: var(--primary-accent); }
+.kpi-card.kpi-due::before { background: var(--rose); }
+.kpi-card.kpi-products::before { background: var(--gold); }
+
+.kpi-value {
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    color: var(--text-primary);
+}
+
+.kpi-label {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+/* 7. Form System — Polished Focus States & Clean Labels */
 .form-group {
     display: flex;
     flex-direction: column;
@@ -1177,30 +1323,183 @@ body.dark-mode .qty-control-btn:hover {
 }
 
 .form-label {
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    text-transform: none;
     color: var(--text-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
 }
 
 .form-input, .form-select, .form-textarea {
     width: 100%;
-    padding: 10px 14px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
     background: var(--bg-surface);
-    color: var(--text-primary);
+    border: 1.5px solid var(--border-color);
+    border-radius: 10px;
+    padding: 12px 14px;
     font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
     font-family: inherit;
     box-sizing: border-box;
-    transition: var(--transition);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:hover, .form-select:hover {
+    border-color: var(--border-hover);
 }
 
 .form-input:focus, .form-select:focus, .form-textarea:focus {
-    outline: none;
     border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.12);
+    background: var(--bg-card);
+    outline: none;
+}
+
+/* 8. Table Styling */
+.table-card {
+    overflow: hidden;
+    border-radius: 14px;
+}
+
+table thead tr {
+    background: var(--primary);
+    color: #ffffff;
+}
+
+table thead th {
+    padding: 12px 16px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+table tbody tr {
+    transition: background 0.15s ease;
+}
+
+table tbody tr:hover {
+    background: rgba(245, 158, 11, 0.04);
+}
+
+table tbody td {
+    padding: 14px 16px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+table tbody tr:nth-child(even) {
+    background: rgba(0, 0, 0, 0.015);
+}
+
+body.dark-mode table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* 10. Modals & Overlays */
+.modal-overlay {
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-card {
+    animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* 13. Micro-Interactions */
+.product-touch-card:active {
+    transform: scale(0.96);
+    transition: transform 0.1s ease;
+}
+
+.qty-control-btn:active {
+    transform: scale(0.9);
+}
+
+.page-container {
+    animation: pageEnter 0.3s ease;
+}
+
+@keyframes pageEnter {
+    from { 
+        opacity: 0; 
+        transform: translateY(8px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+/* 14. Invoice Page Print Feel */
+.invoice-paper {
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.04),
+        0 16px 40px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.thermal-slip {
+    background: #fffff8;
+    font-family: 'Courier New', 'Lucida Console', monospace;
+}
+
+/* 15. Search Inputs Wrapper */
+.search-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.search-wrapper .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 16px;
+    pointer-events: none;
+}
+
+.search-wrapper .form-input {
+    padding-left: 40px;
+    padding-right: 36px;
+}
+
+.search-wrapper .search-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: var(--bg-surface);
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* Button Variants */

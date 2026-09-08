@@ -55,31 +55,37 @@ function EditProduct({ product, onClose, onRefresh }) {
     };
 
     return (
-        <div style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.6)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1100,
-            padding: '20px'
-        }}>
-            <div style={{
-                background: 'var(--bg-card)',
-                borderRadius: '14px',
-                border: '1px solid var(--border-color)',
-                boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-                width: '100%',
-                maxWidth: '540px',
-                padding: '24px',
-                position: 'relative',
-                maxHeight: '90vh',
-                overflowY: 'auto'
-            }}>
+        <div
+            className="modal-overlay"
+            style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                zIndex: 1100,
+                padding: '20px'
+            }}
+        >
+            <div
+                className="modal-card"
+                style={{
+                    background: 'var(--bg-card)',
+                    borderRadius: '14px',
+                    border: '1px solid var(--border-color)',
+                    boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+                    width: '100%',
+                    maxWidth: '540px',
+                    padding: '24px',
+                    position: 'relative',
+                    maxHeight: '90vh',
+                    overflowY: 'auto'
+                }}
+            >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
                     <h3 style={{ fontSize: '18px', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
                         ✏️ <span>Edit Product Details</span>

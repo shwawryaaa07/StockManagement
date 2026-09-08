@@ -160,21 +160,26 @@ function ProductList() {
             }}>
                 {/* Search Box */}
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                    <input
-                        type="text"
-                        placeholder="🔍 Search product name, model, or category..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                            flex: 1,
-                            padding: '11px 16px',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '8px',
-                            background: 'var(--bg-body)',
-                            color: 'var(--text-primary)',
-                            fontSize: '14px'
-                        }}
-                    />
+                    <div className="search-wrapper" style={{ flex: 1 }}>
+                        <span className="search-icon">🔍</span>
+                        <input
+                            type="text"
+                            className="form-input"
+                            placeholder="Search product name, model, or category..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                className="search-clear"
+                                onClick={() => setSearchTerm('')}
+                                aria-label="Clear search"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
                     <span style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontWeight: '600' }}>
                         {filteredProducts.length} item(s) match
                     </span>
@@ -209,12 +214,10 @@ function ProductList() {
             </div>
 
             {/* Products Table */}
-            <div style={{
+            <div className="table-card" style={{
                 background: 'var(--bg-card)',
-                borderRadius: '12px',
                 border: '1px solid var(--border-color)',
-                boxShadow: 'var(--shadow)',
-                overflow: 'hidden'
+                boxShadow: 'var(--shadow)'
             }}>
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                     <table style={{ width: '100%', minWidth: '550px', borderCollapse: 'collapse', fontSize: '13px' }}>

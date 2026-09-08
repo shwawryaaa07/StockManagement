@@ -265,6 +265,7 @@ ${displayShopFooter}`;
             {/* UPI QR CODE MODAL */}
             {showUpiModal && (
                 <div
+                    className="modal-overlay"
                     style={{
                         position: 'fixed',
                         inset: 0,
@@ -281,7 +282,7 @@ ${displayShopFooter}`;
                     }}
                 >
                     <div
-                        className="upi-qr-card"
+                        className="modal-card upi-qr-card"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -384,8 +385,6 @@ ${displayShopFooter}`;
                         maxWidth: '820px',
                         width: '100%',
                         margin: '0 auto',
-                        boxShadow: '0 25px 60px -12px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0,0,0,0.12)',
-                        border: '1px solid #cbd5e1',
                         boxSizing: 'border-box'
                     }}>
                         {/* Shop Letterhead Header */}
@@ -582,14 +581,10 @@ ${displayShopFooter}`;
                 ) : (
                     /* 3-INCH (80mm) THERMAL POS SLIP */
                     <div className="invoice-paper thermal-slip" style={{
-                        background: '#ffffff',
                         color: '#000000',
-                        fontFamily: 'monospace',
                         width: '320px',
                         padding: '20px 16px',
                         borderRadius: '12px',
-                        boxShadow: '0 20px 50px -12px rgba(0, 0, 0, 0.35)',
-                        border: '1px solid #cbd5e1',
                         margin: '0 auto',
                         boxSizing: 'border-box'
                     }}>

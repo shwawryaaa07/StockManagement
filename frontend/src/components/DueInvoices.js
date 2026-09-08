@@ -171,21 +171,26 @@ function DueInvoices() {
 
             {/* Search Filter */}
             <div style={{ marginBottom: '20px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    placeholder="🔍 Filter by customer name, phone, or invoice #..."
-                    style={{
-                        flex: 1,
-                        padding: '12px 16px',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '10px',
-                        background: 'var(--bg-card)',
-                        color: 'var(--text-primary)',
-                        fontSize: '14px'
-                    }}
-                />
+                <div className="search-wrapper" style={{ flex: 1 }}>
+                    <span className="search-icon">🔍</span>
+                    <input
+                        type="text"
+                        className="form-input"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Filter by customer name, phone, or invoice #..."
+                    />
+                    {searchTerm && (
+                        <button
+                            type="button"
+                            className="search-clear"
+                            onClick={() => setSearchTerm('')}
+                            aria-label="Clear search"
+                        >
+                            ✕
+                        </button>
+                    )}
+                </div>
                 <span style={{ fontSize: '13px', color: 'var(--text-secondary)', fontWeight: '700', whiteSpace: 'nowrap' }}>
                     {filteredInvoices.length} due bill(s)
                 </span>
@@ -318,6 +323,7 @@ function DueInvoices() {
             {/* UPI QR Modal for on-the-spot due collection */}
             {qrModalInv && (
                 <div
+                    className="modal-overlay"
                     style={{
                         position: 'fixed',
                         inset: 0,
@@ -333,7 +339,7 @@ function DueInvoices() {
                         setEditingUpiInModal(false);
                     }}
                 >
-                    <div className="upi-qr-card" onClick={(e) => e.stopPropagation()}>
+                    <div className="modal-card upi-qr-card" onClick={(e) => e.stopPropagation()}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                             <div style={{ fontWeight: '800', fontSize: '16px' }}>📱 Customer UPI Payment</div>
                             <button onClick={() => { setQrModalInv(null); setEditingUpiInModal(false); }} style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#64748b' }}>
@@ -411,30 +417,36 @@ function DueInvoices() {
 
             {/* Quick Settle Modal */}
             {selectedInvoice && (
-                <div style={{
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    backgroundColor: 'rgba(0,0,0,0.6)',
-                    backdropFilter: 'blur(4px)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    zIndex: 9999,
-                    padding: '16px'
-                }}>
-                    <div style={{
-                        background: 'var(--bg-card)',
-                        borderRadius: '20px',
-                        padding: '28px',
-                        width: '100%',
-                        maxWidth: '440px',
-                        border: '1px solid var(--border-color)',
-                        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-                        color: 'var(--text-primary)'
-                    }}>
+                <div
+                    className="modal-overlay"
+                    style={{
+                        position: 'fixed',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundColor: 'rgba(0,0,0,0.6)',
+                        backdropFilter: 'blur(4px)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 9999,
+                        padding: '16px'
+                    }}
+                >
+                    <div
+                        className="modal-card"
+                        style={{
+                            background: 'var(--bg-card)',
+                            borderRadius: '20px',
+                            padding: '28px',
+                            width: '100%',
+                            maxWidth: '440px',
+                            border: '1px solid var(--border-color)',
+                            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
+                            color: 'var(--text-primary)'
+                        }}
+                    >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                             <div style={{ fontWeight: '900', fontSize: '18px' }}>
                                 💰 Settle Due Payment
@@ -461,28 +473,29 @@ function DueInvoices() {
 
                         <form onSubmit={handleSettleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
                                     Amount Received (₹) *
                                 </label>
                                 <input
                                     type="number"
                                     step="0.01"
+                                    className="form-input"
                                     value={settleAmount}
                                     onChange={(e) => setSettleAmount(e.target.value)}
                                     placeholder="Enter settlement amount"
                                     required
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '15px', fontWeight: '700' }}
+                                    style={{ fontSize: '15px', fontWeight: '700' }}
                                 />
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
                                     Payment Mode
                                 </label>
                                 <select
                                     value={settleMethod}
                                     onChange={(e) => setSettleMethod(e.target.value)}
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
+                                    className="form-select"
                                 >
                                     <option value="UPI">📱 UPI / QR</option>
                                     <option value="CASH">💵 Cash</option>
@@ -491,15 +504,15 @@ function DueInvoices() {
                             </div>
 
                             <div>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: '700', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                                <label className="form-label" style={{ display: 'block', marginBottom: '6px' }}>
                                     Settlement Remarks (Optional)
                                 </label>
                                 <input
                                     type="text"
+                                    className="form-input"
                                     value={settleNotes}
                                     onChange={(e) => setSettleNotes(e.target.value)}
                                     placeholder="Enter settlement remarks or transaction reference"
-                                    style={{ width: '100%', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)', background: 'var(--bg-body)', color: 'var(--text-primary)', fontSize: '13px' }}
                                 />
                             </div>
 

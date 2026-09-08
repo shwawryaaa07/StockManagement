@@ -127,119 +127,75 @@ function Dashboard() {
                 </div>
             </div>
 
-            {/* 4 Hero KPI Metric Cards */}
+            {/* 4 Hero KPI Metric Cards (Issue 4) */}
             <div className="dash-kpi-grid">
                 {/* 1. Today's Gross Revenue */}
-                <div style={{
-                    background: 'var(--bg-card)',
-                    padding: '22px',
-                    borderRadius: '16px',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow-md)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                }}>
+                <div className="card kpi-card kpi-revenue">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Today's Sales
-                        </span>
-                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--emerald-light)', color: '#065f46', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                        <span className="kpi-label">Today's Sales</span>
+                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--emerald-light)', color: '#065f46', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
                             💰
                         </div>
                     </div>
-                    <div style={{ marginTop: '14px' }}>
-                        <div style={{ fontSize: '32px', fontWeight: '900', color: '#10b981', letterSpacing: '-0.5px' }}>
+                    <div style={{ marginTop: '12px' }}>
+                        <div className="kpi-value" style={{ color: '#10b981' }}>
                             ₹{Number(data.todaySales || 0).toLocaleString('en-IN')}
                         </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '600' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '500' }}>
                             Gross counter receipts
                         </div>
                     </div>
                 </div>
 
                 {/* 2. Today's Invoices Count */}
-                <div style={{
-                    background: 'var(--bg-card)',
-                    padding: '22px',
-                    borderRadius: '16px',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow-md)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                }}>
+                <div className="card kpi-card kpi-orders">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Today's Bills
-                        </span>
-                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(59, 130, 246, 0.15)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                        <span className="kpi-label">Today's Bills</span>
+                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(59, 130, 246, 0.15)', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
                             🧾
                         </div>
                     </div>
-                    <div style={{ marginTop: '14px' }}>
-                        <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+                    <div style={{ marginTop: '12px' }}>
+                        <div className="kpi-value">
                             {data.todayInvoices || 0}
                         </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '600' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '500' }}>
                             Transactions created today
                         </div>
                     </div>
                 </div>
 
                 {/* 3. Market Receivables (Due Balance) */}
-                <div style={{
-                    background: 'var(--bg-card)',
-                    padding: '22px',
-                    borderRadius: '16px',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow-md)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                }}>
+                <div className="card kpi-card kpi-due">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Outstanding Dues
-                        </span>
-                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--amber-light)', color: '#92400e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                        <span className="kpi-label">Outstanding Dues</span>
+                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'var(--amber-light)', color: '#92400e', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
                             🟡
                         </div>
                     </div>
-                    <div style={{ marginTop: '14px' }}>
-                        <div style={{ fontSize: '32px', fontWeight: '900', color: '#f59e0b', letterSpacing: '-0.5px' }}>
+                    <div style={{ marginTop: '12px' }}>
+                        <div className="kpi-value" style={{ color: '#f59e0b' }}>
                             ₹{Number(data.totalDueAmount || 0).toLocaleString('en-IN')}
                         </div>
-                        <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px', fontWeight: '700' }}>
+                        <div style={{ fontSize: '12px', color: '#f59e0b', marginTop: '4px', fontWeight: '600' }}>
                             {data.dueInvoicesCount || 0} customer(s) pending
                         </div>
                     </div>
                 </div>
 
                 {/* 4. Total Stock Asset Value */}
-                <div style={{
-                    background: 'var(--bg-card)',
-                    padding: '22px',
-                    borderRadius: '16px',
-                    border: '1px solid var(--border-color)',
-                    boxShadow: 'var(--shadow-md)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between'
-                }}>
+                <div className="card kpi-card kpi-products">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                            Inventory Asset Value
-                        </span>
-                        <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'rgba(15, 23, 42, 0.08)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '20px' }}>
+                        <span className="kpi-label">Inventory Asset Value</span>
+                        <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: 'rgba(15, 23, 42, 0.08)', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
                             📦
                         </div>
                     </div>
-                    <div style={{ marginTop: '14px' }}>
-                        <div style={{ fontSize: '32px', fontWeight: '900', color: 'var(--text-primary)', letterSpacing: '-0.5px' }}>
+                    <div style={{ marginTop: '12px' }}>
+                        <div className="kpi-value">
                             ₹{totalInventoryValue.toLocaleString('en-IN')}
                         </div>
-                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '600' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px', fontWeight: '500' }}>
                             {totalUnitsInStock} total units across {products.length} products
                         </div>
                     </div>

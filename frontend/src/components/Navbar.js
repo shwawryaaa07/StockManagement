@@ -87,12 +87,12 @@ function Navbar() {
             )}
 
             {/* TOP DESKTOP & MOBILE HEADER */}
-            <nav className="navbar" style={{ position: 'sticky', top: 0, zIndex: 1000 }}>
-                <div className="navbar-left" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <span className="navbar-logo" style={{ fontSize: '24px' }}>🏪</span>
+            <nav className="navbar">
+                <div className="navbar-left">
+                    <div className="navbar-logo-badge">🏪</div>
                     <div className="navbar-brand">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span className="main" style={{ fontWeight: '900', letterSpacing: '-0.3px' }}>
+                            <span className="main">
                                 MANISHA <span className="gold">ELECTRONICS</span>
                             </span>
                             {getRoleBadge()}
@@ -155,25 +155,13 @@ function Navbar() {
                     )}
 
                     <button
-                        className="dark-toggle"
+                        type="button"
+                        className="theme-toggle"
                         onClick={() => setDarkMode(!darkMode)}
                         title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
-                        style={{
-                            background: 'rgba(255,255,255,0.12)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            color: '#fff',
-                            padding: '7px 12px',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            transition: 'all 0.2s ease',
-                            marginLeft: '4px'
-                        }}
+                        aria-label="Toggle dark mode"
                     >
-                        {darkMode ? '☀️ Light' : '🌙 Dark'}
+                        {darkMode ? '☀️' : '🌙'}
                     </button>
 
                     <button
@@ -204,17 +192,11 @@ function Navbar() {
                 {/* Mobile Header Quick Actions (Top Right) */}
                 <div className="mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <button
+                        type="button"
+                        className="theme-toggle"
                         onClick={() => setDarkMode(!darkMode)}
                         title="Toggle dark mode"
-                        style={{
-                            background: 'rgba(255,255,255,0.12)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            color: '#fff',
-                            padding: '6px 10px',
-                            borderRadius: '8px',
-                            fontSize: '13px',
-                            cursor: 'pointer'
-                        }}
+                        aria-label="Toggle dark mode"
                     >
                         {darkMode ? '☀️' : '🌙'}
                     </button>

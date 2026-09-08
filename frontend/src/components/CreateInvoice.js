@@ -438,27 +438,34 @@ function CreateInvoice() {
 
                 {/* Fast Product Search Box with Dropdown */}
                 <div ref={dropdownRef} style={{ position: 'relative', marginBottom: '16px' }}>
-                    <input
-                        ref={searchInputRef}
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => {
-                            setSearchTerm(e.target.value);
-                            setShowSuggestions(true);
-                        }}
-                        onFocus={() => setShowSuggestions(true)}
-                        placeholder="🔍 Type product name, model number, or scan barcode... (Press F4)"
-                        style={{
-                            width: '100%',
-                            padding: '12px 16px',
-                            fontSize: '14px',
-                            borderRadius: '10px',
-                            border: '2px solid var(--border-color)',
-                            background: 'var(--bg-body)',
-                            color: 'var(--text-primary)',
-                            boxSizing: 'border-box'
-                        }}
-                    />
+                    <div className="search-wrapper">
+                        <span className="search-icon">🔍</span>
+                        <input
+                            ref={searchInputRef}
+                            type="text"
+                            className="form-input"
+                            value={searchTerm}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setShowSuggestions(true);
+                            }}
+                            onFocus={() => setShowSuggestions(true)}
+                            placeholder="Type product name, model number, or scan barcode... (Press F4)"
+                        />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                className="search-clear"
+                                onClick={() => {
+                                    setSearchTerm('');
+                                    setShowSuggestions(false);
+                                }}
+                                aria-label="Clear search"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
 
                     {/* Instant Suggestions Dropdown */}
                     {showSuggestions && searchSuggestions.length > 0 && (

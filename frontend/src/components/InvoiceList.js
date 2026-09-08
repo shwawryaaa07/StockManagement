@@ -183,21 +183,26 @@ function InvoiceList() {
             }}>
                 {/* Search Bar */}
                 <div style={{ flex: 1, minWidth: '260px' }}>
-                    <input
-                        type="text"
-                        placeholder="🔍 Search customer name, phone number, or invoice #..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                            width: '100%',
-                            padding: '11px 16px',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '8px',
-                            background: 'var(--bg-body)',
-                            color: 'var(--text-primary)',
-                            fontSize: '13px'
-                        }}
-                    />
+                    <div className="search-wrapper">
+                        <span className="search-icon">🔍</span>
+                        <input
+                            type="text"
+                            className="form-input"
+                            placeholder="Search customer name, phone number, or invoice #..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                className="search-clear"
+                                onClick={() => setSearchTerm('')}
+                                aria-label="Clear search"
+                            >
+                                ✕
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 {/* Status Filter Tabs */}
@@ -230,12 +235,10 @@ function InvoiceList() {
             </div>
 
             {/* Invoices Table */}
-            <div style={{
+            <div className="table-card" style={{
                 background: 'var(--bg-card)',
-                borderRadius: '12px',
                 border: '1px solid var(--border-color)',
-                boxShadow: 'var(--shadow)',
-                overflow: 'hidden'
+                boxShadow: 'var(--shadow)'
             }}>
                 <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
                     <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', fontSize: '13px' }}>

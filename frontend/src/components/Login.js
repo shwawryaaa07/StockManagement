@@ -224,10 +224,10 @@ function Login() {
                         🏪
                     </div>
                     <h2 className="login-card-title">
-                        {isStoreMode ? 'Counter Terminal Login' : 'Access Portal'}
+                        {isStoreMode ? 'Counter Terminal Login' : 'Welcome Back'}
                     </h2>
                     <p className="login-card-subtitle">
-                        {isStoreMode ? 'Enter register credentials to unlock terminal' : 'Select role to authenticate'}
+                        {isStoreMode ? 'Enter register credentials to unlock terminal' : 'Select role to access your portal'}
                     </p>
 
                     {/* Role Navigation Tabs */}

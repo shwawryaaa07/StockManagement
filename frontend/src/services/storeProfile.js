@@ -60,6 +60,7 @@ export const getUpiPaymentUri = (profile, amount, invoiceNumber) => {
     const rawShopName = (profile?.shopName || 'MANISHA ELECTRONICS').replace(/[()]/g, '').trim();
     const cleanShopName = rawShopName.replace(/\s+/g, '+');
     const amt = Number(amount || 0).toFixed(2);
-    const inv = invoiceNumber ? String(invoiceNumber).replace(/[^a-zA-Z0-9-]/g, '') : 'SALE';
-    return `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${cleanShopName}&am=${amt}&tn=INV-${inv}&cu=INR`;
+    const rawInv = invoiceNumber ? String(invoiceNumber).replace(/[^a-zA-Z0-9-]/g, '') : 'SALE';
+    const note = rawInv.toUpperCase().startsWith('INV') ? rawInv : `INV-${rawInv}`;
+    return `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${cleanShopName}&am=${amt}&tn=${encodeURIComponent(note)}&cu=INR`;
 };

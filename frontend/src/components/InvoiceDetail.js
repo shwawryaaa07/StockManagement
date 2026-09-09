@@ -6,7 +6,7 @@ import { useToast } from '../context/ToastContext';
 import { getStoreProfile, saveStoreProfile, getUpiPaymentUri } from '../services/storeProfile';
 import { InvoiceDetailSkeleton } from './SkeletonLoader';
 import QRCodeDisplay from './QRCodeDisplay';
-import { cleanText } from '../utils/purify';
+import { formatWhatsAppReceipt, getWhatsAppShareUrl } from '../utils/receiptFormatter';
 
 function InvoiceDetail() {
     const { id } = useParams();
@@ -61,49 +61,22 @@ function InvoiceDetail() {
 
     const handleWhatsAppShare = () => {
         if (!invoice) return;
+        const message = formatWhatsAppReceipt(invoice, storeProfile, isVisitor);
+        const url = getWhatsAppShareUrl(invoice.customerContact, message);
+        window.open(url, '_blank', 'noopener,noreferrer');
+        toast.success('Opening WhatsApp with official tax invoice...');
+    };
 
-        let cleanPhone = (invoice.customerContact || '').replace(/\D/g, '');
-        if (cleanPhone.length === 10) {
-            cleanPhone = '91' + cleanPhone;
+    const handleCopyWhatsAppReceipt = async () => {
+        if (!invoice) return;
+        const message = formatWhatsAppReceipt(invoice, storeProfile, isVisitor);
+        try {
+            await navigator.clipboard.writeText(message);
+            toast.success('Official WhatsApp tax invoice copied to clipboard!');
+        } catch (err) {
+            console.error('Clipboard copy failed:', err);
+            toast.error('Could not copy to clipboard. Please allow clipboard permissions.');
         }
-
-        const itemsList = (invoice.items || []).map((it, idx) => 
-            `${idx + 1}. ${it.product?.name || 'Product'} (Qty: ${it.quantity}) - ₹${(it.quantity * it.unitPrice).toLocaleString('en-IN')}`
-        ).join('\n');
-
-        const displayShopName = isVisitor ? 'Manisha Electronics (Demo Sandbox)' : storeProfile.shopName;
-        const cleanStorePhone = (storeProfile.phone || '').replace(/,\s*70205592347/g, '').replace(/70205592347\s*,?/g, '').trim() || '9309736172';
-        const displayShopFooter = isVisitor
-            ? `Thank you for choosing *Manisha Electronics (Demo)*!\n📍 Goa • 📞 +91 98000 00000`
-            : `Thank you for choosing *${storeProfile.shopName}*!\n📍 ${storeProfile.address} • 📞 ${cleanStorePhone}`;
-
-        const customerName = cleanText(invoice.customerName) || 'Customer';
-        const customerContact = cleanText(invoice.customerContact);
-
-        const message = 
-`🏪 *${displayShopName.toUpperCase()} - TAX INVOICE*
-----------------------------------------
-*Invoice No:* #${invoice.invoiceNumber}
-*Date:* ${formatDate(invoice.createdAt)}
-*Customer:* ${customerName}
-${customerContact && customerContact !== 'N/A' ? `*Phone:* ${customerContact}` : ''}
-
-*Purchased Items:*
-${itemsList}
-
-----------------------------------------
-*Subtotal:* ₹${Number(invoice.subtotal || 0).toLocaleString('en-IN')}
-*GST (${invoice.gstRate}%):* ₹${Number(invoice.gstAmount || 0).toLocaleString('en-IN')}
-*Grand Total:* ₹${Number(invoice.totalAmount || 0).toLocaleString('en-IN')}
-*Amount Paid:* ₹${Number(invoice.amountPaid || 0).toLocaleString('en-IN')}
-${Number(invoice.balanceDue || invoice.amountDue || 0) > 0 ? `*Balance Due:* ⚠️ ₹${Number(invoice.balanceDue || invoice.amountDue).toLocaleString('en-IN')}` : '*Status:* ✅ Fully Paid'}
-
-${displayShopFooter}`;
-
-        const encoded = encodeURIComponent(message);
-        const url = cleanPhone ? `https://wa.me/${cleanPhone}?text=${encoded}` : `https://wa.me/?text=${encoded}`;
-        window.open(url, '_blank');
-        toast.success('Opening WhatsApp to share bill...');
     };
 
     if (loading) {
@@ -246,10 +219,19 @@ ${displayShopFooter}`;
                     </button>
 
                     <button
+                        onClick={handleCopyWhatsAppReceipt}
+                        className="btn-ghost"
+                        style={{ padding: '9px 14px', fontSize: '13px' }}
+                        title="Copy official tax invoice text for WhatsApp or SMS"
+                    >
+                        📋 Copy Receipt
+                    </button>
+
+                    <button
                         onClick={handleWhatsAppShare}
                         className="btn-whatsapp"
                         style={{ padding: '9px 16px', fontSize: '13px' }}
-                        title="Share tax invoice receipt on WhatsApp"
+                        title="Share official tax invoice receipt on WhatsApp"
                     >
                         📲 Share WhatsApp
                     </button>

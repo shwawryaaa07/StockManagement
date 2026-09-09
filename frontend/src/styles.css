@@ -192,6 +192,29 @@ body {
     color: var(--text-primary);
 }
 
+.btn-ghost {
+    background: var(--bg-surface);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    padding: 9px 16px;
+    min-height: 40px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: var(--transition);
+}
+
+.btn-ghost:hover {
+    background: var(--border-color);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+}
+
 .btn-whatsapp {
     background: #25d366;
     color: #ffffff;

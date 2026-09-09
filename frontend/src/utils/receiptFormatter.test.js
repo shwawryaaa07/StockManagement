@@ -172,6 +172,12 @@ describe('receiptFormatter utility', () => {
             expect(receipt).not.toContain('+91 +91');
         });
 
+        it('does not include website link to avoid WhatsApp rich link preview banners', () => {
+            const receipt = formatWhatsAppReceipt(mockInvoicePaid, mockStoreProfile);
+            expect(receipt).not.toContain('vercel.app');
+            expect(receipt).not.toContain('Online Portal');
+        });
+
         it('returns empty string if invoice is missing', () => {
             expect(formatWhatsAppReceipt(null)).toBe('');
         });

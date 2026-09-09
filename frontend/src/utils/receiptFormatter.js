@@ -159,7 +159,6 @@ export function formatWhatsAppReceipt(invoice, storeProfile = {}, isVisitor = fa
         `🙏 *Thank you for choosing ${isVisitor ? 'Manisha Electronics' : storeProfile.shopName}!*`,
         `🛡️ *Warranty & Support Notice:*`,
         `_Please preserve this digital tax invoice for manufacturer warranty & after-sales service._`,
-        `🌐 *Online Portal:* https://stock-management-xi-six.vercel.app`,
         `_Authorized Computer-Generated Invoice • Valid without signature_`
     ];
 

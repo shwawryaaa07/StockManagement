@@ -60,7 +60,7 @@ public class JwtUtil {
                 .getPayload();
 
         Object role = claims.get("role");
-        return role != null ? role.toString() : "ROLE_ADMIN";
+        return role != null ? role.toString() : "ROLE_VISITOR";
     }
 
     public String getTenantTypeFromToken(String token) {

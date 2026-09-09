@@ -67,12 +67,26 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of(
+
+        List<String> allowedOrigins = new java.util.ArrayList<>(List.of(
                 "http://localhost:[*]",
                 "http://127.0.0.1:[*]",
-                "https://manishaelectronics.vercel.app",
-                "https://*.vercel.app"
+                "https://stock-management-xi-six.vercel.app",
+                "https://manishaelectronics.vercel.app"
         ));
+
+        // Allow overriding or appending trusted origins via environment variable in production
+        String envOrigins = System.getenv("CORS_ALLOWED_ORIGINS");
+        if (envOrigins != null && !envOrigins.isBlank()) {
+            for (String origin : envOrigins.split(",")) {
+                String clean = origin.trim();
+                if (!clean.isEmpty() && !allowedOrigins.contains(clean)) {
+                    allowedOrigins.add(clean);
+                }
+            }
+        }
+
+        configuration.setAllowedOriginPatterns(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setExposedHeaders(Arrays.asList("Authorization", "Content-Type", "X-RateLimit-Limit", "X-RateLimit-Remaining", "Retry-After"));

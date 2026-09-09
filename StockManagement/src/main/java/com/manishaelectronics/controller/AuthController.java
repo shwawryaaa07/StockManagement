@@ -49,12 +49,25 @@ public class AuthController {
         this.shopName = shopName;
     }
 
+    private boolean constantTimeEquals(String a, String b) {
+        if (a == null || b == null) return false;
+        return java.security.MessageDigest.isEqual(
+                a.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                b.getBytes(java.nio.charset.StandardCharsets.UTF_8)
+        );
+    }
+
     private String getClientIp(HttpServletRequest request) {
         String xf = request.getHeader("X-Forwarded-For");
         if (xf != null && !xf.isBlank()) {
-            return xf.split(",")[0].trim();
+            String candidate = xf.split(",")[0].trim();
+            // Validate IPv4 or IPv6 pattern to prevent header injection or spoofing
+            if (candidate.matches("^[0-9a-fA-F:.]+$") && candidate.length() <= 45) {
+                return candidate;
+            }
         }
-        return request.getRemoteAddr() != null ? request.getRemoteAddr() : "127.0.0.1";
+        String remote = request.getRemoteAddr();
+        return (remote != null && !remote.isBlank()) ? remote.trim() : "127.0.0.1";
     }
 
     // 1. Owner / Admin Login (Master PIN or Password)
@@ -82,12 +95,16 @@ public class AuthController {
         boolean isAuthenticated = false;
 
         if (input != null && !input.isBlank()) {
-            if (input.equals(adminPin) || input.equals(adminPassword) || passwordEncoder.matches(input, adminPassword) || passwordEncoder.matches(input, adminPin)) {
+            if (constantTimeEquals(input, adminPin) ||
+                constantTimeEquals(input, adminPassword) ||
+                (adminPassword != null && passwordEncoder.matches(input, adminPassword)) ||
+                (adminPin != null && passwordEncoder.matches(input, adminPin))) {
                 isAuthenticated = true;
             }
         } else if (username != null && password != null) {
             if (adminUsername.equalsIgnoreCase(username.trim()) &&
-                    (adminPassword.equals(password.trim()) || passwordEncoder.matches(password.trim(), adminPassword))) {
+                    (constantTimeEquals(adminPassword, password.trim()) ||
+                     (adminPassword != null && passwordEncoder.matches(password.trim(), adminPassword)))) {
                 isAuthenticated = true;
             }
         }
@@ -122,7 +139,19 @@ public class AuthController {
 
     // 2. Staff Counter Login (Staff ID + 4-Digit PIN)
     @PostMapping(value = {"/staff", "/staff-login"})
-    public ResponseEntity<?> staffLogin(@RequestBody Map<String, String> request) {
+    public ResponseEntity<?> staffLogin(@RequestBody Map<String, String> request, HttpServletRequest httpRequest) {
+        String clientKey = "staff_" + getClientIp(httpRequest);
+
+        long now = System.currentTimeMillis();
+        long[] attemptData = attemptCache.computeIfAbsent(clientKey, k -> new long[]{0, 0});
+        if (attemptData[1] > now) {
+            long remainingSeconds = (attemptData[1] - now) / 1000;
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
+                    "success", false,
+                    "message", "⚠️ Too many failed attempts. Locked for " + remainingSeconds + "s."
+            ));
+        }
+
         String pin = request.get("pin");
         String username = request.get("username");
 
@@ -151,7 +180,7 @@ public class AuthController {
             if (staff.getPin() != null) {
                 if (passwordEncoder.matches(inputPin, staff.getPin())) {
                     pinMatches = true;
-                } else if (staff.getPin().equals(inputPin)) {
+                } else if (constantTimeEquals(staff.getPin(), inputPin)) {
                     // Transparent auto-upgrade plaintext PIN to BCrypt
                     pinMatches = true;
                     staff.setPin(passwordEncoder.encode(inputPin));
@@ -160,6 +189,7 @@ public class AuthController {
             }
 
             if (pinMatches) {
+                attemptCache.remove(clientKey);
                 String token = jwtUtil.generateToken(staff.getName(), "ROLE_STAFF", "PROD");
                 return ResponseEntity.ok(Map.of(
                         "success", true,
@@ -172,9 +202,19 @@ public class AuthController {
             }
         }
 
+        attemptData[0]++;
+        if (attemptData[0] >= MAX_ATTEMPTS) {
+            attemptData[1] = now + LOCK_DURATION_MS;
+            attemptData[0] = 0;
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of(
+                    "success", false,
+                    "message", "⚠️ Maximum login attempts exceeded. System locked for 2 minutes."
+            ));
+        }
+
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of(
                 "success", false,
-                "message", "❌ Invalid Staff ID or PIN. Please check your credentials."
+                "message", "❌ Invalid Staff ID or PIN. (" + (MAX_ATTEMPTS - attemptData[0]) + " attempts remaining)"
         ));
     }
 

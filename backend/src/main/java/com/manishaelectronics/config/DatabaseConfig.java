@@ -28,10 +28,10 @@ public class DatabaseConfig {
     @Primary
     public DataSource dataSource() {
         HikariConfig config = new HikariConfig();
-        config.setDriverClassName(driverClassName);
-        config.setJdbcUrl(dbUrl);
-        config.setUsername(dbUsername);
-        config.setPassword(dbPassword);
+        config.setDriverClassName(driverClassName != null ? driverClassName.trim() : "com.mysql.cj.jdbc.Driver");
+        config.setJdbcUrl(dbUrl != null ? dbUrl.trim() : null);
+        config.setUsername(dbUsername != null ? dbUsername.trim() : null);
+        config.setPassword(dbPassword != null ? dbPassword.trim() : null);
         config.setMaximumPoolSize(10);
         config.setMinimumIdle(2);
         config.setConnectionTimeout(30000);

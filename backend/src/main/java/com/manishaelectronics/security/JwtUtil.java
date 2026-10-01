@@ -20,7 +20,8 @@ public class JwtUtil {
             @Value("${auth.jwt.secret}") String secret,
             @Value("${auth.jwt.expiration-days:30}") long expirationDays
     ) {
-        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
+        String cleanSecret = secret != null ? secret.trim() : "";
+        this.secretKey = Keys.hmacShaKeyFor(cleanSecret.getBytes(StandardCharsets.UTF_8));
         this.expirationMs = expirationDays * 24L * 60L * 60L * 1000L;
     }
 

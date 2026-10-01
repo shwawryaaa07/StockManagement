@@ -48,10 +48,10 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
         this.staffAccountRepository = staffAccountRepository;
         this.passwordEncoder = passwordEncoder;
-        this.adminUsername = adminUsername;
-        this.adminPassword = adminPassword;
-        this.adminPin = adminPin;
-        this.shopName = shopName;
+        this.adminUsername = adminUsername != null ? adminUsername.trim() : "admin";
+        this.adminPassword = adminPassword != null ? adminPassword.trim() : "";
+        this.adminPin = adminPin != null ? adminPin.trim() : "";
+        this.shopName = shopName != null ? shopName.trim() : "MANISHA ELECTRONICS";
     }
 
     private boolean constantTimeEquals(String a, String b) {

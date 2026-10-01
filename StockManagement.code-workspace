@@ -1,0 +1,27 @@
+{
+  "folders": [
+    {
+      "name": "Backend (Spring Boot)",
+      "path": "backend"
+    },
+    {
+      "name": "Frontend (React)",
+      "path": "frontend"
+    },
+    {
+      "name": "StockManagement (Root)",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "java.compile.nullAnalysis.mode": "automatic",
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.maven.enabled": true,
+    "java.import.exclusions": [
+      "**/node_modules/**",
+      "**/frontend/**",
+      "**/.git/**"
+    ],
+    "maven.pomPath": "backend/pom.xml"
+  }
+}

@@ -1,0 +1,770 @@
+/* ==========================================================================
+   LOGIN PAGE STYLES - MANISHA ELECTRONICS REDESIGN
+   ========================================================================== */
+
+.login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background-color: #070a12;
+  background-image: 
+    radial-gradient(circle at 14% 20%, rgba(245, 158, 11, 0.14) 0%, transparent 45%),
+    radial-gradient(circle at 86% 78%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+    radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 24px 24px;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* 1. Background radial gradient glow blobs */
+.login-page::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.16) 0%, rgba(245, 158, 11, 0.06) 40%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(60px);
+  z-index: 0;
+}
+
+.login-page::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  right: -10%;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.14) 0%, rgba(59, 130, 246, 0.04) 40%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(60px);
+  z-index: 0;
+}
+
+/* Dedicated ambient glow blob right behind the login card */
+.login-bg-glow-card {
+  position: absolute;
+  top: 50%;
+  right: 6%;
+  transform: translateY(-50%);
+  width: 480px;
+  height: 520px;
+  background: radial-gradient(circle, rgba(245, 158, 11, 0.12) 0%, rgba(245, 158, 11, 0.04) 50%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  filter: blur(50px);
+  z-index: 0;
+}
+
+/* Page Layout */
+.login-page-layout {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 56px;
+  margin: auto 0;
+  padding: 48px 24px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+}
+
+/* ==========================================================================
+   LEFT HERO SECTION
+   ========================================================================== */
+.login-hero {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 20px 0;
+  max-width: 540px;
+  position: relative;
+  z-index: 1;
+  animation: heroEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes heroEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.login-tagline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  width: fit-content;
+  margin-bottom: 24px;
+  text-transform: uppercase;
+}
+
+.login-tagline-badge.store-mode {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+}
+
+/* 3. Title is 48px on desktop */
+.login-title {
+  font-size: 48px;
+  font-weight: 900;
+  color: #f9fafb;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  margin: 0 0 14px 0;
+}
+
+/* 4. Gold shimmer animation on the word "ELECTRONICS" */
+.gold,
+.login-title .gold {
+  display: inline-block;
+  background: linear-gradient(
+    135deg,
+    #f59e0b 0%,
+    #fbbf24 25%,
+    #fffbeb 50%,
+    #fbbf24 75%,
+    #f59e0b 100%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  animation: goldShimmer 3s ease-in-out infinite;
+}
+
+@keyframes goldShimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.login-subtitle {
+  font-size: 16px;
+  color: #94a3b8;
+  font-weight: 500;
+  line-height: 1.5;
+  margin: 0 0 36px 0;
+}
+
+/* Feature list — vertical stack */
+.login-features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 36px;
+}
+
+.login-feature-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-feature-item:hover {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(245, 158, 11, 0.35);
+  transform: translateX(6px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35), 0 0 24px rgba(245, 158, 11, 0.10);
+}
+
+.feature-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.feature-icon-gold {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.feature-icon-green {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.feature-icon-blue {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.feature-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin-bottom: 2px;
+}
+
+.feature-desc {
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 500;
+}
+
+/* Trust badges */
+.login-trust-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.trust-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trust-divider {
+  color: #334155;
+}
+
+/* ==========================================================================
+   2. ACCESS PORTAL CARD - GLASSMORPHISM + GLOW
+   7. CARD ENTRANCE ANIMATION (SLIDE UP + FADE IN)
+   ========================================================================== */
+.login-card {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(245, 158, 11, 0.15);
+  border-radius: 24px;
+  padding: 36px 32px;
+  width: 100%;
+  max-width: 420px;
+  position: relative;
+  z-index: 1;
+  box-sizing: border-box;
+  
+  box-shadow: 
+    0 0 60px rgba(245, 158, 11, 0.08),
+    0 25px 50px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    
+  animation: cardEntrance 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
+}
+
+@keyframes cardEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(32px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Animated border glow */
+.login-card::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 25px;
+  padding: 1px;
+  background: linear-gradient(
+    135deg, 
+    rgba(245, 158, 11, 0.3), 
+    transparent 40%, 
+    transparent 60%, 
+    rgba(245, 158, 11, 0.15)
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.login-card-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  margin: 0 auto 18px;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.12);
+}
+
+.login-card-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: #f9fafb;
+  text-align: center;
+  margin: 0 0 4px;
+  letter-spacing: -0.3px;
+}
+
+.login-card-subtitle {
+  font-size: 13px;
+  color: #94a3b8;
+  text-align: center;
+  margin: 0 0 24px;
+  font-weight: 500;
+}
+
+/* Role Selector Tabs */
+.role-selector {
+  display: flex;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 4px;
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.role-tab {
+  flex: 1;
+  padding: 10px 14px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.role-tab:hover {
+  color: #e2e8f0;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.role-tab.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0f172a;
+  font-weight: 800;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+/* Sandbox Info Box */
+.sandbox-info {
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.14);
+  border-left: 3px solid #f59e0b;
+  border-radius: 12px;
+  padding: 16px 18px;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.sandbox-info-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fbbf24;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sandbox-info-desc {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.5;
+  font-weight: 500;
+  margin: 0;
+}
+
+.sandbox-info-desc strong {
+  color: #cbd5e1;
+}
+
+/* ==========================================================================
+   5. CTA BUTTON - ANGLED SHINE SWEEP ANIMATION
+   ========================================================================== */
+.login-cta {
+  width: 100%;
+  padding: 14px 24px;
+  border: none;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #0f172a;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s ease;
+  box-shadow: 
+    0 4px 16px rgba(245, 158, 11, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-cta:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.4);
+}
+
+.login-cta:active:not(:disabled) {
+  transform: translateY(0) scale(0.98);
+}
+
+.login-cta:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Angled Specular Shine Sweep */
+.login-cta::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -130%;
+  width: 70%;
+  height: 200%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 25%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.15) 75%,
+    transparent 100%
+  );
+  transform: rotate(25deg);
+  pointer-events: none;
+  animation: btnSweep 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+@keyframes btnSweep {
+  0% {
+    left: -130%;
+  }
+  35% {
+    left: 140%;
+  }
+  100% {
+    left: 140%;
+  }
+}
+
+/* Form inputs */
+.login-form-group {
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.login-form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+  letter-spacing: 0.2px;
+}
+
+.login-input-wrapper {
+  position: relative;
+}
+
+.login-input {
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(2, 6, 23, 0.65);
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  outline: none;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.login-input:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+  background: rgba(2, 6, 23, 0.85);
+}
+
+.login-input.pin-style {
+  letter-spacing: 3px;
+  font-family: monospace;
+  font-size: 15px;
+}
+
+/* PIN Input Polish */
+.pin-input-group {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin: 14px 0 20px;
+}
+
+.pin-digit {
+  width: 48px;
+  height: 56px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: #f9fafb;
+  font-size: 24px;
+  font-weight: 800;
+  text-align: center;
+  caret-color: #f59e0b;
+  transition: all 0.2s ease;
+  outline: none;
+  font-family: inherit;
+}
+
+.pin-digit:focus {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+  background: rgba(245, 158, 11, 0.06);
+  outline: none;
+}
+
+.pin-digit.filled {
+  border-color: rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.login-input-has-toggle {
+  padding-right: 44px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  color: #94a3b8;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.password-toggle-btn:hover {
+  color: #f8fafc;
+}
+
+.login-remember-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+  text-align: left;
+}
+
+.login-remember-checkbox {
+  accent-color: #f59e0b;
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+}
+
+.login-remember-label {
+  font-size: 12px;
+  color: #94a3b8;
+  cursor: pointer;
+  user-select: none;
+}
+
+/* Error banner */
+.login-error-banner {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 20px;
+  line-height: 1.4;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ==========================================================================
+   6. INSTALL POS GHOST BUTTON (SUBTLE OUTLINE, NO GOLD PILL)
+   ========================================================================== */
+.install-btn {
+  position: fixed;
+  top: 20px;
+  right: 24px;
+  z-index: 10;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  color: #94a3b8 !important;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: none !important;
+}
+
+.install-btn:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #f1f5f9 !important;
+  border-color: rgba(245, 158, 11, 0.35) !important;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN (MOBILE-FIRST POLISH)
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .login-title {
+    font-size: 42px;
+  }
+}
+
+@media (max-width: 860px) {
+  .login-page-layout {
+    flex-direction: column-reverse; /* Card first on mobile! */
+    padding: 32px 16px;
+    gap: 36px;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .login-hero {
+    padding: 0;
+    max-width: 100%;
+    text-align: center;
+    align-items: center;
+  }
+
+  .login-title {
+    font-size: 38px;
+  }
+
+  .login-subtitle {
+    font-size: 14px;
+    margin-bottom: 28px;
+  }
+
+  .login-tagline-badge {
+    margin: 0 auto 18px;
+    font-size: 10px;
+  }
+
+  .login-features {
+    gap: 12px;
+    width: 100%;
+    max-width: 440px;
+    margin: 0 auto 32px;
+  }
+
+  .login-feature-item {
+    padding: 12px 14px;
+    text-align: left;
+  }
+
+  .login-card {
+    max-width: 100%;
+    padding: 28px 20px;
+    border-radius: 20px;
+  }
+
+  .login-card-title {
+    font-size: 20px;
+  }
+
+  .login-trust-row {
+    justify-content: center;
+  }
+
+  .install-btn {
+    display: none;
+  }
+  
+  .login-bg-glow-card {
+    right: 50%;
+    transform: translate(50%, -50%);
+    width: 320px;
+    height: 360px;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-title {
+    font-size: 30px;
+  }
+
+  .login-card {
+    padding: 24px 16px;
+  }
+
+  .role-tab {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}
+

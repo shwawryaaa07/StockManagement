@@ -1,0 +1,43 @@
+# ==============================================================================
+# Git Ignore Configuration - Backend
+# ==============================================================================
+
+# Java / Maven Build Output
+target/
+*.class
+*.jar
+*.war
+*.ear
+!src/main/resources/*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Spring Boot Logs & Runtime
+*.log
+*.pid
+
+# Local Secret Configuration Files (NEVER commit to Git!)
+application-local.properties
+*-local.properties
+**/application-local.properties
+**/src/main/resources/application-local.properties
+**/src/main/resources/*-local.properties
+**/src/main/resources/*.local.properties
+
+# Environment variables
+.env
+.env*
+*.env
+*.env.*
+!.env.example
+
+# IDE & Editor files
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# OS Generated
+.DS_Store
+Thumbs.db
+*.lnk

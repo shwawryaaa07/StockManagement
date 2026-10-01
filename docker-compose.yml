@@ -1,0 +1,55 @@
+# ==============================================================================
+# Docker Compose - Local Fullstack Development Environment
+# Runs MySQL 8.4, Spring Boot Backend, and React Frontend containers
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  # MySQL Database Service
+  db:
+    image: mysql:8.4
+    container_name: manisha-pos-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: stockmanagement
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend API
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: manisha-pos-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://db:3306/stockmanagement?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=Asia/Kolkata
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-rootpassword}
+      PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-DevSecretSigningKeyMustBeAtLeast256BitsLongForHmacSha256Security!}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_PIN: ${ADMIN_PIN:-1234}
+      SHOP_NAME: ${SHOP_NAME:-MANISHA ELECTRONICS}
+      SHOP_ADDRESS: ${SHOP_ADDRESS:-EDEN GROVE Building, Nr. State Bank of India, Valpoi, Goa}
+      SHOP_PHONE: ${SHOP_PHONE:-9309736172}
+      SHOP_GSTIN: ${SHOP_GSTIN:-30AMYPN1753F1ZY}
+    ports:
+      - "8080:8080"
+
+volumes:
+  db_data:
+    driver: local

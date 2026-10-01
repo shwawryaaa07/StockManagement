@@ -1,0 +1,262 @@
+import React, { useState, useEffect } from 'react';
+import { NavLink } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+
+function Navbar() {
+    const { isVisitor, isOwner, isStaff, logout } = useAuth();
+    const [darkMode, setDarkMode] = useState(() => {
+        return localStorage.getItem('darkMode') === 'true';
+    });
+
+    useEffect(() => {
+        document.body.classList.toggle('dark-mode', darkMode);
+        localStorage.setItem('darkMode', darkMode);
+    }, [darkMode]);
+
+    const getRoleBadge = () => {
+        if (isOwner) {
+            return (
+                <span style={{
+                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                    color: '#000',
+                    fontWeight: '900',
+                    fontSize: '11px',
+                    padding: '3px 8px',
+                    borderRadius: '6px',
+                    letterSpacing: '0.5px'
+                }}>
+                    👑 OWNER
+                </span>
+            );
+        }
+        if (isStaff) {
+            return (
+                <span style={{
+                    background: 'rgba(59, 130, 246, 0.2)',
+                    color: '#93c5fd',
+                    border: '1px solid rgba(59, 130, 246, 0.4)',
+                    fontWeight: '800',
+                    fontSize: '11px',
+                    padding: '3px 8px',
+                    borderRadius: '6px'
+                }}>
+                    👤 STAFF
+                </span>
+            );
+        }
+        return (
+            <span style={{
+                background: 'rgba(16, 185, 129, 0.2)',
+                color: '#6ee7b7',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                fontWeight: '800',
+                fontSize: '11px',
+                padding: '3px 8px',
+                borderRadius: '6px'
+            }}>
+                🚀 DEMO
+            </span>
+        );
+    };
+
+    const triggerHaptic = () => {
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+            try { navigator.vibrate(12); } catch (e) {}
+        }
+    };
+
+    return (
+        <>
+            {/* Visitor Sandbox Top Banner */}
+            {isVisitor && (
+                <div style={{
+                    background: 'linear-gradient(90deg, #d97706, #b45309)',
+                    color: '#ffffff',
+                    padding: '6px 14px',
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px'
+                }}>
+                    <span>🚀</span>
+                    <span><strong>Demo Sandbox Mode</strong> • Real store database is isolated.</span>
+                </div>
+            )}
+
+            {/* TOP DESKTOP & MOBILE HEADER */}
+            <nav className="navbar">
+                <div className="navbar-left">
+                    <div className="navbar-logo-badge">🏪</div>
+                    <div className="navbar-brand">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span className="main">
+                                MANISHA <span className="gold">ELECTRONICS</span>
+                            </span>
+                            {getRoleBadge()}
+                        </div>
+                        <span className="tagline desktop-only">★ Complete Electronics &amp; Home Appliances Store</span>
+                    </div>
+                </div>
+
+                {/* Desktop Navigation Links */}
+                <div className="navbar-links desktop-only">
+                    <NavLink to="/" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`} end>
+                        <span className="icon">📊</span> Dashboard
+                    </NavLink>
+                    <NavLink to="/products" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <span className="icon">📦</span> Products
+                    </NavLink>
+                    <NavLink to="/create-invoice" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <span className="icon">🧾</span> New Invoice
+                    </NavLink>
+                    <NavLink to="/invoices" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <span className="icon">📋</span> Invoices
+                    </NavLink>
+                    <NavLink to="/due-invoices" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                        <span className="icon">🟡</span> Due Bills
+                    </NavLink>
+
+                    {/* Staff & Store Settings */}
+                    {(isOwner || isVisitor) && (
+                        <NavLink to="/staff-management" className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}>
+                            <span className="icon">👥</span> Staff &amp; Accounts
+                        </NavLink>
+                    )}
+
+                    {/* Desktop App Shortcut for Staff and Owner */}
+                    {(isStaff || isOwner) && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                alert('💡 To install Manisha POS on your desktop:\n1. Click the ⊕ Install icon in your browser address bar (top right)\n2. Or click Menu (⋮) → "Install Manisha POS"');
+                            }}
+                            title="Install as native Windows desktop app"
+                            style={{
+                                background: 'rgba(245, 158, 11, 0.15)',
+                                border: '1px solid rgba(245, 158, 11, 0.4)',
+                                color: '#fbbf24',
+                                padding: '7px 12px',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: '700',
+                                cursor: 'pointer',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                transition: 'all 0.2s ease',
+                                marginLeft: '4px'
+                            }}
+                        >
+                            📲 Install POS
+                        </button>
+                    )}
+
+                    <button
+                        type="button"
+                        className="theme-toggle"
+                        onClick={() => setDarkMode(!darkMode)}
+                        title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+                        aria-label="Toggle dark mode"
+                    >
+                        {darkMode ? '☀️' : '🌙'}
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={logout}
+                        title="Lock Application / Sign Out"
+                        style={{
+                            background: 'rgba(239, 83, 80, 0.2)',
+                            border: '1px solid rgba(239, 83, 80, 0.4)',
+                            color: '#ffcdd2',
+                            padding: '7px 12px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: '700',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            transition: 'all 0.2s ease',
+                            marginLeft: '4px',
+                            flexShrink: 0
+                        }}
+                    >
+                        🔒 Lock
+                    </button>
+                </div>
+
+                {/* Mobile Header Quick Actions (Top Right) */}
+                <div className="mobile-only" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                        type="button"
+                        className="theme-toggle"
+                        onClick={() => setDarkMode(!darkMode)}
+                        title="Toggle dark mode"
+                        aria-label="Toggle dark mode"
+                    >
+                        {darkMode ? '☀️' : '🌙'}
+                    </button>
+
+                    <button
+                        type="button"
+                        onClick={logout}
+                        title="Lock / Sign Out"
+                        style={{
+                            background: 'rgba(239, 83, 80, 0.25)',
+                            border: '1px solid rgba(239, 83, 80, 0.4)',
+                            color: '#ffcdd2',
+                            padding: '6px 10px',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: '800',
+                            cursor: 'pointer'
+                        }}
+                    >
+                        🔒 Lock
+                    </button>
+                </div>
+            </nav>
+
+            {/* CLEAN NATIVE MOBILE BOTTOM NAVIGATION BAR (Uniform 5-tab grid, zero text overlap) */}
+            <div className="mobile-bottom-bar no-print">
+                <NavLink to="/" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`} end>
+                    <span className="tab-icon">📊</span>
+                    <span className="tab-label">Dashboard</span>
+                </NavLink>
+
+                <NavLink to="/products" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                    <span className="tab-icon">📦</span>
+                    <span className="tab-label">Products</span>
+                </NavLink>
+
+                <NavLink to="/create-invoice" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                    <span className="tab-icon">🧾</span>
+                    <span className="tab-label">New Bill</span>
+                </NavLink>
+
+                <NavLink to="/invoices" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                    <span className="tab-icon">📋</span>
+                    <span className="tab-label">Invoices</span>
+                </NavLink>
+
+                {(isOwner || isVisitor) ? (
+                    <NavLink to="/staff-management" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                        <span className="tab-icon">👥</span>
+                        <span className="tab-label">Staff</span>
+                    </NavLink>
+                ) : (
+                    <NavLink to="/due-invoices" onClick={triggerHaptic} className={({ isActive }) => `mobile-tab ${isActive ? 'active' : ''}`}>
+                        <span className="tab-icon">🟡</span>
+                        <span className="tab-label">Due Bills</span>
+                    </NavLink>
+                )}
+            </div>
+        </>
+    );
+}
+
+export default Navbar;

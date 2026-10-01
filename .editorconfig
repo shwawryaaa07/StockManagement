@@ -1,0 +1,42 @@
+# ==============================================================================
+# EditorConfig - Global Code Formatting Standard
+# http://editorconfig.org
+# ==============================================================================
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Java source code
+[*.java]
+indent_style = space
+indent_size = 4
+
+# JavaScript, JSX, JSON, CSS, HTML
+[*.{js,jsx,ts,tsx,json,css,html}]
+indent_style = space
+indent_size = 2
+
+# XML & Maven POM
+[pom.xml]
+indent_style = space
+indent_size = 4
+
+[*.xml]
+indent_style = space
+indent_size = 4
+
+# Properties files
+[*.properties]
+indent_style = space
+indent_size = 2
+
+# Markdown documentation
+[*.md]
+trim_trailing_whitespace = false

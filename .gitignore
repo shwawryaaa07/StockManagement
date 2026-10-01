@@ -1,0 +1,63 @@
+# ==============================================================================
+# Git Ignore Configuration - Root
+# ==============================================================================
+
+# Environment files and Secrets (NEVER commit secrets to Git!)
+.env
+.env*
+*.env
+*.env.*
+!.env.example
+*.local
+*-local.properties
+application-local.properties
+**/src/main/resources/*-local.properties
+**/src/main/resources/*.local.properties
+
+# Java / Maven Build Artifacts
+target/
+**/target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+*.pid
+!backend/.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Node / React Frontend Artifacts
+node_modules/
+**/node_modules/
+build/
+**/build/
+dist/
+**/dist/
+.pnp
+.pnp.js
+coverage/
+**/coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# IDE & Editor Configuration
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.sublime-project
+*.sublime-workspace
+
+# Operating System Specific
+.DS_Store
+Thumbs.db
+ehthumbs.db
+desktop.ini
+*.lnk
